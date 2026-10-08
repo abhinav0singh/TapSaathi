@@ -11,3 +11,5 @@ evidence/
 TaapSaathi_backend_source.zip
 /upload/
 /.codex/
+.next/
+*.tsbuildinfo

@@ -1,54 +1,55 @@
 {
-  "name": "taapsaathi",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Event-driven heat-safety and dispatch operations backend",
-  "type": "module",
-  "workspaces": [
-    "packages/*",
-    "services/*",
-    "infra"
-  ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --coverage.enabled=false",
-    "test:unit": "vitest run packages services",
-    "test:risk:zero-dependency": "node --experimental-strip-types --test services/risk-engine/tests/policy.node-test.ts",
-    "test:infra": "vitest run infra/test",
-    "cdk": "cdk --app \"tsx infra/bin/app.ts\"",
-    "synth": "npm run cdk -- synth",
-    "deploy": "npm run cdk -- deploy --require-approval never",
-    "destroy": "npm run cdk -- destroy",
-    "smoke:deployed": "tsx scripts/deployed-smoke.ts",
-    "verify:definition": "tsx scripts/validate-state-machine.ts"
-  },
-  "engines": {
-    "node": ">=22 <25"
-  },
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.913.0",
-    "@aws-sdk/client-eventbridge": "^3.913.0",
-    "@aws-sdk/client-geo-routes": "^3.913.0",
-    "@aws-sdk/client-polly": "^3.913.0",
-    "@aws-sdk/client-s3": "^3.913.0",
-    "@aws-sdk/client-sfn": "^3.913.0",
-    "@aws-sdk/lib-dynamodb": "^3.913.0",
-    "@aws-sdk/s3-request-presigner": "^3.913.0",
-    "zod": "^4.1.12"
-  },
-  "devDependencies": {
-    "@aws-sdk/client-cloudformation": "^3.1148.0",
-    "@aws-sdk/credential-providers": "^3.1148.0",
-    "@types/aws-lambda": "^8.10.152",
-    "@types/node": "^22.18.12",
-    "aws-cdk": "^2.1031.0",
-    "aws-cdk-lib": "^2.220.0",
-    "constructs": "^10.4.2",
-    "esbuild": "^0.25.11",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
-  }
+    "name":  "taapsaathi",
+    "version":  "0.1.0",
+    "private":  true,
+    "description":  "Event-driven heat-safety and dispatch operations backend",
+    "type":  "module",
+    "workspaces":  [
+                       "apps/*",
+                       "packages/*",
+                       "services/*",
+                       "infra"
+                   ],
+    "scripts":  {
+                    "build":  "tsc -p tsconfig.json",
+                    "typecheck":  "tsc -p tsconfig.json --noEmit",
+                    "lint":  "tsc -p tsconfig.json --noEmit",
+                    "test":  "vitest run --coverage.enabled=false",
+                    "test:unit":  "vitest run packages services",
+                    "test:risk:zero-dependency":  "node --experimental-strip-types --test services/risk-engine/tests/policy.node-test.ts",
+                    "test:infra":  "vitest run infra/test",
+                    "cdk":  "cdk --app \"tsx infra/bin/app.ts\"",
+                    "synth":  "npm run cdk -- synth",
+                    "deploy":  "npm run cdk -- deploy --require-approval never",
+                    "destroy":  "npm run cdk -- destroy",
+                    "smoke:deployed":  "tsx scripts/deployed-smoke.ts",
+                    "verify:definition":  "tsx scripts/validate-state-machine.ts"
+                },
+    "engines":  {
+                    "node":  "\u003e=22 \u003c25"
+                },
+    "dependencies":  {
+                         "@aws-sdk/client-dynamodb":  "^3.913.0",
+                         "@aws-sdk/client-eventbridge":  "^3.913.0",
+                         "@aws-sdk/client-geo-routes":  "^3.913.0",
+                         "@aws-sdk/client-polly":  "^3.913.0",
+                         "@aws-sdk/client-s3":  "^3.913.0",
+                         "@aws-sdk/client-sfn":  "^3.913.0",
+                         "@aws-sdk/lib-dynamodb":  "^3.913.0",
+                         "@aws-sdk/s3-request-presigner":  "^3.913.0",
+                         "zod":  "^4.1.12"
+                     },
+    "devDependencies":  {
+                            "@aws-sdk/client-cloudformation":  "^3.1148.0",
+                            "@aws-sdk/credential-providers":  "^3.1148.0",
+                            "@types/aws-lambda":  "^8.10.152",
+                            "@types/node":  "^22.18.12",
+                            "aws-cdk":  "^2.1031.0",
+                            "aws-cdk-lib":  "^2.220.0",
+                            "constructs":  "^10.4.2",
+                            "esbuild":  "^0.25.11",
+                            "tsx":  "^4.20.6",
+                            "typescript":  "^5.9.3",
+                            "vitest":  "^3.2.4"
+                        }
 }
