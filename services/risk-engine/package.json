@@ -1,0 +1,10 @@
+{
+  "name": "@taapsaathi/risk-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/evaluate-risk.ts",
+  "dependencies": {
+    "@taapsaathi/contracts": "*"
+  }
+}

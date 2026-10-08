@@ -1,0 +1,7 @@
+{
+  "app": "npx tsx infra/bin/app.ts",
+  "context": {
+    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true,
+    "@aws-cdk/aws-apigatewayv2:defaultStageAuthorizerChangeDeploymentLogicalId": true
+  }
+}

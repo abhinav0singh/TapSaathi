@@ -1,0 +1,100 @@
+openapi: 3.1.0
+info:
+  title: TaapSaathi Backend API
+  version: 1.0.0
+  description: Demonstration API for the TaapSaathi heat-safety workflow. All demo data is simulated.
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200": { description: Service health, content: { application/json: { schema: { $ref: "#/components/schemas/Health" } } } }
+  /dashboard:
+    get:
+      operationId: getDashboard
+      responses:
+        "200": { description: Current hub state, content: { application/json: { schema: { type: object } } } }
+  /workers/{workerId}:
+    get:
+      operationId: getWorker
+      parameters:
+        - { name: workerId, in: path, required: true, schema: { type: string, minLength: 1 } }
+      responses:
+        "200": { description: Worker view, content: { application/json: { schema: { type: object } } } }
+        "404": { $ref: "#/components/responses/Error" }
+  /events:
+    get:
+      operationId: getEvents
+      parameters:
+        - { name: after, in: query, required: false, schema: { type: string } }
+      responses:
+        "200": { description: Ordered audit events, content: { application/json: { schema: { type: object } } } }
+  /interventions/{interventionId}/respond:
+    post:
+      operationId: respondToIntervention
+      parameters:
+        - { name: interventionId, in: path, required: true, schema: { type: string, minLength: 1 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RespondRequest" }
+      responses:
+        "202": { description: Callback accepted, content: { application/json: { schema: { type: object } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "500": { $ref: "#/components/responses/Error" }
+  /demo/heat-spike:
+    post:
+      operationId: triggerDemoHeatSpike
+      summary: Publish a clearly labelled simulated observation through the production risk path.
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: false } } }
+      responses:
+        "202": { description: Simulated observation accepted, content: { application/json: { schema: { type: object } } } }
+  /demo/reset:
+    post:
+      operationId: resetDemo
+      responses:
+        "200": { description: Exact seed state restored, content: { application/json: { schema: { type: object } } } }
+        "409": { $ref: "#/components/responses/Error" }
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status, service, time]
+      properties:
+        status: { enum: [ok, degraded] }
+        service: { const: taapsaathi-api }
+        time: { type: string, format: date-time }
+    RespondRequest:
+      type: object
+      additionalProperties: false
+      required: [actorId, actorType, action, clientRequestId]
+      properties:
+        actorId: { type: string, minLength: 1 }
+        actorType: { enum: [WORKER, SUPERVISOR] }
+        action: { enum: [TAKE_BREAK, FEEL_UNWELL, SUPERVISOR_ACK] }
+        language: { enum: [en, hi] }
+        clientRequestId: { type: string, format: uuid }
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string }
+  responses:
+    Error:
+      description: Structured error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

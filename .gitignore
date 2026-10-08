@@ -1,0 +1,13 @@
+node_modules/
+dist/
+cdk.out/
+.env
+.env.*
+!.env.example
+coverage/
+*.log
+.DS_Store
+evidence/
+TaapSaathi_backend_source.zip
+/upload/
+/.codex/
