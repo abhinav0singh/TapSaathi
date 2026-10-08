@@ -1,9 +1,14 @@
-﻿import {
+import {
   DashboardResponseSchema,
   HealthResponseSchema,
   DemoHeatSpikeResponseSchema,
   DemoResetResponseSchema,
+  WorkerViewResponseSchema,
+  RespondRequestSchema,
+  RespondAcceptedSchema,
 } from "@taapsaathi/contracts";
+
+import type { RespondRequest } from "@taapsaathi/contracts";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -65,4 +70,23 @@ export const api = {
       method: "POST",
       body: "{}",
     }),
+
+  worker: (workerId: string) =>
+    apiRequest(
+      `/workers/${encodeURIComponent(workerId)}`,
+      WorkerViewResponseSchema
+    ),
+
+  respond: (interventionId: string, request: RespondRequest) => {
+    const validated = RespondRequestSchema.parse(request);
+
+    return apiRequest(
+      `/interventions/${encodeURIComponent(interventionId)}/respond`,
+      RespondAcceptedSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(validated),
+      }
+    );
+  },
 };

@@ -1,8 +1,16 @@
-# TaapSaathi backend
+# TaapSaathi â€” Heat Safety & Intelligent Dispatch
+
+**Project status:** AWS backend deployed | Live operations dashboard working | Rider experience in testing
+
+[View current development progress](docs/PROJECT_STATUS.md)
+
+[Frontend source](apps/web) | [API specification](docs/openapi.yaml) | [Deployment runbook](docs/DEPLOYMENT_RUNBOOK.md)
+
+## Backend architecture
 
 TaapSaathi is an event-driven heat-safety and dispatch demonstration for delivery workers. A deterministic policy turns a labelled heat observation into a real EventBridge event, a Standard Step Functions intervention, Amazon Location guidance, Polly audio, a one-time human callback, and an auditable DynamoDB reassignment or escalation.
 
-This repository is the backend and AWS infrastructure. It does not make medical claims, contact emergency services, or represent simulated weather/rest points as live data.
+This repository contains the AWS backend, infrastructure, and Next.js frontend. It does not make medical claims, contact emergency services, or represent simulated weather/rest points as live data.
 
 ## Status
 
@@ -77,7 +85,7 @@ npm run synth
 npm run deploy
 ```
 
-Retrieve—not invent—the deployed outputs:
+RetrieveÃ¢â‚¬â€not inventÃ¢â‚¬â€the deployed outputs:
 
 ```bash
 aws cloudformation describe-stacks \
@@ -105,9 +113,9 @@ Fill this table only from real deployed results:
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
-| EventBridge → Step Functions → DynamoDB | AWS VERIFICATION PENDING | execution ARN + queried item |
+| EventBridge Ã¢â€ â€™ Step Functions Ã¢â€ â€™ DynamoDB | AWS VERIFICATION PENDING | execution ARN + queried item |
 | Duplicate protection | AWS VERIFICATION PENDING | replay output + unchanged intervention count |
-| Golden break path ×3 | AWS VERIFICATION PENDING | three execution ARNs |
+| Golden break path Ãƒâ€”3 | AWS VERIFICATION PENDING | three execution ARNs |
 | Symptom escalation | AWS VERIFICATION PENDING | execution ARN + audit record |
 | Timeout escalation | AWS VERIFICATION PENDING | execution ARN + audit record |
 | Location scooter route | AWS VERIFICATION PENDING | persisted `provider: AMAZON_LOCATION` route |
