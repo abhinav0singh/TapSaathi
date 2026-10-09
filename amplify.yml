@@ -1,0 +1,26 @@
+version: 1
+applications:
+  - appRoot: apps/web
+    frontend:
+      # Run install and build from the monorepo root so the shared
+      # @taapsaathi/contracts workspace package is available.
+      buildPath: /
+      phases:
+        preBuild:
+          commands:
+            # Next.js 16 needs Node 20.9+; use 22 to match the repo.
+            - nvm use 22 || (nvm install 22 && nvm use 22)
+            - node -v
+            - npm ci
+        build:
+          commands:
+            # This script builds @taapsaathi/contracts, then runs `next build`.
+            - npm run build --workspace=@taapsaathi/web
+      artifacts:
+        baseDirectory: apps/web/.next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - apps/web/.next/cache/**/*
