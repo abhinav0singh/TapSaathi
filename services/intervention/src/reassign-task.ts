@@ -12,6 +12,7 @@ export const handler: Handler<WorkflowState> = async (input) => {
     hubId: input.envelope.payload.hubId,
     now: new Date().toISOString(),
     correlationId: input.envelope.correlationId,
+    preserveIntervention: input.deliveryHandling === "ESCALATION",
   });
   log("INFO", "ReassignDelivery", { interventionId: input.interventionId, workerId: input.envelope.payload.workerId, replacementWorkerId: result.replacementWorkerId, status: result.status, correlationId: input.envelope.correlationId });
   if (result.status === "REASSIGNED") metric("ReassignmentsSucceeded", 1, { operation: "ReassignDelivery" });

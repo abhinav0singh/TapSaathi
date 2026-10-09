@@ -173,6 +173,11 @@ export class TaapSaathiStack extends cdk.Stack {
     });
     const workerChoice = new sfn.Choice(this, "BranchOnWorkerResponse");
     const reassignState = invoke("ReassignActiveDeliveryTransactionally", reassignTask);
+    const prepareEscalationDelivery = new sfn.Pass(this, "PrepareEscalationDeliveryHandling", {
+      result: sfn.Result.fromString("ESCALATION"),
+      resultPath: "$.deliveryHandling",
+    });
+    const secureEscalationDelivery = invoke("SecureActiveDeliveryForEscalation", reassignTask);
     const reassignmentChoice = new sfn.Choice(this, "ReassignmentSucceeded");
     const escalateState = invoke("EscalateSupervisor", escalate);
     const awaitSupervisor = new tasks.LambdaInvoke(this, "AwaitSupervisorAcknowledgement", {
@@ -204,16 +209,18 @@ export class TaapSaathiStack extends cdk.Stack {
     awaitSupervisor.next(completeSupervisor);
     awaitSupervisor.addCatch(completeUnacknowledged, { errors: ["States.Timeout"], resultPath: "$.supervisorTimeout" });
     escalateState.next(awaitSupervisor);
+    prepareEscalationDelivery.next(secureEscalationDelivery);
+    secureEscalationDelivery.next(escalateState);
     reassignmentChoice
       .when(sfn.Condition.stringEquals("$.reassignment.status", "REASSIGNED"), markResting)
       .otherwise(escalateState);
     reassignState.next(reassignmentChoice);
     workerChoice
       .when(sfn.Condition.stringEquals("$.response.action", "TAKE_BREAK"), reassignState)
-      .when(sfn.Condition.stringEquals("$.response.action", "FEEL_UNWELL"), escalateState)
-      .otherwise(escalateState);
+      .when(sfn.Condition.stringEquals("$.response.action", "FEEL_UNWELL"), prepareEscalationDelivery)
+      .otherwise(prepareEscalationDelivery);
     awaitWorker.next(workerChoice);
-    awaitWorker.addCatch(escalateState, { errors: ["States.Timeout"], resultPath: "$.timeout" });
+    awaitWorker.addCatch(prepareEscalationDelivery, { errors: ["States.Timeout"], resultPath: "$.timeout" });
     guidanceState.next(awaitWorker);
     const creationOutcomeChoice = new sfn.Choice(this, "CheckInterventionCreationOutcome");
     const workerUnavailable = new sfn.Succeed(this, "WorkerUnavailableSuppressed");

@@ -221,15 +221,27 @@ export class MemoryRepository implements Repository {
     const replacement = selectReplacementWorker(await this.getWorkers(input.hubId), input.workerId);
     if (!replacement) {
       this.tasks.set(task.taskId, { ...task, assigneeId: null, status: "REASSIGNMENT_REQUIRED", updatedAt: input.now });
+      const original = this.workers.get(input.workerId);
+      if (original) {
+        this.workers.set(original.workerId, {
+          ...original,
+          activeTaskIds: original.activeTaskIds.filter((id) => id !== task.taskId),
+          updatedAt: input.now,
+        });
+      }
       this.interventions.set(intervention.interventionId, { ...intervention, status: "REASSIGNMENT_REQUIRED", escalationReason: "NO_ELIGIBLE_WORKER", updatedAt: input.now });
       return { status: "REASSIGNMENT_REQUIRED" };
     }
     const original = this.workers.get(input.workerId);
     if (!original) throw new NotFoundError("Original worker not found.");
     this.tasks.set(task.taskId, { ...task, assigneeId: replacement.workerId, updatedAt: input.now });
-    this.workers.set(original.workerId, { ...original, state: "RESTING", activeTaskIds: original.activeTaskIds.filter((id) => id !== task.taskId), activeInterventionId: undefined, updatedAt: input.now });
+    this.workers.set(original.workerId, input.preserveIntervention
+      ? { ...original, activeTaskIds: original.activeTaskIds.filter((id) => id !== task.taskId), updatedAt: input.now }
+      : { ...original, state: "RESTING", activeTaskIds: original.activeTaskIds.filter((id) => id !== task.taskId), activeInterventionId: undefined, updatedAt: input.now });
     this.workers.set(replacement.workerId, { ...replacement, activeTaskIds: [...replacement.activeTaskIds, task.taskId], updatedAt: input.now });
-    this.interventions.set(intervention.interventionId, { ...intervention, status: "RESTING", replacementWorkerId: replacement.workerId, updatedAt: input.now });
+    this.interventions.set(intervention.interventionId, input.preserveIntervention
+      ? { ...intervention, replacementWorkerId: replacement.workerId, updatedAt: input.now }
+      : { ...intervention, status: "RESTING", replacementWorkerId: replacement.workerId, updatedAt: input.now });
     this.auditEvents.push({ auditEventId: `audit-reassign-${input.interventionId}`, interventionId: input.interventionId, eventType: "DELIVERY_REASSIGNED", actorType: "SYSTEM", correlationId: input.correlationId, workerId: input.workerId, hubId: input.hubId, demoGeneration: input.generation, details: { taskId: input.taskId, replacementWorkerId: replacement.workerId }, occurredAt: input.now });
     return { status: "REASSIGNED", replacementWorkerId: replacement.workerId };
   }

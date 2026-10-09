@@ -58,7 +58,7 @@ export interface Repository {
   consumeCallback(input: ConsumeCallbackInput): Promise<ConsumeCallbackResult>;
   releaseCallback(input: { interventionId: string; actorType: "WORKER" | "SUPERVISOR"; clientRequestId: string }): Promise<void>;
   finalizeCallback(input: { interventionId: string; actorType: "WORKER" | "SUPERVISOR"; clientRequestId: string }): Promise<void>;
-  reassignTask(input: { interventionId: string; generation: number; workerId: string; taskId: string; hubId: string; now: string; correlationId: string }): Promise<{ replacementWorkerId?: string; status: "REASSIGNED" | "REASSIGNMENT_REQUIRED" }>;
+  reassignTask(input: { interventionId: string; generation: number; workerId: string; taskId: string; hubId: string; now: string; correlationId: string; preserveIntervention?: boolean }): Promise<{ replacementWorkerId?: string; status: "REASSIGNED" | "REASSIGNMENT_REQUIRED" }>;
   escalate(input: { interventionId: string; generation: number; reason: "FEEL_UNWELL" | "WORKER_TIMEOUT" | "NO_ELIGIBLE_WORKER"; now: string; audit: AuditEvent }): Promise<void>;
   complete(input: { interventionId: string; generation: number; status: Intervention["status"]; now: string; audit: AuditEvent }): Promise<void>;
 }
