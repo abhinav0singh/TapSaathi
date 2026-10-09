@@ -15,8 +15,13 @@ const IdentitySchema = z.discriminatedUnion("role", [
   }),
 ]);
 
+const CognitoSubjectSchema = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  "Invalid Cognito subject identifier"
+);
+
 const MappingSchema = z.record(
-  z.string().uuid(),
+  CognitoSubjectSchema,
   IdentitySchema
 );
 

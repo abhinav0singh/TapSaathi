@@ -9,6 +9,7 @@ import {
 } from "@taapsaathi/contracts";
 
 import type { RespondRequest } from "@taapsaathi/contracts";
+import { getAccessToken } from "@/lib/auth";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -23,14 +24,19 @@ async function apiRequest<T>(
   const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
+    const headers = new Headers(init?.headers);
+    headers.set("content-type", "application/json");
+
+    if (init?.method?.toUpperCase() === "POST") {
+      const accessToken = await getAccessToken();
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
+
     const response = await fetch(`${API_URL}${path}`, {
       ...init,
       cache: "no-store",
       signal: controller.signal,
-      headers: {
-        "content-type": "application/json",
-        ...init?.headers,
-      },
+      headers,
     });
 
     const body: unknown = await response.json();

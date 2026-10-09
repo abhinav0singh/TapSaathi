@@ -27,6 +27,23 @@ describe("Cognito identity mapping configuration", () => {
     expect(load(JSON.stringify(mapping))).toEqual(mapping);
   });
 
+  it("accepts Cognito-issued subject identifiers with non-RFC variant bits", () => {
+    const mapping = {
+      "9103ddaa-3011-70ef-f6cb-36edc1540299": {
+        role: "OPERATOR",
+      },
+      "b1a35daa-4091-70e5-fe1e-3befacedbb96": {
+        role: "WORKER",
+        actorId: "ravi-001",
+      },
+      "31133d5a-0061-70a0-7e29-2a27d9876f3f": {
+        role: "SUPERVISOR",
+        actorId: "supervisor-neha-001",
+      },
+    };
+
+    expect(load(JSON.stringify(mapping))).toEqual(mapping);
+  });
   it("rejects missing configuration", () => {
     expect(() => load()).toThrowError(
       expect.objectContaining({
