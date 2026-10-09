@@ -133,3 +133,7 @@ npm run destroy -- --profile taapsaathi-dev
 ```
 
 Destroying the development stack deletes demo DynamoDB and S3 data. Confirm the stack name and account before running the command.
+
+## Latest AWS deployment update
+
+[AWS authentication deployment status](docs/AWS_AUTH_DEPLOYMENT_STATUS.md)
