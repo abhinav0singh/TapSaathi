@@ -298,7 +298,7 @@ export class TaapSaathiStack extends cdk.Stack {
       corsPreflight: {
         allowOrigins: frontendOrigins,
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.OPTIONS],
-        allowHeaders: ["content-type", "x-correlation-id"],
+        allowHeaders: ["authorization", "content-type", "x-correlation-id"],
         exposeHeaders: ["x-correlation-id"],
         maxAge: cdk.Duration.hours(1),
       },
@@ -360,6 +360,13 @@ export class TaapSaathiStack extends cdk.Stack {
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     });
 
+    new cdk.CfnOutput(this, "CognitoUserPoolId", {
+      value: userPool.userPoolId,
+    });
+
+    new cdk.CfnOutput(this, "CognitoUserPoolClientId", {
+      value: userPoolClient.userPoolClientId,
+    });
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new cdk.CfnOutput(this, "StateMachineArn", { value: stateMachine.stateMachineArn });
     new cdk.CfnOutput(this, "TableName", { value: table.tableName });

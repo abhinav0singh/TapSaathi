@@ -14,6 +14,185 @@ function template(): Template {
 }
 
 describe("TaapSaathi infrastructure", () => {
+  it("allows Authorization headers in API CORS", () => {
+    template().hasResourceProperties("AWS::ApiGatewayV2::Api", {
+      CorsConfiguration: Match.objectLike({
+        AllowHeaders: Match.arrayWith([
+          "authorization",
+          "content-type",
+          "x-correlation-id",
+        ]),
+      }),
+    });
+  });
+
+  it("attaches SSM permissions only to protected Lambda roles", () => {
+    const resources = template().toJSON().Resources as Record<
+      string,
+      {
+        Type: string;
+        Properties?: Record<string, unknown>;
+      }
+    >;
+
+    const protectedNames = [
+      "RespondFunction",
+      "HeatSpikeFunction",
+      "ResetFunction",
+    ];
+
+    const functions = Object.entries(resources).filter(
+      ([, resource]) => resource.Type === "AWS::Lambda::Function"
+    );
+
+    const policies = Object.values(resources).filter(
+      (resource) => resource.Type === "AWS::IAM::Policy"
+    );
+
+    for (const [logicalId, resource] of functions) {
+      const role = (
+        resource.Properties as {
+          Role: { "Fn::GetAtt": string[] };
+        }
+      ).Role["Fn::GetAtt"][0];
+
+      expect(role, `Missing execution role for ${logicalId}`).toBeDefined();
+
+      if (role === undefined) {
+        throw new Error(`Missing execution role for ${logicalId}`);
+      }
+
+      const rolePolicies = policies.filter((policy) => {
+        const roles = (
+          policy.Properties as {
+            Roles?: unknown[];
+          }
+        ).Roles ?? [];
+
+        return roles.some((entry) =>
+          JSON.stringify(entry).includes(role)
+        );
+      });
+
+      const ssmStatements = rolePolicies.flatMap((policy) => {
+        const document = (
+          policy.Properties as {
+            PolicyDocument: {
+              Statement: Array<{
+                Action: string | string[];
+                Effect: string;
+                Resource: unknown;
+              }>;
+            };
+          }
+        ).PolicyDocument;
+
+        return document.Statement.filter((statement) =>
+          (Array.isArray(statement.Action)
+            ? statement.Action
+            : [statement.Action]
+          ).includes("ssm:GetParameter")
+        );
+      });
+
+      const shouldHaveAccess = protectedNames.some(
+        (name) => logicalId.startsWith(name)
+      );
+
+      if (shouldHaveAccess) {
+        expect(ssmStatements, logicalId).toHaveLength(1);
+        expect(ssmStatements[0]?.Effect).toBe("Allow");
+        expect(JSON.stringify(ssmStatements[0]?.Resource)).toContain(
+          "parameter/taapsaathi/demo/identity-mapping"
+        );
+        expect(ssmStatements[0]?.Resource).not.toBe("*");
+      } else {
+        expect(ssmStatements, logicalId).toHaveLength(0);
+      }
+    }
+  });
+  it("restricts SSM identity mapping access to protected Lambdas", () => {
+    const rendered = template();
+    const resources = rendered.toJSON().Resources as Record<
+      string,
+      {
+        Type: string;
+        Properties?: Record<string, unknown>;
+      }
+    >;
+
+    const protectedNames = [
+      "RespondFunction",
+      "HeatSpikeFunction",
+      "ResetFunction",
+    ];
+
+    const parameterName = "/taapsaathi/demo/identity-mapping";
+
+    const functions = Object.entries(resources).filter(
+      ([, resource]) => resource.Type === "AWS::Lambda::Function"
+    );
+
+    for (const [logicalId, resource] of functions) {
+      const properties = resource.Properties as {
+        Environment?: {
+          Variables?: Record<string, unknown>;
+        };
+      };
+
+      const actualParameter =
+        properties.Environment?.Variables?.[
+          "DEMO_IDENTITY_MAPPING_PARAMETER"
+        ];
+
+      if (protectedNames.some((name) => logicalId.startsWith(name))) {
+        expect(actualParameter, logicalId).toBe(parameterName);
+      } else {
+        expect(actualParameter, logicalId).toBeUndefined();
+      }
+    }
+
+    const policies = Object.entries(resources).filter(
+      ([, resource]) => resource.Type === "AWS::IAM::Policy"
+    );
+
+    const ssmPolicies = policies.filter(([, resource]) =>
+      JSON.stringify(resource.Properties).includes("ssm:GetParameter")
+    );
+
+    expect(ssmPolicies).toHaveLength(3);
+
+    for (const [logicalId, resource] of ssmPolicies) {
+      const properties = resource.Properties as {
+        PolicyDocument: {
+          Statement: Array<{
+            Action: string | string[];
+            Effect: string;
+            Resource: unknown;
+          }>;
+        };
+      };
+
+      const statements = properties.PolicyDocument.Statement.filter(
+        (statement) =>
+          (Array.isArray(statement.Action)
+            ? statement.Action
+            : [statement.Action]
+          ).includes("ssm:GetParameter")
+      );
+
+      expect(statements, logicalId).toHaveLength(1);
+      expect(statements[0]?.Effect).toBe("Allow");
+
+      const encodedResource = JSON.stringify(statements[0]?.Resource);
+
+      expect(encodedResource).toContain(
+        "parameter/taapsaathi/demo/identity-mapping"
+      );
+      expect(statements[0]?.Resource).not.toBe("*");
+    }
+  });
+
   it("protects mutation routes with JWT authorization", () => {
     const rendered = template();
 
