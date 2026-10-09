@@ -27,5 +27,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run build --workspace=@taapsaathi/contracts
       - run: npm run typecheck --workspace=@taapsaathi/web
       - run: npm run build --workspace=@taapsaathi/web
