@@ -355,15 +355,66 @@ export class DynamoRepository implements Repository {
               TableName: this.tableName,
               Key: { PK: `WORKER#${intervention.workerId}`, SK: "PROFILE" },
               UpdateExpression: "SET #state = :risk, GSI1SK = :gsi, activeInterventionId = :interventionId, updatedAt = :now",
-              ConditionExpression: "demoGeneration = :generation",
+              ConditionExpression: "demoGeneration = :generation AND attribute_not_exists(activeInterventionId) AND (#state = :safe OR #state = :caution)",
               ExpressionAttributeNames: { "#state": "state" },
-              ExpressionAttributeValues: { ":risk": intervention.riskLevel, ":gsi": `STATE#${intervention.riskLevel}#WORKER#${intervention.workerId}`, ":interventionId": intervention.interventionId, ":now": intervention.updatedAt, ":generation": intervention.demoGeneration },
+              ExpressionAttributeValues: { ":risk": intervention.riskLevel, ":gsi": `STATE#${intervention.riskLevel}#WORKER#${intervention.workerId}`, ":interventionId": intervention.interventionId, ":now": intervention.updatedAt, ":generation": intervention.demoGeneration, ":safe": "SAFE", ":caution": "CAUTION" },
             },
           },
         ],
       }));
     } catch (error) {
-      if (isConditionalFailure(error)) throw new ConflictError("INTERVENTION_CREATE_CONFLICT", "Intervention could not be created for current state.");
+      const reasons =
+        error instanceof Error &&
+        error.name === "TransactionCanceledException" &&
+        "CancellationReasons" in error &&
+        Array.isArray(error.CancellationReasons)
+          ? error.CancellationReasons
+          : undefined;
+
+      const conditionalFailure =
+        reasons !== undefined &&
+        reasons.some(
+          (reason) =>
+            reason !== null &&
+            typeof reason === "object" &&
+            "Code" in reason &&
+            reason.Code === "ConditionalCheckFailed"
+        ) &&
+        reasons.every(
+          (reason) =>
+            reason !== null &&
+            typeof reason === "object" &&
+            "Code" in reason &&
+            (reason.Code === "None" ||
+              reason.Code === "ConditionalCheckFailed")
+        );
+
+      if (conditionalFailure && reasons?.length === 4) {
+        const failedIndexes = reasons.flatMap((reason, index) =>
+          reason?.Code === "ConditionalCheckFailed" ? [index] : []
+        );
+
+        if (failedIndexes.length === 1) {
+          switch (failedIndexes[0]) {
+            case 0:
+              throw new StaleGenerationError();
+
+            case 3:
+              throw new ConflictError(
+                "WORKER_INTERVENTION_ACTIVE",
+                "Worker is not eligible for a new intervention."
+              );
+
+            case 1:
+            case 2:
+              throw new ConflictError(
+                "INTERVENTION_CREATE_CONFLICT",
+                "Intervention record could not be created."
+              );
+          }
+        }
+      }
+
       throw error;
     }
   }
@@ -485,11 +536,71 @@ export class DynamoRepository implements Repository {
   }
 
   public async complete(input: Parameters<Repository["complete"]>[0]): Promise<void> {
-    await this.client.send(new TransactWriteCommand({ TransactItems: [
-      this.generationCheck(input.generation),
-      { Update: { TableName: this.tableName, Key: { PK: `INTERVENTION#${input.interventionId}`, SK: "META" }, UpdateExpression: "SET #status = :status, updatedAt = :now, completedAt = :now", ConditionExpression: "demoGeneration = :generation", ExpressionAttributeNames: { "#status": "status" }, ExpressionAttributeValues: { ":status": input.status, ":now": input.now, ":generation": input.generation } } },
-      { Put: { TableName: this.tableName, Item: auditItem(input.audit), ConditionExpression: "attribute_not_exists(PK)" } },
-    ] }));
+    const intervention = await this.getIntervention(input.interventionId);
+    if (!intervention) throw new NotFoundError("Intervention not found.");
+    if (intervention.demoGeneration !== input.generation) throw new StaleGenerationError();
+
+    const worker = await this.getWorker(intervention.workerId);
+    if (!worker) throw new NotFoundError("Worker not found.");
+    if (worker.demoGeneration !== input.generation) throw new StaleGenerationError();
+
+    const workerOperation = worker.activeInterventionId === input.interventionId
+      ? {
+          Update: {
+            TableName: this.tableName,
+            Key: { PK: `WORKER#${intervention.workerId}`, SK: "PROFILE" },
+            UpdateExpression: "SET updatedAt = :now REMOVE activeInterventionId",
+            ConditionExpression: "demoGeneration = :generation AND activeInterventionId = :interventionId",
+            ExpressionAttributeValues: {
+              ":generation": input.generation,
+              ":interventionId": input.interventionId,
+              ":now": input.now,
+            },
+          },
+        }
+      : {
+          ConditionCheck: {
+            TableName: this.tableName,
+            Key: { PK: `WORKER#${intervention.workerId}`, SK: "PROFILE" },
+            ConditionExpression: worker.activeInterventionId
+              ? "demoGeneration = :generation AND activeInterventionId = :observed"
+              : "demoGeneration = :generation AND attribute_not_exists(activeInterventionId)",
+            ExpressionAttributeValues: {
+              ":generation": input.generation,
+              ...(worker.activeInterventionId
+                ? { ":observed": worker.activeInterventionId }
+                : {}),
+            },
+          },
+        };
+
+    await this.client.send(new TransactWriteCommand({
+      TransactItems: [
+        this.generationCheck(input.generation),
+        {
+          Update: {
+            TableName: this.tableName,
+            Key: { PK: `INTERVENTION#${input.interventionId}`, SK: "META" },
+            UpdateExpression: "SET #status = :status, updatedAt = :now, completedAt = :now",
+            ConditionExpression: "demoGeneration = :generation AND attribute_not_exists(completedAt)",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: {
+              ":status": input.status,
+              ":now": input.now,
+              ":generation": input.generation,
+            },
+          },
+        },
+        workerOperation,
+        {
+          Put: {
+            TableName: this.tableName,
+            Item: auditItem(input.audit),
+            ConditionExpression: "attribute_not_exists(PK)",
+          },
+        },
+      ],
+    }));
   }
 
   private async queryHub<T>(hubId: string, prefix: string): Promise<T[]> {

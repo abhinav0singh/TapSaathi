@@ -98,11 +98,36 @@ export class MemoryRepository implements Repository {
 
   public async createIntervention(intervention: Intervention, audit: AuditEvent): Promise<void> {
     this.ensureGeneration(intervention.demoGeneration);
-    if (this.interventions.has(intervention.interventionId)) throw new ConflictError("INTERVENTION_EXISTS", "Intervention already exists.");
+
+    if (this.interventions.has(intervention.interventionId)) {
+      throw new ConflictError("INTERVENTION_EXISTS", "Intervention already exists.");
+    }
+
+    const worker = this.workers.get(intervention.workerId);
+
+    if (!worker) {
+      throw new NotFoundError("Worker not found.");
+    }
+
+    if (
+      worker.activeInterventionId ||
+      !["SAFE", "CAUTION"].includes(worker.state)
+    ) {
+      throw new ConflictError(
+        "WORKER_INTERVENTION_ACTIVE",
+        "Worker already has an active or unresolved safety intervention."
+      );
+    }
+
     this.interventions.set(intervention.interventionId, clone(intervention));
     this.auditEvents.push(clone(audit));
-    const worker = this.workers.get(intervention.workerId);
-    if (worker) this.workers.set(worker.workerId, { ...worker, state: intervention.riskLevel, activeInterventionId: intervention.interventionId, updatedAt: intervention.updatedAt });
+
+    this.workers.set(worker.workerId, {
+      ...worker,
+      state: intervention.riskLevel,
+      activeInterventionId: intervention.interventionId,
+      updatedAt: intervention.updatedAt,
+    });
   }
 
   public async updateGuidance(input: Parameters<Repository["updateGuidance"]>[0]): Promise<void> {
@@ -199,7 +224,24 @@ export class MemoryRepository implements Repository {
 
   public async complete(input: Parameters<Repository["complete"]>[0]): Promise<void> {
     const intervention = this.requiredIntervention(input.interventionId, input.generation);
-    this.interventions.set(input.interventionId, { ...intervention, status: input.status, updatedAt: input.now, completedAt: input.now });
+    const worker = this.workers.get(intervention.workerId);
+
+    this.interventions.set(input.interventionId, {
+      ...intervention,
+      status: input.status,
+      updatedAt: input.now,
+      completedAt: input.now,
+    });
+
+    if (worker?.activeInterventionId === input.interventionId) {
+      const { activeInterventionId: _previous, ...rest } = worker;
+
+      this.workers.set(worker.workerId, {
+        ...rest,
+        updatedAt: input.now,
+      });
+    }
+
     this.auditEvents.push(clone(input.audit));
   }
 

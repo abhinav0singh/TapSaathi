@@ -14,6 +14,89 @@ function template(): Template {
 }
 
 describe("TaapSaathi infrastructure", () => {
+  it("routes intervention creation outcomes correctly", () => {
+    const resources = template().findResources(
+      "AWS::StepFunctions::StateMachine"
+    );
+
+    const machine = Object.values(resources)[0] as {
+      Properties?: {
+        DefinitionString?: {
+          "Fn::Join"?: [string, unknown[]];
+        };
+      };
+    };
+
+    expect(machine).toBeDefined();
+
+    const join = machine.Properties?.DefinitionString?.["Fn::Join"];
+
+    expect(join).toBeDefined();
+
+    const fragments = join?.[1];
+
+    expect(Array.isArray(fragments)).toBe(true);
+
+    const reconstructed = fragments!
+      .map((fragment) =>
+        typeof fragment === "string" ? fragment : "MOCK_ARN"
+      )
+      .join("");
+
+    const definition = JSON.parse(reconstructed) as {
+      States: Record<string, {
+        Type?: string;
+        Next?: string;
+        Default?: string;
+        Choices?: Array<{
+          Variable?: string;
+          StringEquals?: string;
+          Next?: string;
+        }>;
+      }>;
+    };
+
+    const states = definition.States;
+
+    expect(states["CreateIntervention"]?.Next).toBe(
+      "CheckInterventionCreationOutcome"
+    );
+
+    const choice = states["CheckInterventionCreationOutcome"];
+
+    expect(choice?.Type).toBe("Choice");
+
+    expect(choice?.Choices).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          Variable: "$.creationOutcome",
+          StringEquals: "CREATED",
+          Next: "PrepareGuidanceWithLocationAndPolly",
+        }),
+        expect.objectContaining({
+          Variable: "$.creationOutcome",
+          StringEquals: "WORKER_UNAVAILABLE",
+          Next: "WorkerUnavailableSuppressed",
+        }),
+      ])
+    );
+
+    expect(choice?.Default).toBe(
+      "UnexpectedInterventionCreationOutcome"
+    );
+
+    expect(states["WorkerUnavailableSuppressed"]?.Type).toBe(
+      "Succeed"
+    );
+
+    expect(states["UnexpectedInterventionCreationOutcome"]?.Type).toBe(
+      "Fail"
+    );
+
+    expect(states["DuplicateRiskEvent"]?.Type).toBe(
+      "Choice"
+    );
+  });
   it("INF-001 contains every required resource type", () => {
     const rendered = template();
     rendered.resourceCountIs("AWS::DynamoDB::Table", 1);

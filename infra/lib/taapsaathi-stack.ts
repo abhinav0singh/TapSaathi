@@ -173,7 +173,15 @@ export class TaapSaathiStack extends cdk.Stack {
     awaitWorker.next(workerChoice);
     awaitWorker.addCatch(escalateState, { errors: ["States.Timeout"], resultPath: "$.timeout" });
     guidanceState.next(awaitWorker);
-    createState.next(guidanceState);
+    const creationOutcomeChoice = new sfn.Choice(this, "CheckInterventionCreationOutcome");
+    const workerUnavailable = new sfn.Succeed(this, "WorkerUnavailableSuppressed");
+
+    creationOutcomeChoice
+      .when(sfn.Condition.stringEquals("$.creationOutcome", "CREATED"), guidanceState)
+      .when(sfn.Condition.stringEquals("$.creationOutcome", "WORKER_UNAVAILABLE"), workerUnavailable)
+      .otherwise(new sfn.Fail(this, "UnexpectedInterventionCreationOutcome"));
+
+    createState.next(creationOutcomeChoice);
     loadState.next(createState);
     const duplicateChoice = new sfn.Choice(this, "DuplicateRiskEvent");
     duplicateChoice.when(sfn.Condition.booleanEquals("$.duplicate", true), duplicateComplete).otherwise(loadState);

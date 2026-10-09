@@ -4,6 +4,7 @@ export interface WorkflowState {
   envelope: HeatRiskRaisedEnvelope;
   interventionId: string;
   duplicate: boolean;
+  creationOutcome?: "CREATED" | "WORKER_UNAVAILABLE";
   taskId?: string;
   workerLanguage?: "en" | "hi";
   workerPosition?: [number, number];

@@ -1,6 +1,6 @@
 import type { Handler } from "aws-lambda";
 import type { Intervention } from "@taapsaathi/contracts";
-import { createAudit, DynamoRepository, loadEnvironment, log, metric } from "@taapsaathi/shared";
+import { AppError, createAudit, DynamoRepository, loadEnvironment, log, metric } from "@taapsaathi/shared";
 import type { WorkflowState } from "./workflow-input.js";
 
 export const handler: Handler<WorkflowState> = async (input) => {
@@ -22,7 +22,7 @@ export const handler: Handler<WorkflowState> = async (input) => {
     createdAt: now,
     updatedAt: now,
   };
-  await repository.createIntervention(intervention, createAudit({
+  try { await repository.createIntervention(intervention, createAudit({
     interventionId: intervention.interventionId,
     eventType: "INTERVENTION_CREATED",
     actorType: "SYSTEM",
@@ -32,8 +32,20 @@ export const handler: Handler<WorkflowState> = async (input) => {
     demoGeneration: intervention.demoGeneration,
     details: { riskLevel: intervention.riskLevel, matchedRule: intervention.matchedRule, policyVersion: envelope.payload.policyVersion },
     occurredAt: now,
-  }));
+  })); } catch (error) {
+    if (error instanceof AppError && error.code === "WORKER_INTERVENTION_ACTIVE") {
+      metric("WorkerInterventionsSuppressed", 1, { operation: "CreateIntervention" });
+      log("WARN", "WorkerInterventionSuppressed", {
+        eventId: envelope.eventId,
+        interventionId: intervention.interventionId,
+        workerId: intervention.workerId,
+        correlationId: intervention.correlationId,
+      });
+      return { ...input, creationOutcome: "WORKER_UNAVAILABLE" };
+    }
+    throw error;
+  }
   metric("InterventionsCreated", 1, { operation: "CreateIntervention" });
   log("INFO", "CreateIntervention", { eventId: envelope.eventId, interventionId: intervention.interventionId, workerId: intervention.workerId, correlationId: intervention.correlationId });
-  return input;
+  return { ...input, creationOutcome: "CREATED" };
 };

@@ -1,5 +1,7 @@
 # TaapSaathi â€” Heat Safety & Intelligent Dispatch
 
+**Engineering update (9 October 2026):** Worker-concurrency and terminal-state hardening implemented locally. AWS redeployment and golden-path verification pending. [Post-critique engineering progress](docs/POST_CRITIQUE_PROGRESS.md)
+
 **Project status:** AWS backend deployed | Live operations dashboard working | Rider experience in testing
 
 [View current development progress](docs/PROJECT_STATUS.md)
