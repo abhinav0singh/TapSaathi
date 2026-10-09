@@ -1,4 +1,4 @@
-﻿import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { AppError } from "./errors.js";
 
 type Role = "OPERATOR" | "WORKER" | "SUPERVISOR";
@@ -41,22 +41,34 @@ function groupsFrom(claims: Record<string, unknown>): string[] {
     );
   }
 
-  if (typeof raw === "string") {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-
-      if (
-        Array.isArray(parsed) &&
-        parsed.every((value) => typeof value === "string")
-      ) {
-        return parsed;
-      }
-    } catch {
-      return [];
-    }
+  if (typeof raw !== "string") {
+    return [];
   }
 
-  return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    if (
+      Array.isArray(parsed) &&
+      parsed.every((value) => typeof value === "string")
+    ) {
+      return parsed;
+    }
+
+    return [];
+  } catch {
+    const normalized = raw.trim();
+
+    const groupText =
+      normalized.startsWith("[") && normalized.endsWith("]")
+        ? normalized.slice(1, -1)
+        : normalized;
+
+    return groupText
+      .split(",")
+      .map((group) => group.trim())
+      .filter((group) => group.length > 0);
+  }
 }
 
 function identityFrom(
@@ -87,6 +99,7 @@ function identityFrom(
   }
 
   if (!groupsFrom(claims).includes(identity.role)) {
+
     throw new AppError(
       "FORBIDDEN",
       "Required role is missing.",

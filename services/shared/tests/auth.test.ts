@@ -126,6 +126,102 @@ describe("Cognito demo authorization", () => {
     );
   });
 
+  it("accepts a plain-string Cognito operator group", () => {
+    const request = event("sub-operator", ["OPERATOR"]);
+    const context = request.requestContext as unknown as {
+      authorizer: {
+        jwt: { claims: Record<string, unknown> };
+      };
+    };
+
+    context.authorizer.jwt.claims["cognito:groups"] = "OPERATOR";
+
+    expect(() =>
+      requireOperator(request, identities)
+    ).not.toThrow();
+  });
+
+  it("accepts comma-separated Cognito groups", () => {
+    const request = event("sub-operator", ["OPERATOR"]);
+    const context = request.requestContext as unknown as {
+      authorizer: {
+        jwt: { claims: Record<string, unknown> };
+      };
+    };
+
+    context.authorizer.jwt.claims["cognito:groups"] =
+      "WORKER,OPERATOR";
+
+    expect(() =>
+      requireOperator(request, identities)
+    ).not.toThrow();
+  });
+
+  it("rejects plain-string groups without the required role", () => {
+    const request = event("sub-operator", ["OPERATOR"]);
+    const context = request.requestContext as unknown as {
+      authorizer: {
+        jwt: { claims: Record<string, unknown> };
+      };
+    };
+
+    context.authorizer.jwt.claims["cognito:groups"] = "WORKER";
+
+    expect(() =>
+      requireOperator(request, identities)
+    ).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
+  });
+
+  it("rejects partial operator group matches", () => {
+    const request = event("sub-operator", ["OPERATOR"]);
+    const context = request.requestContext as unknown as {
+      authorizer: {
+        jwt: { claims: Record<string, unknown> };
+      };
+    };
+
+    context.authorizer.jwt.claims["cognito:groups"] =
+      "SUPER_OPERATOR";
+
+    expect(() =>
+      requireOperator(request, identities)
+    ).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
+  });
+  it("accepts API Gateway bracketed Cognito groups", () => {
+    const request = event("sub-operator", ["OPERATOR"]);
+    const context = request.requestContext as unknown as {
+      authorizer: {
+        jwt: { claims: Record<string, unknown> };
+      };
+    };
+
+    context.authorizer.jwt.claims["cognito:groups"] = "[OPERATOR]";
+
+    expect(() =>
+      requireOperator(request, identities)
+    ).not.toThrow();
+  });
+
+  it("rejects bracketed partial role matches", () => {
+    const request = event("sub-operator", ["OPERATOR"]);
+    const context = request.requestContext as unknown as {
+      authorizer: {
+        jwt: { claims: Record<string, unknown> };
+      };
+    };
+
+    context.authorizer.jwt.claims["cognito:groups"] = "[SUPER_OPERATOR]";
+
+    expect(() =>
+      requireOperator(request, identities)
+    ).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
+  });
   it("accepts Cognito groups encoded as JSON strings", () => {
     const request = event("sub-ravi", ["WORKER"]);
     const context = request.requestContext as unknown as {
