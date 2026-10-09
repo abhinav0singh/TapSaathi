@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { DashboardResponse, Intervention } from "@taapsaathi/contracts";
 import AppNav from "@/components/AppNav";
 import { api } from "@/lib/api";
+import { getAuthenticatedIdentity } from "@/lib/auth";
 
 function waitingForSupervisor(intervention: Intervention) {
   return ["AWAITING_SUPERVISOR", "SUPERVISOR_UNACKNOWLEDGED"].includes(intervention.status);
@@ -12,7 +13,7 @@ function waitingForSupervisor(intervention: Intervention) {
 
 export default function SupervisorPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
-  const [supervisorId, setSupervisorId] = useState("");
+  const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
@@ -35,14 +36,27 @@ export default function SupervisorPage() {
     return () => window.clearInterval(timer);
   }, [refresh]);
 
+  useEffect(() => {
+    void getAuthenticatedIdentity()
+      .then((identity) => {
+        if (!identity || !identity.groups.includes("SUPERVISOR") || !identity.actorId) {
+          throw new Error("Sign in with a configured supervisor account to acknowledge an escalation.");
+        }
+        setSupervisorId(identity.actorId);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unable to confirm supervisor identity.");
+      });
+  }, []);
+
   async function acknowledge(interventionId: string) {
-    if (!supervisorId.trim() || pendingId) return;
+    if (!supervisorId || pendingId) return;
 
     setPendingId(interventionId);
     setError(null);
     try {
       await api.respond(interventionId, {
-        actorId: supervisorId.trim(),
+        actorId: supervisorId,
         actorType: "SUPERVISOR",
         action: "SUPERVISOR_ACK",
         clientRequestId: crypto.randomUUID(),
@@ -76,16 +90,11 @@ export default function SupervisorPage() {
 
         <section className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <label htmlFor="supervisor-id" className="text-sm font-bold">Supervisor ID</label>
-            <p className="mt-1 text-sm text-slate-500">Use your assigned identity; it is recorded in the audit trail.</p>
-            <input
-              id="supervisor-id"
-              value={supervisorId}
-              onChange={(event) => setSupervisorId(event.target.value)}
-              autoComplete="username"
-              placeholder="Your authenticated supervisor ID"
-              className="mt-3 min-h-12 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-orange-600 focus:ring-2 focus:ring-orange-100"
-            />
+            <p className="text-sm font-bold">Authenticated supervisor</p>
+            <p className="mt-1 text-sm text-slate-500">Your signed-in identity is used for the audit trail.</p>
+            <p className="mt-3 min-h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800" aria-live="polite">
+              {supervisorId ?? "Confirming your Cognito identity…"}
+            </p>
           </div>
           <button onClick={() => void refresh()} className="min-h-12 rounded-xl border border-slate-300 px-5 text-sm font-bold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-orange-600">
             Refresh queue
@@ -134,7 +143,7 @@ export default function SupervisorPage() {
                     ) : (
                       <button
                         type="button"
-                        disabled={!supervisorId.trim() || pendingId !== null}
+                        disabled={!supervisorId || pendingId !== null}
                         onClick={() => void acknowledge(intervention.interventionId)}
                         className="mt-5 min-h-12 w-full rounded-xl bg-violet-700 px-4 font-bold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
                       >

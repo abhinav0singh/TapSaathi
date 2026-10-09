@@ -95,6 +95,11 @@ export default function RiderExperience({
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    setAccepted(false);
+    requestIdRef.current = null;
+  }, [data?.intervention?.interventionId]);
+
   const actionable =
     data?.intervention?.status === "AWAITING_WORKER" &&
     data.worker.activeInterventionId === data.intervention.interventionId &&

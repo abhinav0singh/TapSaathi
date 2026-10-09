@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/auth";
+import { identityFromSession, signIn } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,8 +28,27 @@ export default function LoginPage() {
         throw new Error("Authentication session is invalid.");
       }
 
+      const identity = identityFromSession(session);
+      let destination: string;
+
+      if (identity.groups.includes("OPERATOR")) {
+        destination = "/ops";
+      } else if (identity.groups.includes("SUPERVISOR")) {
+        if (!identity.actorId) {
+          throw new Error("Supervisor identity mapping is missing. Contact the demo administrator.");
+        }
+        destination = "/supervisor";
+      } else if (identity.groups.includes("WORKER")) {
+        if (!identity.actorId) {
+          throw new Error("Worker identity mapping is missing. Contact the demo administrator.");
+        }
+        destination = `/worker/${encodeURIComponent(identity.actorId)}`;
+      } else {
+        throw new Error("This account is not assigned to a TaapSaathi role.");
+      }
+
       setPassword("");
-      router.replace("/ops");
+      router.replace(destination);
       router.refresh();
     } catch (err) {
       setError(
