@@ -23,6 +23,16 @@ export FRONTEND_ORIGINS=http://localhost:3000
 
 The identity command must show the intended account. It does not print secret credentials.
 
+The mutation routes require Cognito access tokens. Obtain current tokens through the demo sign-in flow and keep them only in the local shell environment:
+
+```bash
+export OPERATOR_ACCESS_TOKEN='<operator access token>'
+export WORKER_ACCESS_TOKEN='<Ravi access token>'
+export SUPERVISOR_ACCESS_TOKEN='<supervisor access token>'
+```
+
+Do not save tokens in repository files or evidence artifacts.
+
 ## 2. Install, verify, synthesize, and deploy
 
 ```bash
@@ -64,9 +74,11 @@ Reset and trigger through the production risk path:
 
 ```bash
 curl --fail-with-body -sS -X POST "$API_URL/demo/reset" \
+  -H "authorization: Bearer $OPERATOR_ACCESS_TOKEN" \
   -H 'content-type: application/json' -d '{}' | tee evidence/gate1-reset.json
 
 curl --fail-with-body -sS -X POST "$API_URL/demo/heat-spike" \
+  -H "authorization: Bearer $OPERATOR_ACCESS_TOKEN" \
   -H 'content-type: application/json' -d '{}' | tee evidence/gate1-spike.json
 ```
 
@@ -139,9 +151,12 @@ Start an intervention, save its ID, reset, and submit the old response:
 ```bash
 curl -sS "$API_URL/dashboard" | tee evidence/before-stale-reset.json
 export OLD_INTERVENTION_ID="$(jq -r '.activeInterventions[0].interventionId' evidence/before-stale-reset.json)"
-curl --fail-with-body -sS -X POST "$API_URL/demo/reset" -H 'content-type: application/json' -d '{}' | tee evidence/after-stale-reset.json
+curl --fail-with-body -sS -X POST "$API_URL/demo/reset" \
+  -H "authorization: Bearer $OPERATOR_ACCESS_TOKEN" \
+  -H 'content-type: application/json' -d '{}' | tee evidence/after-stale-reset.json
 curl -sS -o evidence/stale-response.json -w '%{http_code}\n' \
   -X POST "$API_URL/interventions/$OLD_INTERVENTION_ID/respond" \
+  -H "authorization: Bearer $WORKER_ACCESS_TOKEN" \
   -H 'content-type: application/json' \
   -d "{\"actorId\":\"ravi-001\",\"actorType\":\"WORKER\",\"action\":\"TAKE_BREAK\",\"language\":\"hi\",\"clientRequestId\":\"$(node -e 'console.log(crypto.randomUUID())')\"}"
 ```
@@ -153,8 +168,10 @@ Expected: structured `404` or stale-generation `409`; the reset dashboard remain
 Golden response:
 
 ```bash
-curl --fail-with-body -sS -X POST "$API_URL/demo/reset" -H 'content-type: application/json' -d '{}'
-curl --fail-with-body -sS -X POST "$API_URL/demo/heat-spike" -H 'content-type: application/json' -d '{}'
+curl --fail-with-body -sS -X POST "$API_URL/demo/reset" \
+  -H "authorization: Bearer $OPERATOR_ACCESS_TOKEN" -H 'content-type: application/json' -d '{}'
+curl --fail-with-body -sS -X POST "$API_URL/demo/heat-spike" \
+  -H "authorization: Bearer $OPERATOR_ACCESS_TOKEN" -H 'content-type: application/json' -d '{}'
 for attempt in $(seq 1 30); do
   curl --fail-with-body -sS "$API_URL/dashboard" > evidence/golden-dashboard.json
   INTERVENTION_ID="$(jq -r '.activeInterventions[] | select(.status=="AWAITING_WORKER") | .interventionId' evidence/golden-dashboard.json | head -1)"
@@ -166,6 +183,7 @@ export INTERVENTION_ID
 export CLIENT_REQUEST_ID="$(node -e 'console.log(crypto.randomUUID())')"
 
 curl --fail-with-body -sS -X POST "$API_URL/interventions/$INTERVENTION_ID/respond" \
+  -H "authorization: Bearer $WORKER_ACCESS_TOKEN" \
   -H 'content-type: application/json' \
   -d "{\"actorId\":\"ravi-001\",\"actorType\":\"WORKER\",\"action\":\"TAKE_BREAK\",\"language\":\"hi\",\"clientRequestId\":\"$CLIENT_REQUEST_ID\"}"
 ```
@@ -176,9 +194,9 @@ Symptom path:
 
 1. Reset and trigger.
 2. Wait for `AWAITING_WORKER`.
-3. Submit `FEEL_UNWELL` as Ravi.
+3. Submit `FEEL_UNWELL` as Ravi with `Authorization: Bearer $WORKER_ACCESS_TOKEN`.
 4. Wait for `AWAITING_SUPERVISOR`.
-5. Submit `SUPERVISOR_ACK` with `actorId: supervisor-neha-001`, `actorType: SUPERVISOR`.
+5. Submit `SUPERVISOR_ACK` with `actorId: supervisor-neha-001`, `actorType: SUPERVISOR`, and `Authorization: Bearer $SUPERVISOR_ACCESS_TOKEN`.
 6. Capture the execution and audit record proving `SUPERVISOR_RESPONDING`.
 
 Timeout path:
@@ -206,9 +224,9 @@ The intervention route must say `provider: AMAZON_LOCATION`; otherwise the hones
 Run the golden smoke command three independent times:
 
 ```bash
-API_URL="$API_URL" npm run smoke:deployed | tee evidence/golden-1.json
-API_URL="$API_URL" npm run smoke:deployed | tee evidence/golden-2.json
-API_URL="$API_URL" npm run smoke:deployed | tee evidence/golden-3.json
+API_URL="$API_URL" OPERATOR_ACCESS_TOKEN="$OPERATOR_ACCESS_TOKEN" WORKER_ACCESS_TOKEN="$WORKER_ACCESS_TOKEN" npm run smoke:deployed | tee evidence/golden-1.json
+API_URL="$API_URL" OPERATOR_ACCESS_TOKEN="$OPERATOR_ACCESS_TOKEN" WORKER_ACCESS_TOKEN="$WORKER_ACCESS_TOKEN" npm run smoke:deployed | tee evidence/golden-2.json
+API_URL="$API_URL" OPERATOR_ACCESS_TOKEN="$OPERATOR_ACCESS_TOKEN" WORKER_ACCESS_TOKEN="$WORKER_ACCESS_TOKEN" npm run smoke:deployed | tee evidence/golden-3.json
 ```
 
 Then run symptom and timeout paths once each. Search logs for prohibited token/secret text before release; inspect results locally and do not paste tokens into reports:

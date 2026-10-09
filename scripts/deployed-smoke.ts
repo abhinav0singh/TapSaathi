@@ -17,6 +17,20 @@ const apiUrl: string = (() => {
   }
   return value;
 })();
+const operatorAccessToken: string = (() => {
+  const value = process.env["OPERATOR_ACCESS_TOKEN"];
+  if (!value) {
+    throw new Error("OPERATOR_ACCESS_TOKEN must contain a current Cognito access token.");
+  }
+  return value;
+})();
+const workerAccessToken: string = (() => {
+  const value = process.env["WORKER_ACCESS_TOKEN"];
+  if (!value) {
+    throw new Error("WORKER_ACCESS_TOKEN must contain Ravi's current Cognito access token.");
+  }
+  return value;
+})();
 const stackName = process.env["STACK_NAME"] ?? "TaapSaathiStack";
 const profile = process.env["AWS_PROFILE"];
 const region = process.env["AWS_REGION"] ?? "ap-south-1";
@@ -31,18 +45,22 @@ const clientConfig = {
 const cloudFormation = new CloudFormationClient(clientConfig);
 const stepFunctions = new SFNClient(clientConfig);
 
-async function request(path: string, init?: RequestInit) {
+async function request(path: string, init?: RequestInit, accessToken?: string) {
   const response = await fetch(`${apiUrl.replace(/\/$/, "")}${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      "content-type": "application/json",
+      ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
+      ...(init?.headers ?? {}),
+    },
   });
   const body = await response.json() as Record<string, unknown>;
   if (!response.ok) throw new Error(`${path} returned ${response.status}: ${JSON.stringify(body)}`);
   return { status: response.status, body };
 }
 
-const reset = await request("/demo/reset", { method: "POST", body: "{}" });
-const spike = await request("/demo/heat-spike", { method: "POST", body: "{}" });
+const reset = await request("/demo/reset", { method: "POST", body: "{}" }, operatorAccessToken);
+const spike = await request("/demo/heat-spike", { method: "POST", body: "{}" }, operatorAccessToken);
 const eventId = String(spike.body["eventId"]);
 let interventionId = "";
 for (let attempt = 0; attempt < 30; attempt += 1) {
@@ -53,7 +71,11 @@ for (let attempt = 0; attempt < 30; attempt += 1) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 }
 if (!interventionId) throw new Error("Workflow did not reach AWAITING_WORKER in 30 seconds.");
-await request(`/interventions/${interventionId}/respond`, { method: "POST", body: JSON.stringify({ actorId: "ravi-001", actorType: "WORKER", action: "TAKE_BREAK", language: "hi", clientRequestId: randomUUID() }) });
+await request(
+  `/interventions/${interventionId}/respond`,
+  { method: "POST", body: JSON.stringify({ actorId: "ravi-001", actorType: "WORKER", action: "TAKE_BREAK", language: "hi", clientRequestId: randomUUID() }) },
+  workerAccessToken
+);
 let complete = false;
 for (let attempt = 0; attempt < 30; attempt += 1) {
   const dashboard = await request("/dashboard");
