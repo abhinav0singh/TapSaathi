@@ -1,6 +1,6 @@
 # TaapSaathi â€” Heat Safety & Intelligent Dispatch
 
-**Engineering update (9 October 2026):** Worker-concurrency and terminal-state hardening implemented locally. AWS redeployment and golden-path verification pending. [Post-critique engineering progress](docs/POST_CRITIQUE_PROGRESS.md)
+**Engineering update (10 October 2026):** PR #4 is deployed, and the live worker-timeout path now reassigns the active delivery before supervisor escalation. [AWS timeout verification](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md)
 
 **Project status:** AWS backend deployed | Live operations dashboard working | Rider experience in testing
 
@@ -20,7 +20,7 @@ This repository contains the AWS backend, infrastructure, and Next.js frontend. 
 | --- | --- | --- |
 | Code complete | See current handoff | Source and tests in this repository |
 | Local verification | Run commands below | Never infer pass from source presence |
-| AWS verification | Pending until deployed | Record real stack outputs and execution ARNs in the release table |
+| AWS verification | Timeout escalation passed | [Deployed execution and audit evidence](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md) |
 
 ## Architecture
 
@@ -119,7 +119,7 @@ Fill this table only from real deployed results:
 | Duplicate protection | AWS VERIFICATION PENDING | replay output + unchanged intervention count |
 | Golden break path Ãƒâ€”3 | AWS VERIFICATION PENDING | three execution ARNs |
 | Symptom escalation | AWS VERIFICATION PENDING | execution ARN + audit record |
-| Timeout escalation | AWS VERIFICATION PENDING | execution ARN + audit record |
+| Timeout escalation | PASS | [Succeeded execution, reassignment, and audit records](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md) |
 | Location scooter route | AWS VERIFICATION PENDING | persisted `provider: AMAZON_LOCATION` route |
 | Hindi Polly audio/private S3 | AWS VERIFICATION PENDING | object metadata + presigned GET result |
 | Reset/stale generation | AWS VERIFICATION PENDING | old callback rejection + clean new state |
