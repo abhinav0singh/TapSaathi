@@ -9,6 +9,7 @@ import type {
 } from "@taapsaathi/contracts";
 import type { z } from "zod";
 import { api } from "@/lib/api";
+import RoutePreview from "@/components/worker/RoutePreview";
 
 type WorkerView = z.infer<typeof WorkerViewResponseSchema>;
 
@@ -162,7 +163,7 @@ export default function RiderExperience({
     <main className="min-h-screen bg-[#f5f7fb] px-4 py-5 text-slate-900">
       <div className="mx-auto max-w-md space-y-5">
         <header className="flex items-center justify-between gap-3">
-          <Link href="/ops" className="text-sm font-medium text-slate-600">
+          <Link href="/ops" className="rounded-lg px-1 py-2 text-sm font-medium text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline focus-visible:outline-2 focus-visible:outline-orange-600">
             ← Operations
           </Link>
 
@@ -218,10 +219,20 @@ export default function RiderExperience({
           </div>
         ) : (
           <>
-            <section className={`rounded-2xl border p-6 ${statusStyles[data.worker.state] ?? "bg-white"}`}>
-              <p className="text-sm font-semibold">
-                {data.worker.state.replaceAll("_", " ")}
-              </p>
+            <section className={`rounded-2xl border p-6 shadow-sm ${statusStyles[data.worker.state] ?? "bg-white"}`} aria-live="polite">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold tracking-[0.16em]">CURRENT SAFETY STATUS</p>
+                  <p className="mt-1 text-lg font-bold">
+                    {data.worker.state.replaceAll("_", " ")}
+                  </p>
+                </div>
+                {data.intervention && (
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold">
+                    {data.intervention.riskLevel} risk
+                  </span>
+                )}
+              </div>
               <p className="mt-4 text-xl font-semibold leading-relaxed">
                 {data.instruction}
               </p>
@@ -247,6 +258,7 @@ export default function RiderExperience({
                     ? "Route provided by Amazon Location"
                     : "Approximate route information"}
                 </p>
+                <RoutePreview route={route} />
               </section>
             )}
 
@@ -290,7 +302,7 @@ export default function RiderExperience({
                   </button>
                 </>
               ) : (
-                <div className="rounded-xl bg-white p-4 text-center text-sm text-slate-600">
+                <div role="status" className="rounded-xl bg-white p-4 text-center text-sm text-slate-600">
                   {accepted ? t.accepted : t.noAction}
                 </div>
               )}
