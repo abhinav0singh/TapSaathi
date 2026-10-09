@@ -3,6 +3,7 @@ import type { WorkflowState } from "../src/workflow-input.js";
 
 const mocks = vi.hoisted(() => ({
   createIntervention: vi.fn(),
+  recordSuppressedRiskEvent: vi.fn(),
   log: vi.fn(),
   metric: vi.fn(),
 }));
@@ -16,6 +17,7 @@ vi.mock("@taapsaathi/shared", async () => {
     ...actual,
     DynamoRepository: class {
       createIntervention = mocks.createIntervention;
+      recordSuppressedRiskEvent = mocks.recordSuppressedRiskEvent;
     },
     loadEnvironment: () => ({
       TABLE_NAME: "TaapSaathiTest",
@@ -62,6 +64,7 @@ describe("CreateIntervention Lambda", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createIntervention.mockResolvedValue(undefined);
+    mocks.recordSuppressedRiskEvent.mockResolvedValue(undefined);
   });
 
   it("returns CREATED after successful persistence", async () => {
@@ -107,6 +110,61 @@ describe("CreateIntervention Lambda", () => {
     );
   });
 
+  it("persists suppression evidence before returning WORKER_UNAVAILABLE", async () => {
+    mocks.createIntervention.mockRejectedValue(
+      new AppError("WORKER_INTERVENTION_ACTIVE", "Worker unavailable", 409)
+    );
+
+    const result = await invoke();
+
+    expect(result).toMatchObject({
+      creationOutcome: "WORKER_UNAVAILABLE",
+    });
+
+    expect(mocks.recordSuppressedRiskEvent).toHaveBeenCalledTimes(1);
+
+    const audit = mocks.recordSuppressedRiskEvent.mock.calls[0]?.[0];
+
+    expect(audit).toMatchObject({
+      interventionId: input.interventionId,
+      eventType: "INTERVENTION_SUPPRESSED",
+      actorType: "SYSTEM",
+      workerId: input.envelope.payload.workerId,
+      demoGeneration: input.envelope.demoGeneration,
+      details: expect.objectContaining({
+        eventId: input.envelope.eventId,
+        reason: "WORKER_UNAVAILABLE",
+      }),
+    });
+
+    expect(audit.auditEventId).toBe(
+      `audit-suppressed-${input.interventionId}`
+    );
+  });
+
+  it("does not write a suppression audit after successful creation", async () => {
+    await invoke();
+
+    expect(mocks.recordSuppressedRiskEvent).not.toHaveBeenCalled();
+  });
+
+  it("propagates suppression audit persistence failures", async () => {
+    mocks.createIntervention.mockRejectedValue(
+      new AppError("WORKER_INTERVENTION_ACTIVE", "Worker unavailable", 409)
+    );
+
+    const failure = new Error("DynamoDB audit write failed");
+
+    mocks.recordSuppressedRiskEvent.mockRejectedValue(failure);
+
+    await expect(invoke()).rejects.toBe(failure);
+
+    expect(mocks.metric).not.toHaveBeenCalledWith(
+      "WorkerInterventionsSuppressed",
+      1,
+      expect.anything()
+    );
+  });
   it("propagates stale-generation errors", async () => {
     mocks.createIntervention.mockRejectedValue(
       new StaleGenerationError()

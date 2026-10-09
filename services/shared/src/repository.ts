@@ -52,6 +52,7 @@ export interface Repository {
   putObservation(observation: HeatObservation, generation: number): Promise<void>;
   claimRiskEvent(event: HeatRiskRaisedEnvelope, interventionId: string, expiresAt: number): Promise<boolean>;
   createIntervention(intervention: Intervention, audit: AuditEvent): Promise<void>;
+  recordSuppressedRiskEvent(audit: AuditEvent): Promise<void>;
   updateGuidance(input: { interventionId: string; generation: number; route: RouteView; audioKey?: string; audioLanguage?: "en" | "hi"; failure?: "GUIDANCE_ROUTE_FAILED" | "GUIDANCE_AUDIO_FAILED"; now: string; audit: AuditEvent }): Promise<void>;
   registerCallback(record: CallbackRecord, now: string, audit: AuditEvent): Promise<void>;
   consumeCallback(input: ConsumeCallbackInput): Promise<ConsumeCallbackResult>;

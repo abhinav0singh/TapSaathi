@@ -2,11 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import { DemoHeatSpikeRequestSchema, DemoHeatSpikeResponseSchema, HeatObservationSchema } from "@taapsaathi/contracts";
-import { DynamoRepository, errorResponse, evaluateAndPublishObservation, json, loadEnvironment, parseJson, requestContext } from "@taapsaathi/shared";
+import { DynamoRepository, errorResponse, evaluateAndPublishObservation, json, loadEnvironment, loadRuntimeIdentityMapping, parseJson, requestContext, requireOperator } from "@taapsaathi/shared";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const context = requestContext(event);
   try {
+    requireOperator(event, await loadRuntimeIdentityMapping());
     parseJson(event, DemoHeatSpikeRequestSchema);
     const environment = loadEnvironment();
     if (!environment.EVENT_BUS_NAME) throw new Error("EVENT_BUS_NAME is required");

@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   BatchWriteCommand,
@@ -419,6 +420,97 @@ export class DynamoRepository implements Repository {
     }
   }
 
+  public async recordSuppressedRiskEvent(audit: AuditEvent): Promise<void> {
+    const key = {
+      PK: `INTERVENTION#${audit.interventionId}`,
+      SK: `EVENT#SUPPRESSED#${audit.auditEventId}`,
+    };
+
+    try {
+      await this.client.send(new TransactWriteCommand({
+        TransactItems: [
+          this.generationCheck(audit.demoGeneration),
+          {
+            Put: {
+              TableName: this.tableName,
+              Item: {
+                ...auditItem(audit),
+                ...key,
+              },
+              ConditionExpression: "attribute_not_exists(PK)",
+            },
+          },
+        ],
+      }));
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        error.name !== "TransactionCanceledException"
+      ) {
+        throw error;
+      }
+
+      const reasons =
+        "CancellationReasons" in error &&
+        Array.isArray(error.CancellationReasons)
+          ? error.CancellationReasons
+          : undefined;
+
+      const codes = reasons?.map((reason) =>
+        reason && typeof reason === "object" && "Code" in reason
+          ? reason.Code
+          : undefined
+      );
+
+      if (
+        codes?.length !== 2 ||
+        !codes.every((code) =>
+          code === "None" || code === "ConditionalCheckFailed"
+        )
+      ) {
+        throw error;
+      }
+
+      if (
+        codes[0] === "ConditionalCheckFailed" &&
+        codes[1] === "None"
+      ) {
+        throw new StaleGenerationError();
+      }
+
+      if (
+        codes[0] !== "None" ||
+        codes[1] !== "ConditionalCheckFailed"
+      ) {
+        throw error;
+      }
+
+      const existing = await this.client.send(new GetCommand({
+        TableName: this.tableName,
+        Key: key,
+        ConsistentRead: true,
+      }));
+
+      if (!existing.Item) {
+        throw error;
+      }
+
+      const storedAudit = withoutKeys<AuditEvent>(existing.Item);
+
+      if (!isDeepStrictEqual(storedAudit, audit)) {
+        throw new ConflictError(
+          "SUPPRESSION_AUDIT_CONFLICT",
+          "A different audit event already uses this ID."
+        );
+      }
+
+      const currentGeneration = await this.getDemoGeneration();
+
+      if (currentGeneration !== audit.demoGeneration) {
+        throw new StaleGenerationError();
+      }
+    }
+  }
   public async updateGuidance(input: Parameters<Repository["updateGuidance"]>[0]): Promise<void> {
     const names: Record<string, string> = { "#status": "status", "#route": "route" };
     const values: Record<string, unknown> = { ":status": "GUIDANCE_READY", ":route": input.route, ":now": input.now, ":generation": input.generation };

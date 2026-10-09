@@ -14,6 +14,93 @@ function template(): Template {
 }
 
 describe("TaapSaathi infrastructure", () => {
+  it("protects mutation routes with JWT authorization", () => {
+    const rendered = template();
+
+    rendered.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1);
+
+    rendered.hasResourceProperties("AWS::ApiGatewayV2::Authorizer", {
+      AuthorizerType: "JWT",
+      IdentitySource: ["$request.header.Authorization"],
+    });
+
+    const routes = rendered.findResources("AWS::ApiGatewayV2::Route");
+
+    const protectedRoutes = [
+      "POST /demo/reset",
+      "POST /demo/heat-spike",
+      "POST /interventions/{interventionId}/respond",
+    ];
+
+    for (const routeKey of protectedRoutes) {
+      const route = Object.values(routes).find(
+        (resource) =>
+          (resource as { Properties?: { RouteKey?: string } })
+            .Properties?.RouteKey === routeKey
+      ) as { Properties?: { AuthorizationType?: string; AuthorizerId?: unknown } } | undefined;
+
+      expect(route, `Missing route: ${routeKey}`).toBeDefined();
+      expect(route?.Properties?.AuthorizationType).toBe("JWT");
+      expect(route?.Properties?.AuthorizerId).toBeDefined();
+    }
+  });
+
+  it("keeps read-only routes publicly accessible", () => {
+    const routes = template().findResources("AWS::ApiGatewayV2::Route");
+
+    for (const routeKey of [
+      "GET /health",
+      "GET /dashboard",
+      "GET /workers/{workerId}",
+      "GET /events",
+    ]) {
+      const route = Object.values(routes).find(
+        (resource) =>
+          (resource as { Properties?: { RouteKey?: string } })
+            .Properties?.RouteKey === routeKey
+      ) as { Properties?: { AuthorizationType?: string } } | undefined;
+
+      expect(route, `Missing route: ${routeKey}`).toBeDefined();
+      expect(route?.Properties?.AuthorizationType ?? "NONE").toBe("NONE");
+    }
+  });
+
+  it("creates Cognito demo identity infrastructure", () => {
+    const rendered = template();
+
+    rendered.resourceCountIs("AWS::Cognito::UserPool", 1);
+    rendered.resourceCountIs("AWS::Cognito::UserPoolClient", 1);
+    rendered.resourceCountIs("AWS::Cognito::UserPoolGroup", 3);
+
+    rendered.hasResourceProperties("AWS::Cognito::UserPool", {
+      AdminCreateUserConfig: {
+        AllowAdminCreateUserOnly: true,
+      },
+    });
+
+    rendered.hasResourceProperties("AWS::Cognito::UserPoolClient", {
+      GenerateSecret: false,
+    });
+
+    const groups = rendered.findResources(
+      "AWS::Cognito::UserPoolGroup"
+    );
+
+    const names = Object.values(groups).map(
+      (resource) =>
+        (resource as { Properties: { GroupName: string } })
+          .Properties.GroupName
+    );
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "OPERATOR",
+        "WORKER",
+        "SUPERVISOR",
+      ])
+    );
+  });
+
   it("routes intervention creation outcomes correctly", () => {
     const resources = template().findResources(
       "AWS::StepFunctions::StateMachine"

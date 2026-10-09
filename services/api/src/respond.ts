@@ -1,7 +1,7 @@
 import type { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { SFNClient, SendTaskSuccessCommand } from "@aws-sdk/client-sfn";
 import { RespondAcceptedSchema, RespondRequestSchema } from "@taapsaathi/contracts";
-import { AppError, ConflictError, DynamoRepository, errorResponse, json, loadEnvironment, log, metric, NotFoundError, parseJson, requestContext } from "@taapsaathi/shared";
+import { AppError, ConflictError, DynamoRepository, errorResponse, json, loadEnvironment, log, metric, NotFoundError, loadRuntimeIdentityMapping, parseJson, requestContext, requireActor } from "@taapsaathi/shared";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const context = requestContext(event);
@@ -9,6 +9,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const interventionId = event.pathParameters?.["interventionId"];
     if (!interventionId) throw new NotFoundError("Intervention not found.");
     const body = parseJson(event, RespondRequestSchema);
+
+    requireActor(
+      event,
+      await loadRuntimeIdentityMapping(),
+      body.actorType,
+      body.actorId
+    );
+
     const repository = new DynamoRepository(loadEnvironment().TABLE_NAME);
     const intervention = await repository.getIntervention(interventionId);
     if (!intervention) throw new NotFoundError("Intervention not found.");

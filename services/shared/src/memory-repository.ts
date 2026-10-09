@@ -130,6 +130,26 @@ export class MemoryRepository implements Repository {
     });
   }
 
+  public async recordSuppressedRiskEvent(audit: AuditEvent): Promise<void> {
+    this.ensureGeneration(audit.demoGeneration);
+
+    const existing = this.auditEvents.find(
+      (event) => event.auditEventId === audit.auditEventId
+    );
+
+    if (existing) {
+      if (JSON.stringify(existing) === JSON.stringify(audit)) {
+        return;
+      }
+
+      throw new ConflictError(
+        "SUPPRESSION_AUDIT_CONFLICT",
+        "A different audit event already uses this ID."
+      );
+    }
+
+    this.auditEvents.push(clone(audit));
+  }
   public async updateGuidance(input: Parameters<Repository["updateGuidance"]>[0]): Promise<void> {
     const intervention = this.requiredIntervention(input.interventionId, input.generation);
     this.interventions.set(input.interventionId, {

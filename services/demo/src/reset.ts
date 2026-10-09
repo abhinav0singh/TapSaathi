@@ -1,10 +1,11 @@
 import type { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DemoResetRequestSchema, DemoResetResponseSchema } from "@taapsaathi/contracts";
-import { DynamoRepository, errorResponse, json, loadEnvironment, parseJson, requestContext } from "@taapsaathi/shared";
+import { DynamoRepository, errorResponse, json, loadEnvironment, loadRuntimeIdentityMapping, parseJson, requestContext, requireOperator } from "@taapsaathi/shared";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const context = requestContext(event);
   try {
+    requireOperator(event, await loadRuntimeIdentityMapping());
     parseJson(event, DemoResetRequestSchema);
     const now = new Date().toISOString();
     const repository = new DynamoRepository(loadEnvironment().TABLE_NAME);

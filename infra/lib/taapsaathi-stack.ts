@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import * as cdk from "aws-cdk-lib";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigwv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as authorizers from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
@@ -30,6 +32,46 @@ export class TaapSaathiStack extends cdk.Stack {
     const maxContinuousMinutes = Number(process.env["MAX_CONTINUOUS_MINUTES"] ?? 60);
     const frontendOrigins = (process.env["FRONTEND_ORIGINS"] ?? "http://localhost:3000").split(",").map((value) => value.trim());
 
+    const userPool = new cognito.UserPool(this, "DemoUserPool", {
+      userPoolName: "taapsaathi-demo-users",
+      selfSignUpEnabled: false,
+      signInAliases: { username: true },
+      standardAttributes: {
+        email: { required: false },
+      },
+      passwordPolicy: {
+        minLength: 12,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: true,
+      },
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    const userPoolClient = userPool.addClient("DemoWebClient", {
+      userPoolClientName: "taapsaathi-demo-web",
+      generateSecret: false,
+      authFlows: {
+        userSrp: true,
+      },
+      preventUserExistenceErrors: true,
+    });
+
+    for (const groupName of ["OPERATOR", "WORKER", "SUPERVISOR"]) {
+      new cognito.CfnUserPoolGroup(this, `${groupName}Group`, {
+        userPoolId: userPool.userPoolId,
+        groupName,
+      });
+    }
+
+    const jwtAuthorizer = new authorizers.HttpJwtAuthorizer(
+      "DemoJwtAuthorizer",
+      `https://cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}`,
+      {
+        jwtAudience: [userPoolClient.userPoolClientId],
+      }
+    );
     const table = new dynamodb.Table(this, "TaapSaathiTable", {
       partitionKey: { name: "PK", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "SK", type: dynamodb.AttributeType.STRING },
@@ -229,6 +271,24 @@ export class TaapSaathiStack extends cdk.Stack {
     table.grantReadWriteData(respondFunction);
     table.grantReadWriteData(heatSpikeFunction);
     table.grantReadWriteData(resetFunction);
+    const identityMappingParameterName = "/taapsaathi/demo/identity-mapping";
+    const identityMappingParameterArn = cdk.Stack.of(this).formatArn({
+      service: "ssm",
+      resource: "parameter",
+      resourceName: identityMappingParameterName.replace(/^\//, ""),
+    });
+
+    for (const fn of [respondFunction, heatSpikeFunction, resetFunction]) {
+      fn.addEnvironment(
+        "DEMO_IDENTITY_MAPPING_PARAMETER",
+        identityMappingParameterName
+      );
+
+      fn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["ssm:GetParameter"],
+        resources: [identityMappingParameterArn],
+      }));
+    }
     audioBucket.grantRead(workerFunction);
     eventBus.grantPutEventsTo(heatSpikeFunction);
     respondFunction.addToRolePolicy(new iam.PolicyStatement({ actions: ["states:SendTaskSuccess"], resources: ["*"] }));
@@ -252,18 +312,28 @@ export class TaapSaathiStack extends cdk.Stack {
       };
       defaultStage.defaultRouteSettings = { throttlingBurstLimit: 50, throttlingRateLimit: 25 };
     }
-    const route = (routePath: string, method: apigwv2.HttpMethod, fn: lambda.IFunction, idSuffix: string) => api.addRoutes({
+    const route = (
+      routePath: string,
+      method: apigwv2.HttpMethod,
+      fn: lambda.IFunction,
+      idSuffix: string,
+      protectedRoute = false
+    ) => api.addRoutes({
       path: routePath,
       methods: [method],
-      integration: new apigwv2Integrations.HttpLambdaIntegration(`${idSuffix}Integration`, fn),
+      integration: new apigwv2Integrations.HttpLambdaIntegration(
+        `${idSuffix}Integration`,
+        fn
+      ),
+      ...(protectedRoute ? { authorizer: jwtAuthorizer } : {}),
     });
     route("/health", apigwv2.HttpMethod.GET, healthFunction, "Health");
     route("/dashboard", apigwv2.HttpMethod.GET, dashboardFunction, "Dashboard");
     route("/workers/{workerId}", apigwv2.HttpMethod.GET, workerFunction, "Worker");
     route("/events", apigwv2.HttpMethod.GET, eventsFunction, "Events");
-    route("/interventions/{interventionId}/respond", apigwv2.HttpMethod.POST, respondFunction, "Respond");
-    route("/demo/heat-spike", apigwv2.HttpMethod.POST, heatSpikeFunction, "HeatSpike");
-    route("/demo/reset", apigwv2.HttpMethod.POST, resetFunction, "Reset");
+    route("/interventions/{interventionId}/respond", apigwv2.HttpMethod.POST, respondFunction, "Respond", true);
+    route("/demo/heat-spike", apigwv2.HttpMethod.POST, heatSpikeFunction, "HeatSpike", true);
+    route("/demo/reset", apigwv2.HttpMethod.POST, resetFunction, "Reset", true);
 
     const seedFunction = nodeFunction("SeedFunction", "services/demo/src/seed.ts");
     table.grantReadWriteData(seedFunction);

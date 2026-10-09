@@ -34,13 +34,36 @@ export const handler: Handler<WorkflowState> = async (input) => {
     occurredAt: now,
   })); } catch (error) {
     if (error instanceof AppError && error.code === "WORKER_INTERVENTION_ACTIVE") {
-      metric("WorkerInterventionsSuppressed", 1, { operation: "CreateIntervention" });
+      await repository.recordSuppressedRiskEvent(createAudit({
+        auditEventId: `audit-suppressed-${intervention.interventionId}`,
+        interventionId: intervention.interventionId,
+        eventType: "INTERVENTION_SUPPRESSED",
+        actorType: "SYSTEM",
+        correlationId: intervention.correlationId,
+        workerId: intervention.workerId,
+        hubId: intervention.hubId,
+        demoGeneration: intervention.demoGeneration,
+        details: {
+          eventId: envelope.eventId,
+          reason: "WORKER_UNAVAILABLE",
+          riskLevel: intervention.riskLevel,
+          matchedRule: intervention.matchedRule,
+          policyVersion: envelope.payload.policyVersion,
+        },
+        occurredAt: envelope.occurredAt,
+      }));
+
+      metric("WorkerInterventionsSuppressed", 1, {
+        operation: "CreateIntervention",
+      });
+
       log("WARN", "WorkerInterventionSuppressed", {
         eventId: envelope.eventId,
         interventionId: intervention.interventionId,
         workerId: intervention.workerId,
         correlationId: intervention.correlationId,
       });
+
       return { ...input, creationOutcome: "WORKER_UNAVAILABLE" };
     }
     throw error;
