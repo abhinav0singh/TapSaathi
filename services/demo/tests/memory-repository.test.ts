@@ -81,4 +81,35 @@ describe("repository correctness", () => {
     expect(await repository.reassignTask({ interventionId: "int-001", generation, workerId: "ravi-001", taskId: "delivery-001", hubId: "hub-delhi-001", now, correlationId: "corr-001" })).toEqual({ status: "REASSIGNED", replacementWorkerId: "asha-001" });
     await expect(repository.reassignTask({ interventionId: "int-001", generation, workerId: "ravi-001", taskId: "delivery-001", hubId: "hub-delhi-001", now, correlationId: "corr-001" })).rejects.toMatchObject({ code: "TASK_OWNERSHIP_CHANGED" });
   });
+
+  it("secures an escalated worker's delivery without clearing intervention ownership", async () => {
+    const repository = new MemoryRepository();
+    const { generation } = await repository.resetDemo(now);
+    await repository.createIntervention(intervention(generation), audit(generation));
+
+    expect(await repository.reassignTask({
+      interventionId: "int-001",
+      generation,
+      workerId: "ravi-001",
+      taskId: "delivery-001",
+      hubId: "hub-delhi-001",
+      now,
+      correlationId: "corr-001",
+      preserveIntervention: true,
+    })).toEqual({ status: "REASSIGNED", replacementWorkerId: "asha-001" });
+
+    expect(await repository.getWorker("ravi-001")).toMatchObject({
+      activeInterventionId: "int-001",
+      activeTaskIds: [],
+      state: "HIGH",
+    });
+    expect(await repository.getWorker("asha-001")).toMatchObject({
+      activeTaskIds: ["delivery-001"],
+      state: "SAFE",
+    });
+    expect(await repository.getIntervention("int-001")).toMatchObject({
+      replacementWorkerId: "asha-001",
+      status: "CREATED",
+    });
+  });
 });

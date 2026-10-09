@@ -13,6 +13,25 @@ function template(): Template {
   return cachedTemplate;
 }
 
+function workflowStates(): Record<string, {
+  Type?: string;
+  Next?: string;
+  Default?: string;
+  Choices?: Array<{ Variable?: string; StringEquals?: string; Next?: string }>;
+  Catch?: Array<{ ErrorEquals?: string[]; Next?: string }>;
+}> {
+  const resources = template().findResources("AWS::StepFunctions::StateMachine");
+  const machine = Object.values(resources)[0] as {
+    Properties?: { DefinitionString?: { "Fn::Join"?: [string, unknown[]] } };
+  };
+  const fragments = machine.Properties?.DefinitionString?.["Fn::Join"]?.[1];
+  if (!Array.isArray(fragments)) throw new Error("State machine definition is missing.");
+  const reconstructed = fragments
+    .map((fragment) => typeof fragment === "string" ? fragment : "MOCK_ARN")
+    .join("");
+  return (JSON.parse(reconstructed) as { States: ReturnType<typeof workflowStates> }).States;
+}
+
 describe("TaapSaathi infrastructure", () => {
   it("allows Authorization headers in API CORS", () => {
     template().hasResourceProperties("AWS::ApiGatewayV2::Api", {
@@ -430,5 +449,27 @@ describe("TaapSaathi infrastructure", () => {
     expect(encoded).toContain("AwaitSupervisorAcknowledgement");
     expect(encoded).toContain("ReassignActiveDeliveryTransactionally");
     expect(encoded).toContain("waitForTaskToken");
+  });
+
+  it("secures the active delivery before symptom and timeout escalation", () => {
+    const states = workflowStates();
+    expect(states["BranchOnWorkerResponse"]?.Choices).toContainEqual(
+      expect.objectContaining({
+        StringEquals: "FEEL_UNWELL",
+        Next: "PrepareEscalationDeliveryHandling",
+      })
+    );
+    expect(states["AwaitWorkerResponse"]?.Catch).toContainEqual(
+      expect.objectContaining({
+        ErrorEquals: ["States.Timeout"],
+        Next: "PrepareEscalationDeliveryHandling",
+      })
+    );
+    expect(states["PrepareEscalationDeliveryHandling"]?.Next).toBe(
+      "SecureActiveDeliveryForEscalation"
+    );
+    expect(states["SecureActiveDeliveryForEscalation"]?.Next).toBe(
+      "EscalateSupervisor"
+    );
   });
 });

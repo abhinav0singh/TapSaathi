@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import type { HeatRiskRaisedEnvelope } from "@taapsaathi/contracts";
 import { DynamoRepository } from "../src/dynamo-repository.js";
+import { createSeedState } from "../src/seed.js";
 
 const envelope: HeatRiskRaisedEnvelope = {
   schemaVersion: 1,
@@ -319,5 +320,51 @@ describe("DynamoDB transaction adapter", () => {
     expect(items).toHaveLength(2);
     expect(items?.[0]?.ConditionCheck?.ConditionExpression).toContain("#value = :generation");
     expect(items?.[1]?.Put?.ConditionExpression).toBe("attribute_not_exists(PK)");
+  });
+
+  it("preserves intervention ownership while securing an escalated delivery", async () => {
+    const send = vi.fn().mockResolvedValue({});
+    const repository = new DynamoRepository("TaapSaathiTest", { send } as never);
+    const workers = createSeedState(4, envelope.occurredAt).workers.map((worker) =>
+      worker.workerId === "ravi-001"
+        ? { ...worker, state: "HIGH" as const, activeInterventionId: "int-001" }
+        : worker
+    );
+
+    vi.spyOn(repository, "getDemoGeneration").mockResolvedValue(4);
+    vi.spyOn(repository, "getWorkers").mockResolvedValue(workers);
+
+    await repository.reassignTask({
+      interventionId: "int-001",
+      generation: 4,
+      workerId: "ravi-001",
+      taskId: "delivery-001",
+      hubId: "hub-delhi-001",
+      now: envelope.occurredAt,
+      correlationId: envelope.correlationId,
+      preserveIntervention: true,
+    });
+
+    const command = send.mock.calls[0]?.[0];
+    expect(command).toBeInstanceOf(TransactWriteCommand);
+    const items = (command as TransactWriteCommand).input.TransactItems;
+    const workerUpdate = items?.find(
+      (item) => item.Update?.Key?.PK === "WORKER#ravi-001"
+    )?.Update;
+    const interventionUpdate = items?.find(
+      (item) => item.Update?.Key?.PK === "INTERVENTION#int-001"
+    )?.Update;
+
+    expect(workerUpdate?.UpdateExpression).toBe(
+      "SET activeTaskIds = :remaining, updatedAt = :now"
+    );
+    expect(workerUpdate?.ExpressionAttributeValues).toMatchObject({
+      ":remaining": [],
+      ":interventionId": "int-001",
+    });
+    expect(interventionUpdate?.UpdateExpression).toBe(
+      "SET replacementWorkerId = :replacement, updatedAt = :now"
+    );
+    expect(interventionUpdate?.ExpressionAttributeNames).toBeUndefined();
   });
 });

@@ -10,6 +10,7 @@ export interface WorkflowState {
   workerPosition?: [number, number];
   action?: "TAKE_BREAK" | "FEEL_UNWELL" | "SUPERVISOR_ACK";
   timeout?: unknown;
+  deliveryHandling?: "ESCALATION";
   reassignment?: { replacementWorkerId?: string; status: "REASSIGNED" | "REASSIGNMENT_REQUIRED" };
 }
 
