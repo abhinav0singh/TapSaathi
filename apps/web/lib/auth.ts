@@ -7,6 +7,13 @@ import {
 
 const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
+const identityMapValue = process.env.NEXT_PUBLIC_COGNITO_IDENTITY_MAP;
+
+export type AuthenticatedIdentity = {
+  username: string;
+  groups: string[];
+  actorId?: string;
+};
 
 let cachedPool: CognitoUserPool | null = null;
 
@@ -108,6 +115,67 @@ export async function getAccessToken(): Promise<string> {
   }
 
   return session.getAccessToken().getJwtToken();
+}
+
+function groupsFrom(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((group): group is string => typeof group === "string");
+  }
+
+  if (typeof value !== "string") return [];
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((group): group is string => typeof group === "string");
+    }
+  } catch {
+    // Cognito can serialize the group claim as comma-separated text.
+  }
+
+  return value
+    .replace(/^\[|\]$/g, "")
+    .split(",")
+    .map((group) => group.trim())
+    .filter(Boolean);
+}
+
+function identityMap(): Record<string, string> {
+  if (!identityMapValue) return {};
+
+  try {
+    const parsed: unknown = JSON.parse(identityMapValue);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, string] =>
+          typeof entry[0] === "string" && typeof entry[1] === "string"
+      )
+    );
+  } catch {
+    return {};
+  }
+}
+
+export function identityFromSession(session: CognitoUserSession): AuthenticatedIdentity {
+  const claims = session.getAccessToken().decodePayload() as Record<string, unknown>;
+  const username = claims.username ?? claims["cognito:username"];
+
+  if (typeof username !== "string" || !username) {
+    throw new Error("The Cognito session does not contain a username.");
+  }
+
+  return {
+    username,
+    groups: groupsFrom(claims["cognito:groups"]),
+    actorId: identityMap()[username],
+  };
+}
+
+export async function getAuthenticatedIdentity(): Promise<AuthenticatedIdentity | null> {
+  const session = await getCurrentSession();
+  return session ? identityFromSession(session) : null;
 }
 
 export function signOut(): void {
