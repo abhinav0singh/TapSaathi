@@ -182,3 +182,33 @@ export function signOut(): void {
   const user = getPool().getCurrentUser();
   user?.signOut();
 }
+
+export type Role = "OPERATOR" | "SUPERVISOR" | "WORKER";
+
+export function hasRole(identity: AuthenticatedIdentity, role: Role): boolean {
+  return identity.groups.includes(role);
+}
+
+/**
+ * Single source of truth for where a signed-in user belongs.
+ * Throws a user-readable error when the account cannot be mapped.
+ */
+export function destinationForIdentity(identity: AuthenticatedIdentity): string {
+  if (hasRole(identity, "OPERATOR")) return "/ops";
+
+  if (hasRole(identity, "SUPERVISOR")) {
+    if (!identity.actorId) {
+      throw new Error("Supervisor identity mapping is missing. Contact the demo administrator.");
+    }
+    return "/supervisor";
+  }
+
+  if (hasRole(identity, "WORKER")) {
+    if (!identity.actorId) {
+      throw new Error("Worker identity mapping is missing. Contact the demo administrator.");
+    }
+    return `/worker/${encodeURIComponent(identity.actorId)}`;
+  }
+
+  throw new Error("This account is not assigned to a TaapSaathi role.");
+}

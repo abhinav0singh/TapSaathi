@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import type {
   Language,
   ResponseAction,
@@ -10,6 +9,7 @@ import type {
 import type { z } from "zod";
 import { api } from "@/lib/api";
 import RoutePreview from "@/components/worker/RoutePreview";
+import RiderSessionLink from "@/components/worker/RiderSessionLink";
 
 type WorkerView = z.infer<typeof WorkerViewResponseSchema>;
 
@@ -168,9 +168,7 @@ export default function RiderExperience({
     <main className="min-h-screen bg-[#f5f7fb] px-4 py-5 text-slate-900">
       <div className="mx-auto max-w-md space-y-5">
         <header className="flex items-center justify-between gap-3">
-          <Link href="/ops" className="rounded-lg px-1 py-2 text-sm font-medium text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline focus-visible:outline-2 focus-visible:outline-orange-600">
-            ← Operations
-          </Link>
+          <RiderSessionLink />
 
           <div className="flex rounded-full border border-slate-200 bg-white p-1">
             {(["en", "hi"] as const).map((value) => (
