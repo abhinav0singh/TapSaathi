@@ -14,7 +14,7 @@ The public frontend and API are reachable. The v2 evidence records one take-brea
 | Check | Result |
 | --- | --- |
 | Backend TypeScript | PASS |
-| Unit tests | PASS — 23 files, 146 tests |
+| Unit tests | PASS — 24 files, 147 tests |
 | CDK synthesis | PASS |
 | Step Functions definition validator | PASS |
 | Next.js production build | PASS |

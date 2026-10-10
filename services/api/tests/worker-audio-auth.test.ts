@@ -112,6 +112,12 @@ describe("Worker audio API authorization", () => {
     expect(mocks.getWorker).toHaveBeenCalledWith("ravi-001");
     expect(mocks.getIntervention).toHaveBeenCalledWith("int-test-001");
     expect(mocks.getSignedUrl).toHaveBeenCalledTimes(1);
+    const [client, command, options] = mocks.getSignedUrl.mock.calls[0] ?? [];
+    expect(client).toBeDefined();
+    expect(command).toMatchObject({
+      input: { Bucket: "test-audio-bucket", Key: "audio/hi/ravi-001.mp3" },
+    });
+    expect(options).toEqual({ expiresIn: 300 });
     expect(JSON.parse(String(result.body))).toMatchObject({
       audioUrl: "https://signed.example/audio.mp3",
       audioExpiresAt: expect.any(String),

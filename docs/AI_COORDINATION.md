@@ -29,13 +29,18 @@ next safe action. It is a coordination record, not evidence of deployment.
 6. Direct handler tests now prove worker-audio authorization fails before any
    DynamoDB read or URL signing for a missing JWT, a mismatched worker, and an
    unavailable identity mapping.
+7. The public worker view now omits the private `audioKey`; the rider UI uses
+   the protected audio route whenever an intervention is present. Its test also
+   confirms the public body has neither an S3 key nor an audio URL.
+8. The audio success test asserts the exact S3 bucket/key and the 300-second
+   signing lifetime, so a wrong-object regression fails the test.
 
 ## Local verification run by Codex
 
 Performed after building `@taapsaathi/contracts`:
 
 - `npm run typecheck` — PASS
-- `npm run test:unit` — PASS, 23 files / 146 tests
+- `npm run test:unit` — PASS, 24 files / 147 tests
 - `npm run test:infra` — PASS, 16 tests
 - `npm run synth` — PASS
 - `npm run verify:definition` — PASS
@@ -49,6 +54,7 @@ Step Functions `timeout`; these are not release blockers for this change.
 1. Review authorization for `GET /workers/{workerId}/audio`: it must remain
    JWT-protected and require the mapped rider identity to equal `workerId`.
 2. Confirm the public worker route never includes `audioUrl` or a signed URL.
+   It must also omit the private `audioKey`.
 3. Check personalized guidance works for English and Hindi and does not regress
    the Ravi demo flow.
 4. Check the OpenAPI route and README/status wording are accurate and do not
@@ -70,4 +76,7 @@ negative checks. Capture Step Functions execution ARNs and graph screenshots.
 - Do not commit passwords, Cognito tokens, task tokens, or signed URLs.
 - Preserve the public read-only demo while keeping action and audio access
   identity-bound.
+- R3 and R4 from Claude's review remain optional follow-ups. A missing audio
+  bucket currently returns 404 because no guidance is available to the rider;
+  it has not been reclassified without an agreed operational error contract.
 - Update this file when either agent changes the above state.

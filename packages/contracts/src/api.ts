@@ -10,6 +10,9 @@ import {
   WorkerSchema,
 } from "./entities.js";
 
+/** The intervention view safe to return from the public worker route. */
+export const PublicInterventionSchema = InterventionSchema.omit({ audioKey: true });
+
 export const ErrorEnvelopeSchema = z.object({
   error: z.object({
     code: z.string().min(1),
@@ -50,7 +53,7 @@ export const DashboardResponseSchema = z.object({
 export const WorkerViewResponseSchema = z.object({
   worker: WorkerSchema,
   instruction: z.string(),
-  intervention: InterventionSchema.optional(),
+  intervention: PublicInterventionSchema.optional(),
   route: RouteViewSchema.optional(),
   audioUrl: z.string().url().optional(),
   audioExpiresAt: IsoDateSchema.optional(),

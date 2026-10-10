@@ -174,7 +174,7 @@ export default function RiderExperience({
 
   useEffect(() => {
     let cancelled = false;
-    if (!isRiderSession || !data?.intervention?.audioKey) {
+    if (!isRiderSession || !data?.intervention) {
       setAudioUrl(null);
       return;
     }
@@ -186,7 +186,7 @@ export default function RiderExperience({
         if (!cancelled) setAudioUrl(null);
       });
     return () => { cancelled = true; };
-  }, [data?.intervention?.audioKey, isRiderSession, workerId]);
+  }, [data?.intervention?.updatedAt, isRiderSession, workerId]);
 
   useEffect(() => {
     const interval = window.setInterval(
