@@ -42,11 +42,22 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const repository = new DynamoRepository(loadEnvironment().TABLE_NAME);
     const worker = await repository.getWorker(workerId);
     if (!worker) throw new NotFoundError("Worker not found.");
+    // A rider can resume after a completed break, or after a supervisor
+    // acknowledged their symptom report and the rider confirms they feel fit.
+    const afterSymptom = worker.state === "AWAITING_SUPERVISOR";
+    if (afterSymptom && body.selfDeclaredFit !== true) {
+      throw new AppError(
+        "FITNESS_CONFIRMATION_REQUIRED",
+        "Confirm that you feel well enough before resuming work.",
+        400
+      );
+    }
+    const requiredStatus = afterSymptom ? "SUPERVISOR_RESPONDING" : "COMPLETED";
     const intervention = (await repository.listInterventions(worker.hubId))
       .filter((item) =>
         item.workerId === workerId
         && item.demoGeneration === worker.demoGeneration
-        && item.status === "COMPLETED"
+        && item.status === requiredStatus
         && Boolean(item.replacementWorkerId)
       )
       .sort((a, b) => (b.completedAt ?? b.updatedAt).localeCompare(a.completedAt ?? a.updatedAt))[0];
@@ -63,6 +74,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       generation: worker.demoGeneration,
       interventionId: intervention.interventionId,
       clientRequestId: body.clientRequestId,
+      fromState: afterSymptom ? "AWAITING_SUPERVISOR" : "RESTING",
       now: resumedAt,
       audit: createAudit({
         auditEventId: `audit-resume-${body.clientRequestId}`,
@@ -75,8 +87,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         hubId: worker.hubId,
         demoGeneration: worker.demoGeneration,
         details: {
-          previousState: "RESTING",
+          previousState: afterSymptom ? "AWAITING_SUPERVISOR" : "RESTING",
           newState: "SAFE",
+          afterSymptomReport: afterSymptom,
+          selfDeclaredFit: afterSymptom ? true : null,
           activeMinutesResetTo: 0,
           deliveryRemainsWith: intervention.replacementWorkerId,
           clientRequestId: body.clientRequestId,

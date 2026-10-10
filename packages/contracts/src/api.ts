@@ -93,6 +93,8 @@ export const RespondAcceptedSchema = z.object({
 export const ResumeWorkerRequestSchema = z.object({
   actorId: z.string().min(1),
   clientRequestId: z.string().uuid(),
+  // Required when resuming after a reported symptom: the rider states they feel well enough.
+  selfDeclaredFit: z.literal(true).optional(),
 }).strict();
 
 export const ResumeWorkerAcceptedSchema = z.object({

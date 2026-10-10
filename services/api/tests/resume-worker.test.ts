@@ -31,7 +31,8 @@ const completedAt = "2026-10-10T10:25:02.460Z";
 function event(
   sub: string | undefined,
   actorId = "ravi-001",
-  workerId = "ravi-001"
+  workerId = "ravi-001",
+  extra: Record<string, unknown> = {}
 ): APIGatewayProxyEventV2 {
   return {
     version: "2.0",
@@ -48,7 +49,7 @@ function event(
         },
       } : {}),
     },
-    body: JSON.stringify({ actorId, clientRequestId: requestId }),
+    body: JSON.stringify({ actorId, clientRequestId: requestId, ...extra }),
   } as unknown as APIGatewayProxyEventV2;
 }
 
@@ -108,6 +109,7 @@ describe("Resume worker API", () => {
       generation: 16,
       interventionId: "int-break",
       clientRequestId: requestId,
+      fromState: "RESTING",
       audit: expect.objectContaining({
         eventType: "RIDER_RESUMED_WORK",
         actorId: "ravi-001",
@@ -124,6 +126,70 @@ describe("Resume worker API", () => {
       status: "RESUMED",
       resumedAt: completedAt,
       clientRequestId: requestId,
+    });
+  });
+
+  describe("after a supervisor-acknowledged symptom report", () => {
+    beforeEach(() => {
+      mocks.getWorker.mockResolvedValue({
+        workerId: "ravi-001",
+        hubId: "hub-delhi-001",
+        state: "AWAITING_SUPERVISOR",
+        demoGeneration: 16,
+      });
+      mocks.listInterventions.mockResolvedValue([{
+        interventionId: "int-unwell",
+        correlationId: "corr-unwell",
+        workerId: "ravi-001",
+        hubId: "hub-delhi-001",
+        status: "SUPERVISOR_RESPONDING",
+        replacementWorkerId: "asha-001",
+        demoGeneration: 16,
+        updatedAt: completedAt,
+        completedAt,
+      }]);
+    });
+
+    it("requires the rider to confirm they feel well enough", async () => {
+      const result = await invoke(event(raviSub));
+      expect(result.statusCode).toBe(400);
+      expect(JSON.parse(String(result.body)).error.code).toBe("FITNESS_CONFIRMATION_REQUIRED");
+      expect(mocks.resumeWorker).not.toHaveBeenCalled();
+    });
+
+    it("resumes Ravi and records the self-declaration", async () => {
+      const result = await invoke(event(raviSub, "ravi-001", "ravi-001", { selfDeclaredFit: true }));
+      expect(result.statusCode).toBe(200);
+      expect(mocks.resumeWorker).toHaveBeenCalledWith(expect.objectContaining({
+        interventionId: "int-unwell",
+        fromState: "AWAITING_SUPERVISOR",
+        audit: expect.objectContaining({
+          eventType: "RIDER_RESUMED_WORK",
+          details: expect.objectContaining({
+            previousState: "AWAITING_SUPERVISOR",
+            newState: "SAFE",
+            afterSymptomReport: true,
+            selfDeclaredFit: true,
+            deliveryRemainsWith: "asha-001",
+          }),
+        }),
+      }));
+    });
+
+    it("does not resume when the supervisor has not acknowledged", async () => {
+      mocks.listInterventions.mockResolvedValue([{
+        interventionId: "int-unwell",
+        correlationId: "corr-unwell",
+        workerId: "ravi-001",
+        hubId: "hub-delhi-001",
+        status: "SUPERVISOR_UNACKNOWLEDGED",
+        replacementWorkerId: "asha-001",
+        demoGeneration: 16,
+        updatedAt: completedAt,
+      }]);
+      const result = await invoke(event(raviSub, "ravi-001", "ravi-001", { selfDeclaredFit: true }));
+      expect(result.statusCode).toBe(409);
+      expect(mocks.resumeWorker).not.toHaveBeenCalled();
     });
   });
 });
