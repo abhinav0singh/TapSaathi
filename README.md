@@ -1,139 +1,106 @@
-# TaapSaathi â€” Heat Safety & Intelligent Dispatch
+# TaapSaathi — Heat Safety and Intelligent Dispatch
 
-**Engineering update (10 October 2026):** PR #4 is deployed, and the live worker-timeout path now reassigns the active delivery before supervisor escalation. [AWS timeout verification](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md)
+TaapSaathi is an AWS-native demonstration that detects heat risk for delivery workers, delivers bilingual safety guidance, waits for a human response, and safely reassigns or escalates active work. The public frontend and backend are deployed, the critical AWS workflows are verified, and the final open acceptance gate is three-role Cognito browser evidence.
 
-**Project status:** AWS backend deployed | Live operations dashboard working | Rider experience in testing
+- Public demo: <https://main.d6hf0wv24qbik.amplifyapp.com>
+- API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
+- [Current project status](docs/PROJECT_STATUS.md)
+- [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md)
+- [Three-minute judge demo runbook](docs/JUDGE_DEMO_RUNBOOK.md)
+- [Deployment runbook](docs/DEPLOYMENT_RUNBOOK.md)
 
-[View current development progress](docs/PROJECT_STATUS.md)
+## What the demo proves
 
-[Frontend source](apps/web) | [API specification](docs/openapi.yaml) | [Deployment runbook](docs/DEPLOYMENT_RUNBOOK.md)
-
-## Backend architecture
-
-TaapSaathi is an event-driven heat-safety and dispatch demonstration for delivery workers. A deterministic policy turns a labelled heat observation into a real EventBridge event, a Standard Step Functions intervention, Amazon Location guidance, Polly audio, a one-time human callback, and an auditable DynamoDB reassignment or escalation.
-
-This repository contains the AWS backend, infrastructure, and Next.js frontend. It does not make medical claims, contact emergency services, or represent simulated weather/rest points as live data.
-
-## Status
-
-| Verification layer | Status | Evidence |
-| --- | --- | --- |
-| Code complete | See current handoff | Source and tests in this repository |
-| Local verification | Run commands below | Never infer pass from source presence |
-| AWS verification | Timeout escalation passed | [Deployed execution and audit evidence](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md) |
+1. An operator triggers a labelled heat spike.
+2. The same deterministic risk path used by scheduled observations publishes a versioned EventBridge event.
+3. Standard Step Functions creates a durable intervention.
+4. Amazon Location and Polly prepare route and audio guidance.
+5. Ravi can take a break or report feeling unwell.
+6. DynamoDB transactions secure the delivery before reassignment or supervisor escalation.
+7. Cognito roles and server-side identity mapping protect every mutation.
+8. Generation isolation prevents old workflows and callbacks from corrupting a reset demo.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
     A[EventBridge Scheduler] --> B[Weather Lambda]
-    C[Demo API] --> D[Shared risk processor]
+    C[Authenticated demo control] --> D[Shared risk processor]
     B --> D
     D --> E[Custom EventBridge bus]
     E --> F[Standard Step Functions]
     F --> G[DynamoDB]
     F --> H[Amazon Location Routes]
-    F --> I[Polly]
+    F --> I[Amazon Polly]
     I --> J[Private S3 audio]
-    K[HTTP API] --> L[API Lambdas]
+    K[Amplify-hosted Next.js app] --> L[API Gateway HTTP API]
+    L --> M[Cognito JWT authorizer]
     L --> G
     L --> F
 ```
 
-The demo endpoint does not start Step Functions. Scheduled and demo observations call `evaluateAndPublishObservation`, which invokes the same deterministic policy and publishes the same versioned `HeatRiskRaised` envelope to EventBridge.
+The demo heat-spike endpoint never starts Step Functions directly. Scheduled and demo observations both call the shared risk processor and publish the same `HeatRiskRaised` contract to EventBridge.
+
+## Verification
+
+| Layer | Result |
+| --- | --- |
+| Backend TypeScript | PASS |
+| Vitest | PASS — 22 files, 139 tests |
+| CDK synthesis and definition validation | PASS |
+| Next.js production build | PASS |
+| GitHub Backend and Web workflows on `main` | PASS |
+| CloudFormation deployment | PASS — `UPDATE_COMPLETE` |
+| Break, symptom, worker-timeout, and supervisor-timeout workflows | PASS in AWS |
+| Duplicate event and callback protection | PASS in AWS |
+| Wrong-role and missing-token rejection | PASS |
+| Reset during an in-flight workflow | PASS after PR #11 |
+| Real browser sign-in and action for all three Cognito roles | PENDING — [issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) |
+
+See [verification status](docs/VERIFICATION_STATUS.md) for the current gate and [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md) for execution identifiers and test boundaries.
 
 ## Repository layout
 
 ```text
-infra/                 CDK stack and assertion tests
-packages/contracts/    shared Zod API, event, and entity contracts
-services/api/          query and callback HTTP handlers
-services/demo/         heat-spike, reset, and deployment seed handlers
+apps/web/              Next.js operator, worker, supervisor, and login experiences
+infra/                 AWS CDK stack and infrastructure assertions
+packages/contracts/    shared Zod contracts
+services/api/          dashboard, worker, event, and callback APIs
+services/demo/         authenticated heat-spike, reset, and seed handlers
 services/intervention/ Step Functions task handlers
-services/risk-engine/  pure deterministic policy and observation processor
-services/shared/       DynamoDB adapter, in-memory test double, logging, HTTP helpers
+services/risk-engine/  deterministic heat-risk policy and publisher
+services/shared/       authorization, DynamoDB, logging, and HTTP helpers
 services/weather/      scheduled weather adapter
-scripts/               deployed smoke and definition verification
-docs/                  OpenAPI and AWS runbook
+scripts/               deployed smoke and state-machine validation
+docs/                  specifications, runbooks, evidence, and limitations
 ```
 
 ## Local verification
 
-Node.js 22 is required.
+Node.js 22 or newer is required.
 
 ```bash
-npm install
-npm run test:risk:zero-dependency
+npm ci
 npm run typecheck
-npm run test:unit
-npm run test:infra
+npm run test
 npm run synth
 npm run verify:definition
+npm --workspace apps/web run build
 ```
 
-`npm install` creates the lockfile. Commit `package-lock.json` before deployment. Do not mark these commands passed unless their actual output is retained.
+## Deployment
 
-## Safe AWS deployment
-
-Use an AWS CLI profile or IAM Identity Center. Do not paste access keys into source files, shell history, or chat.
+Use short-lived AWS credentials through an AWS CLI profile or IAM Identity Center. Set `FRONTEND_ORIGINS` to the local and hosted frontend origins before deployment.
 
 ```bash
-aws configure sso --profile taapsaathi-dev
-aws sts get-caller-identity --profile taapsaathi-dev
 export AWS_PROFILE=taapsaathi-dev
 export AWS_REGION=ap-south-1
-npx cdk bootstrap aws://ACCOUNT_ID/ap-south-1
-npm run synth
+export FRONTEND_ORIGINS=http://localhost:3000,https://main.d6hf0wv24qbik.amplifyapp.com
 npm run deploy
 ```
 
-RetrieveÃ¢â‚¬â€not inventÃ¢â‚¬â€the deployed outputs:
+Never place passwords, access tokens, callback task tokens, or AWS keys in source, shell history, screenshots, or evidence files.
 
-```bash
-aws cloudformation describe-stacks \
-  --stack-name TaapSaathiStack \
-  --region ap-south-1 \
-  --profile taapsaathi-dev \
-  --query 'Stacks[0].Outputs' \
-  --output table
-```
+## Scope
 
-Continue with [AWS deployment and evidence runbook](docs/DEPLOYMENT_RUNBOOK.md).
-
-The exact implementation-environment results are recorded in [verification status](docs/VERIFICATION_STATUS.md).
-
-## API contract
-
-- Runtime Zod schemas: `packages/contracts/src`
-- Machine-readable description: `docs/openapi.yaml`
-- JSON uses camelCase and UTC ISO-8601 timestamps.
-- Callback task tokens and private S3 paths are never returned by an API.
-
-## Release evidence
-
-Fill this table only from real deployed results:
-
-| Gate | Result | Evidence |
-| --- | --- | --- |
-| EventBridge Ã¢â€ â€™ Step Functions Ã¢â€ â€™ DynamoDB | AWS VERIFICATION PENDING | execution ARN + queried item |
-| Duplicate protection | AWS VERIFICATION PENDING | replay output + unchanged intervention count |
-| Golden break path Ãƒâ€”3 | AWS VERIFICATION PENDING | three execution ARNs |
-| Symptom escalation | AWS VERIFICATION PENDING | execution ARN + audit record |
-| Timeout escalation | PASS | [Succeeded execution, reassignment, and audit records](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md) |
-| Location scooter route | AWS VERIFICATION PENDING | persisted `provider: AMAZON_LOCATION` route |
-| Hindi Polly audio/private S3 | AWS VERIFICATION PENDING | object metadata + presigned GET result |
-| Reset/stale generation | AWS VERIFICATION PENDING | old callback rejection + clean new state |
-
-## Cost and teardown
-
-The stack uses on-demand DynamoDB, Lambda, HTTP API, Step Functions, EventBridge Scheduler, Location, Polly, S3, CloudWatch, and X-Ray. These can incur charges. Logs expire after one week and generated audio after seven days.
-
-```bash
-npm run destroy -- --profile taapsaathi-dev
-```
-
-Destroying the development stack deletes demo DynamoDB and S3 data. Confirm the stack name and account before running the command.
-
-## Latest AWS deployment update
-
-[AWS authentication deployment status](docs/AWS_AUTH_DEPLOYMENT_STATUS.md)
+This is a hackathon demonstration using simulated weather, locations, workers, and deliveries. It does not make medical claims, contact emergency services, or integrate with a production dispatch system. Read-only demo views are public; every state-changing route requires Cognito authorization. See [known limitations](docs/KNOWN_LIMITATIONS.md).
