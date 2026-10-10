@@ -37,8 +37,12 @@ export const RiskDecisionSchema = z.object({
   state: z.enum(["SAFE", "CAUTION", "HIGH", "CRITICAL"]),
   matchedRule: z.enum([
     "NO_POLICY_MATCH",
+    "ELEVATED_HEAT_INDEX",
     "OFFICIAL_HEAT_ALERT",
     "HEAT_ALERT_WITH_ACTIVE_EXPOSURE",
+    "HEAT_THRESHOLD",
+    "HEAT_THRESHOLD_WITH_ACTIVE_EXPOSURE",
+    "EXTREME_HEAT_INDEX",
     "WORKER_REPORTED_SYMPTOM",
   ]),
   recommendedAction: z.enum(["CONTINUE", "PREPARE_BREAK", "TAKE_BREAK", "ESCALATE"]),

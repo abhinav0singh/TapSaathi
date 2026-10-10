@@ -4,6 +4,7 @@
 - Read-only dashboard, event, and worker query routes are public for the hackathon demonstration. All reset, heat-spike, response, and rider-resume mutations require Cognito JWT authorization and server-side identity mapping.
 - The deployment is a single-hub demonstration, not a production multi-tenant service.
 - Weather mode defaults to a cached, non-alert baseline. The labelled heat spike is simulated and visibly identified as such.
+- `heat-policy-v2` decides from the weather readings (apparent temperature bands of 32, 39 and 52 C, and 45 C air temperature) as well as an official alert. These thresholds are demonstration policy, not medical advice, and must be checked against IMD, NDMA or NWS guidance before they are cited as authoritative. Live Open-Meteo readings never assert an official alert.
 - Rest points and rider positions are seeded demonstration data.
 - Exposure thresholds are demonstration policy and are not medical advice.
 - The rider can self-resume only after the normal `TAKE_BREAK` path. Symptom and timeout escalations intentionally require an external human clearance process that this prototype does not model.

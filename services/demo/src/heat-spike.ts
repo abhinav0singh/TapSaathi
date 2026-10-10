@@ -20,7 +20,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       temperatureC: 45.2,
       relativeHumidity: 42,
       apparentTemperatureC: 49.1,
-      officialHeatAlert: true,
+      // No official alert is asserted: the policy decides from the readings.
+      officialHeatAlert: false,
       observedAt: now,
     });
     const repository = new DynamoRepository(environment.TABLE_NAME);

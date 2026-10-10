@@ -4,8 +4,8 @@ import { evaluatePolicy } from "../src/policy.ts";
 
 const base = {
   officialHeatAlert: false,
-  temperatureC: 35,
-  apparentTemperatureC: 37,
+  temperatureC: 30,
+  apparentTemperatureC: 31,
   relativeHumidity: 40,
   activeMinutes: 20,
   maxContinuousMinutes: 60,
@@ -21,6 +21,14 @@ describe("zero-dependency deterministic risk policy", () => {
     assert.equal(evaluatePolicy({ ...base, officialHeatAlert: true }).matchedRule, "OFFICIAL_HEAT_ALERT");
     assert.equal(evaluatePolicy({ ...base, officialHeatAlert: true, activeMinutes: 60 }).matchedRule, "HEAT_ALERT_WITH_ACTIVE_EXPOSURE");
     assert.equal(evaluatePolicy({ ...base, symptomReported: true }).matchedRule, "WORKER_REPORTED_SYMPTOM");
+  });
+
+  it("selects rules from the readings when no official alert exists", () => {
+    assert.equal(evaluatePolicy({ ...base, apparentTemperatureC: 32 }).matchedRule, "ELEVATED_HEAT_INDEX");
+    assert.equal(evaluatePolicy({ ...base, apparentTemperatureC: 39 }).matchedRule, "HEAT_THRESHOLD");
+    assert.equal(evaluatePolicy({ ...base, apparentTemperatureC: 39, activeMinutes: 60 }).matchedRule, "HEAT_THRESHOLD_WITH_ACTIVE_EXPOSURE");
+    assert.equal(evaluatePolicy({ ...base, apparentTemperatureC: 52 }).matchedRule, "EXTREME_HEAT_INDEX");
+    assert.equal(evaluatePolicy({ ...base, temperatureC: 45 }).matchedRule, "HEAT_THRESHOLD");
   });
 
   it("returns byte-identical output 100 times", () => {

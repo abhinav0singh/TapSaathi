@@ -26,6 +26,7 @@ async function observation(mode: string, hubId: string, now: string) {
       temperatureC: data.current?.temperature_2m,
       relativeHumidity: data.current?.relative_humidity_2m,
       apparentTemperatureC: data.current?.apparent_temperature,
+      // Not an official alert: heat-policy-v2 decides from the readings themselves.
       officialHeatAlert: false,
       observedAt: now,
     });
