@@ -1,12 +1,12 @@
 # TaapSaathi project status
 
 **Updated:** 10 October 2026  
-**Current source:** `main` after PR #29 (`d33eb36`)  
-**Backend deployment:** post-PR #22 backend deployment status not fully confirmed
+**Current source and deployment:** `main` at `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
+**Backend deployment:** confirmed; CloudFormation `UPDATE_COMPLETE`, Amplify build `SUCCEED`
 
 ## Release assessment
 
-The core implementation is complete and the public API/frontend are reachable. The v2 take-break and symptom flows are recorded, but the remaining AWS gates must be re-run before the project can claim complete deployed verification.
+PR #30 is deployed correctly and its rider-audio authorization/privacy checks passed in production. The core implementation is complete, but the broader Phase 3 workflow evidence remains incomplete.
 
 ## Completed
 
@@ -20,17 +20,22 @@ The core implementation is complete and the public API/frontend are reachable. T
 - Safe delivery handling implemented before supervisor escalation.
 - `TAKE_BREAK` and `FEEL_UNWELL` with supervisor acknowledgment and audited self-resume recorded against heat-policy-v2.
 - Backend and Web GitHub Actions checks passing on `main`.
-- Local verification passing: 155 unit tests, TypeScript, CDK synthesis, definition validation, and Next.js production build.
+- Deployed release checks passing: typecheck, 180 unit tests, 16 infrastructure tests, CDK synthesis, and Next.js production build.
+- Ravi can retrieve only Ravi's protected audio; operator, supervisor, and cross-rider audio requests are rejected in production.
+- Public worker and dashboard APIs expose no audio URL, expiry, or storage key; signed Polly audio downloads successfully only through the protected route.
 
-## Open release gate
+## Remaining Phase 3 evidence
 
-[Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) requires live browser evidence for all three real Cognito roles:
+[Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) and the remaining workflow scenarios require live evidence:
 
 1. Operator signs in and successfully performs reset and heat spike.
 2. Ravi signs in, sees the live intervention, and submits a response.
 3. Neha signs in, sees the escalation, and acknowledges it.
 4. Worker and supervisor layouts are checked at a mobile viewport.
 5. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
+6. Take-break then rider resume; symptom escalation then acknowledgement and self-declared resume; timeout; duplicate event; and stale callback after reset are recorded with deployed evidence.
+
+The demo is currently clean with zero active interventions. An immediate reset once returned `500` while a workflow was finishing; a retry succeeded. This is not yet reset-isolation proof.
 
 ## Final rehearsal
 

@@ -130,12 +130,13 @@ The heat-spike endpoint does **not** start Step Functions directly. Scheduled an
 | Check | Status |
 | --- | --- |
 | TypeScript across the monorepo | ✅ Pass |
-| Unit tests | ✅ 25 files, 155 tests |
+| Unit tests | ✅ 180 tests |
 | CDK synthesis and state-machine validation | ✅ Pass |
 | Next.js production build | ✅ Pass |
 | Deployed v2 take-break and symptom workflows | ✅ Recorded in [golden-path evidence](docs/GOLDEN_PATH_EVIDENCE.md) |
 | v2 timeout, duplicate replay, stale callback after reset | ⏳ Not yet re-verified; do not treat earlier-policy evidence as v2 proof |
 | Wrong-role and missing-token rejection | ⏳ Needs fresh browser/API evidence on this release |
+| Protected rider audio | ✅ Deployed: matching rider `200`; operator, supervisor, and cross-rider requests `403` |
 | Reset during an in-flight workflow | ⏳ Needs fresh v2 evidence |
 | Three-role Cognito browser evidence | ⏳ In progress — [issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) |
 

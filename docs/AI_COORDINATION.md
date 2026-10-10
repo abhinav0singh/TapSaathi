@@ -6,11 +6,12 @@ next safe action. It is a coordination record, not evidence of deployment.
 
 ## Current change
 
-- **Branch:** `codex/protect-worker-audio`
-- **Purpose:** resolve the findings from the ChatGPT handoff analysis before
-  beginning Phase 3 verification.
-- **Deployment status:** local only. A deploy-capable AWS owner must deploy it
-  with `FRONTEND_ORIGINS` including both localhost and the Amplify origin.
+- **Merged/deployed commit:** `61836f8eb57580ba20d8c5708d5ad68c7ed123f1`
+- **Purpose:** PR #30 deployed; preserve its evidence boundary while preparing
+  the remaining Phase 3 workflow verification.
+- **Deployment status:** CloudFormation `UPDATE_COMPLETE`; Amplify `SUCCEED`.
+  The Amplify CORS origin is preserved and the demo reset is clean with zero
+  active interventions.
 
 ## What changed
 
@@ -50,10 +51,10 @@ next safe action. It is a coordination record, not evidence of deployment.
 
 ## Local verification run by Codex
 
-Performed after building `@taapsaathi/contracts`:
+The deployed release was verified with:
 
 - `npm run typecheck` — PASS
-- `npm run test:unit` — PASS, 25 files / 155 tests
+- `npm run test:unit` — PASS, 180 tests
 - `npm run test:infra` — PASS, 16 tests
 - `npm run synth` — PASS
 - `npm run verify:definition` — PASS
@@ -62,18 +63,25 @@ Performed after building `@taapsaathi/contracts`:
 The CDK commands emit existing deprecation warnings for `logRetention` and
 Step Functions `timeout`; these are not release blockers for this change.
 
-## Claude review checklist
+## Deployed PR #30 evidence
 
-1. Review authorization for `GET /workers/{workerId}/audio`: it must remain
-   JWT-protected and require the mapped rider identity to equal `workerId`.
-2. Confirm the public worker route never includes `audioUrl` or a signed URL.
-   It must also omit the private `audioKey`.
-3. Check personalized guidance works for English and Hindi and does not regress
-   the Ravi demo flow.
-4. Check the OpenAPI route and README/status wording are accurate and do not
-   overstate deployment evidence.
-5. Do not mark AWS scenarios verified without a real execution ARN, queried
-   deployed record, or captured browser/API proof.
+- Matching rider audio access returned `200`; operator, supervisor, and
+  cross-rider requests returned `403`.
+- The signed Polly audio downloaded successfully.
+- Public worker and dashboard APIs exposed no audio URL, expiry, or storage
+  key; all main pages returned `200`.
+- One immediate reset returned `500` while a workflow was finishing; retry
+  succeeded and the final state is clean. This is not reset-isolation proof.
+
+## Phase 3 review checklist
+
+1. Record deployed proof for break then rider resume, symptom escalation then
+   supervisor acknowledgement and self-declared resume, timeout, duplicate
+   event, and stale callback after reset.
+2. Capture execution ARNs, queried deployed records, or browser/API evidence
+   for every scenario before marking it verified.
+3. Investigate the transient reset `500` before treating reset isolation as
+   verified.
 
 ## Next action after deploy: Phase 3
 
