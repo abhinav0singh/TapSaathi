@@ -3,12 +3,13 @@ import {
   HealthResponseSchema,
   DemoHeatSpikeResponseSchema,
   DemoResetResponseSchema,
+  EventsResponseSchema,
   WorkerViewResponseSchema,
   RespondRequestSchema,
   RespondAcceptedSchema,
 } from "@taapsaathi/contracts";
 
-import type { RespondRequest } from "@taapsaathi/contracts";
+import type { AuditEvent, RespondRequest } from "@taapsaathi/contracts";
 import { getAccessToken } from "@/lib/auth";
 
 const API_URL =
@@ -82,6 +83,27 @@ export const api = {
       `/workers/${encodeURIComponent(workerId)}`,
       WorkerViewResponseSchema
     ),
+
+  eventsPage: (after?: string) =>
+    apiRequest(
+      `/events${after ? `?after=${encodeURIComponent(after)}` : ""}`,
+      EventsResponseSchema
+    ),
+
+  async allEvents(): Promise<AuditEvent[]> {
+    const events: AuditEvent[] = [];
+    let after: string | undefined;
+
+    for (let page = 0; page < 20; page += 1) {
+      const result = await this.eventsPage(after);
+      events.push(...result.events);
+      if (!result.nextCursor) return events;
+      if (result.nextCursor === after) throw new Error("Audit history did not advance.");
+      after = result.nextCursor;
+    }
+
+    throw new Error("Audit history is too long to verify safely.");
+  },
 
   respond: (interventionId: string, request: RespondRequest) => {
     const validated = RespondRequestSchema.parse(request);
