@@ -51,7 +51,7 @@ TaapSaathi connects those decisions in one workflow. Safety becomes an operation
 | --- | --- |
 | **Live operations map** | Shows rider positions, current safety state, rest routes, active interventions, and delivery ownership |
 | **Shared heat-risk engine** | Processes scheduled weather observations and labelled demo heat spikes through the same deterministic policy |
-| **Rider safety guidance** | Delivers bilingual instructions, route context, protected audio, and explicit break or symptom responses |
+| **Rider safety guidance** | Delivers bilingual instructions, route context, protected audio, explicit break or symptom responses, and an auditable return-to-work action after a completed break |
 | **Delivery protection** | Secures active work before reassignment so a safety intervention does not create ambiguous ownership |
 | **Human escalation** | Uses durable waits and authenticated supervisor acknowledgment when a rider does not respond |
 | **Auditable recovery** | Records the intervention timeline and isolates demo generations so stale callbacks cannot corrupt a reset |
@@ -77,7 +77,8 @@ TaapSaathi connects those decisions in one workflow. Safety becomes an operation
 3. **Guide** — Standard Step Functions creates a durable intervention while Amazon Location and Polly prepare route and voice guidance.
 4. **Protect** — DynamoDB transactions secure active work before reassignment or escalation.
 5. **Confirm** — Cognito-backed rider and supervisor responses advance the workflow with an audit trail.
-6. **Recover safely** — generation isolation prevents an old workflow or callback from corrupting a reset demo.
+6. **Return safely** — after a normal break, the rider can resume as `SAFE` with continuous active minutes reset while the reassigned delivery stays with its new rider.
+7. **Recover safely** — generation isolation prevents an old workflow or callback from corrupting a reset demo.
 
 ## Architecture
 
@@ -129,7 +130,7 @@ The heat-spike endpoint does **not** start Step Functions directly. Scheduled an
 | Check | Status |
 | --- | --- |
 | TypeScript across the monorepo | ✅ Pass |
-| Vitest | ✅ 22 files, 139 tests |
+| Vitest | ✅ 24 files, 144 tests |
 | CDK synthesis and state-machine validation | ✅ Pass |
 | Next.js production build | ✅ Pass |
 | Break and symptom workflows in deployed AWS | ✅ Pass |

@@ -56,6 +56,7 @@ describe("TaapSaathi infrastructure", () => {
 
     const protectedNames = [
       "RespondFunction",
+      "ResumeWorkerFunction",
       "HeatSpikeFunction",
       "ResetFunction",
     ];
@@ -142,6 +143,7 @@ describe("TaapSaathi infrastructure", () => {
 
     const protectedNames = [
       "RespondFunction",
+      "ResumeWorkerFunction",
       "HeatSpikeFunction",
       "ResetFunction",
     ];
@@ -179,7 +181,7 @@ describe("TaapSaathi infrastructure", () => {
       JSON.stringify(resource.Properties).includes("ssm:GetParameter")
     );
 
-    expect(ssmPolicies).toHaveLength(3);
+    expect(ssmPolicies).toHaveLength(4);
 
     for (const [logicalId, resource] of ssmPolicies) {
       const properties = resource.Properties as {
@@ -228,6 +230,7 @@ describe("TaapSaathi infrastructure", () => {
       "POST /demo/reset",
       "POST /demo/heat-spike",
       "POST /interventions/{interventionId}/respond",
+      "POST /workers/{workerId}/resume",
     ];
 
     for (const routeKey of protectedRoutes) {

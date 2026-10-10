@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type {
   Language,
   ResponseAction,
@@ -12,6 +13,8 @@ import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
 import { useAuditEvents } from "@/lib/useAuditEvents";
 import RoutePreview from "@/components/worker/RoutePreview";
 import RiderSessionLink from "@/components/worker/RiderSessionLink";
+import { useIdentity } from "@/components/useIdentity";
+import { hasRole } from "@/lib/auth";
 
 type WorkerView = z.infer<typeof WorkerViewResponseSchema>;
 
@@ -36,6 +39,13 @@ const copy = {
     overdueStatus: "SUPERVISOR RESPONSE OVERDUE",
     overdueInstruction: "No supervisor acknowledgment was recorded in time. Stay in a safe place and seek help.",
     overdueResponse: "The supervisor response window ended without acknowledgment.",
+    resumeTitle: "Ready to return?",
+    resumeHelp: "After resting and hydrating, confirm when you are ready. Your previous delivery stays reassigned.",
+    resume: "I am ready to resume work",
+    resuming: "Updating work status...",
+    riderSessionRequired: "This is a read-only preview. Ravi must use his signed-in rider session to respond.",
+    resumeSessionRequired: "After resting and hydrating, Ravi can return to SAFE from his authenticated rider session. The previous delivery stays reassigned.",
+    signIn: "Open rider sign-in",
   },
   hi: {
     title: "आपकी सुरक्षा सबसे पहले",
@@ -57,6 +67,13 @@ const copy = {
     overdueStatus: "सुपरवाइज़र का जवाब लंबित है",
     overdueInstruction: "समय पर सुपरवाइज़र की पुष्टि दर्ज नहीं हुई। सुरक्षित स्थान पर रहें और मदद लें।",
     overdueResponse: "सुपरवाइज़र से पुष्टि की अवधि बिना जवाब के समाप्त हो गई।",
+    resumeTitle: "काम पर लौटने के लिए तैयार हैं?",
+    resumeHelp: "आराम और पानी पीने के बाद तैयार होने पर पुष्टि करें। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
+    resume: "मैं काम पर लौटने के लिए तैयार हूँ",
+    resuming: "काम की स्थिति अपडेट हो रही है...",
+    riderSessionRequired: "यह केवल देखने के लिए है। जवाब देने के लिए रवि को अपने राइडर खाते से साइन इन करना होगा।",
+    resumeSessionRequired: "आराम और पानी पीने के बाद रवि अपने राइडर खाते से SAFE स्थिति में लौट सकता है। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
+    signIn: "राइडर साइन-इन खोलें",
   },
 } as const;
 
@@ -81,9 +98,11 @@ export default function RiderExperience({
   const [pending, setPending] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const identity = useIdentity();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const requestIdRef = useRef<string | null>(null);
+  const resumeRequestIdRef = useRef<string | null>(null);
 
   const t = copy[language];
   const auditEvents = useAuditEvents(
@@ -122,20 +141,30 @@ export default function RiderExperience({
     requestIdRef.current = null;
   }, [data?.intervention?.interventionId]);
 
-  const actionable =
+  const isRiderSession =
+    identity.status === "signed-in" &&
+    hasRole(identity.identity, "WORKER") &&
+    identity.identity.actorId === workerId;
+  const awaitingWorker =
     data?.intervention?.status === "AWAITING_WORKER" &&
     data.worker.activeInterventionId === data.intervention.interventionId &&
     !accepted &&
+    !stale;
+  const actionable = awaitingWorker && isRiderSession;
+  const canResume =
+    data?.worker.state === "RESTING" &&
+    !data.worker.activeInterventionId &&
+    isRiderSession &&
     !stale;
 
   useEffect(() => {
     const interval = window.setInterval(
       () => void refresh(),
-      actionable ? 2000 : 5000
+      awaitingWorker ? 2000 : 5000
     );
 
     return () => window.clearInterval(interval);
-  }, [refresh, actionable]);
+  }, [refresh, awaitingWorker]);
 
   function changeLanguage(value: Language) {
     setLanguage(value);
@@ -181,6 +210,25 @@ export default function RiderExperience({
       await audioRef.current.play();
     } catch {
       setAudioError("Audio playback is unavailable. Read the instruction above.");
+    }
+  }
+
+  async function resumeWork() {
+    if (!canResume || pending) return;
+
+    const clientRequestId = resumeRequestIdRef.current ?? crypto.randomUUID();
+    resumeRequestIdRef.current = clientRequestId;
+    setPending(true);
+    setError(null);
+
+    try {
+      await api.resumeWorker(workerId, { actorId: workerId, clientRequestId });
+      resumeRequestIdRef.current = null;
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to resume work.");
+    } finally {
+      setPending(false);
     }
   }
 
@@ -334,6 +382,43 @@ export default function RiderExperience({
                     {pending ? t.submitting : t.feelUnwell}
                   </button>
                 </>
+              ) : awaitingWorker ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center">
+                  <p className="text-sm leading-relaxed text-slate-700">{t.riderSessionRequired}</p>
+                  {identity.status === "anonymous" && (
+                    <Link
+                      href="/login"
+                      className="mt-4 inline-flex min-h-12 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-bold text-white"
+                    >
+                      {t.signIn}
+                    </Link>
+                  )}
+                </div>
+              ) : canResume ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <h2 className="text-lg font-bold text-emerald-950">{t.resumeTitle}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900">{t.resumeHelp}</p>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => void resumeWork()}
+                    className="mt-4 min-h-14 w-full rounded-xl bg-emerald-700 px-5 text-base font-bold text-white disabled:opacity-50"
+                  >
+                    {pending ? t.resuming : t.resume}
+                  </button>
+                </div>
+              ) : data.worker.state === "RESTING" ? (
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
+                  <p className="text-sm leading-relaxed text-blue-900">{t.resumeSessionRequired}</p>
+                  {identity.status === "anonymous" && (
+                    <Link
+                      href="/login"
+                      className="mt-4 inline-flex min-h-12 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-bold text-white"
+                    >
+                      {t.signIn}
+                    </Link>
+                  )}
+                </div>
               ) : (
                 <div role="status" className="rounded-xl bg-white p-4 text-center text-sm text-slate-600">
                   {supervisorOutcome?.status === "ACKNOWLEDGED"

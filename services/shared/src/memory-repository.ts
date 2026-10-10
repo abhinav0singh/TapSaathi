@@ -277,6 +277,32 @@ export class MemoryRepository implements Repository {
     this.auditEvents.push(clone(input.audit));
   }
 
+  public async resumeWorker(input: Parameters<Repository["resumeWorker"]>[0]): Promise<{ duplicate: boolean; resumedAt: string }> {
+    this.ensureGeneration(input.generation);
+    const existing = this.auditEvents.find(
+      (event) => event.auditEventId === `audit-resume-${input.clientRequestId}`
+    );
+    if (existing) return { duplicate: true, resumedAt: existing.occurredAt };
+
+    const worker = this.workers.get(input.workerId);
+    if (!worker) throw new NotFoundError("Worker not found.");
+    if (worker.state !== "RESTING" || worker.activeInterventionId) {
+      throw new ConflictError(
+        "WORKER_NOT_RESTING",
+        "Only a rider with a completed break can resume work."
+      );
+    }
+
+    this.workers.set(worker.workerId, {
+      ...worker,
+      state: "SAFE",
+      activeMinutes: 0,
+      updatedAt: input.now,
+    });
+    this.auditEvents.push(clone(input.audit));
+    return { duplicate: false, resumedAt: input.now };
+  }
+
   private ensureGeneration(generation: number): void {
     if (generation !== this.generation) throw new StaleGenerationError();
   }

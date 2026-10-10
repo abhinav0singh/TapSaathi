@@ -7,9 +7,11 @@ import {
   WorkerViewResponseSchema,
   RespondRequestSchema,
   RespondAcceptedSchema,
+  ResumeWorkerAcceptedSchema,
+  ResumeWorkerRequestSchema,
 } from "@taapsaathi/contracts";
 
-import type { AuditEvent, RespondRequest } from "@taapsaathi/contracts";
+import type { AuditEvent, RespondRequest, ResumeWorkerRequest } from "@taapsaathi/contracts";
 import { getAccessToken } from "@/lib/auth";
 
 const API_URL =
@@ -111,6 +113,19 @@ export const api = {
     return apiRequest(
       `/interventions/${encodeURIComponent(interventionId)}/respond`,
       RespondAcceptedSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(validated),
+      }
+    );
+  },
+
+  resumeWorker: (workerId: string, request: ResumeWorkerRequest) => {
+    const validated = ResumeWorkerRequestSchema.parse(request);
+
+    return apiRequest(
+      `/workers/${encodeURIComponent(workerId)}/resume`,
+      ResumeWorkerAcceptedSchema,
       {
         method: "POST",
         body: JSON.stringify(validated),

@@ -699,6 +699,80 @@ export class DynamoRepository implements Repository {
     }));
   }
 
+  public async resumeWorker(input: Parameters<Repository["resumeWorker"]>[0]): Promise<{ duplicate: boolean; resumedAt: string }> {
+    await this.assertGeneration(input.generation);
+    const requestKey = {
+      PK: `RESUME#${input.workerId}`,
+      SK: `REQUEST#${input.clientRequestId}`,
+    };
+
+    try {
+      await this.client.send(new TransactWriteCommand({
+        TransactItems: [
+          this.generationCheck(input.generation),
+          {
+            Update: {
+              TableName: this.tableName,
+              Key: { PK: `WORKER#${input.workerId}`, SK: "PROFILE" },
+              UpdateExpression: "SET #state = :safe, GSI1SK = :gsi, activeMinutes = :zero, updatedAt = :now",
+              ConditionExpression: "demoGeneration = :generation AND #state = :resting AND attribute_not_exists(activeInterventionId)",
+              ExpressionAttributeNames: { "#state": "state" },
+              ExpressionAttributeValues: {
+                ":safe": "SAFE",
+                ":resting": "RESTING",
+                ":gsi": `STATE#SAFE#WORKER#${input.workerId}`,
+                ":zero": 0,
+                ":now": input.now,
+                ":generation": input.generation,
+              },
+            },
+          },
+          {
+            Put: {
+              TableName: this.tableName,
+              Item: auditItem(input.audit),
+              ConditionExpression: "attribute_not_exists(PK)",
+            },
+          },
+          {
+            Put: {
+              TableName: this.tableName,
+              Item: {
+                ...requestKey,
+                entityType: "RESUME_REQUEST",
+                workerId: input.workerId,
+                interventionId: input.interventionId,
+                clientRequestId: input.clientRequestId,
+                demoGeneration: input.generation,
+                resumedAt: input.now,
+                expiresAt: Math.floor(new Date(input.now).getTime() / 1000) + 86400,
+              },
+              ConditionExpression: "attribute_not_exists(PK)",
+            },
+          },
+        ],
+      }));
+      return { duplicate: false, resumedAt: input.now };
+    } catch (error) {
+      if (!isConditionalFailure(error)) throw error;
+      const previous = await this.client.send(new GetCommand({
+        TableName: this.tableName,
+        Key: requestKey,
+        ConsistentRead: true,
+      }));
+      if (
+        previous.Item?.["demoGeneration"] === input.generation
+        && previous.Item?.["interventionId"] === input.interventionId
+      ) {
+        return { duplicate: true, resumedAt: String(previous.Item?.["resumedAt"] ?? input.now) };
+      }
+      throw new ConflictError(
+        "WORKER_NOT_RESTING",
+        "Only a rider with a completed break can resume work."
+      );
+    }
+  }
+
   private async queryHub<T>(hubId: string, prefix: string): Promise<T[]> {
     const result = await this.client.send(new QueryCommand({
       TableName: this.tableName,
