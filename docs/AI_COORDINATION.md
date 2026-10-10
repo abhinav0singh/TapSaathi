@@ -97,6 +97,17 @@ zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
    zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to
    Ravi. That snapshot is a readiness baseline, not additional scenario proof.
 
+**Browser-evidence progress (11 October 2026):** an existing authenticated Ravi
+worker session was checked at a 375 × 812 viewport. The clean `SAFE` worker
+screen rendered correctly in English and Hindi; the visible identity remained
+Ravi and the Hindi view localized the heading, response-status notice,
+emergency CTA, and simulation disclosure. This is a responsive clean-state
+baseline captured in the review session, not proof of an active intervention,
+audio greeting, operator action, or supervisor acknowledgement. Chrome did not
+have an authenticated AWS Console session, so no Step Functions graph was
+captured. Do not mark the remaining browser/mobile or graph criteria complete
+until an authenticated, redacted evidence capture covers the active flows.
+
 ## Next action after deploy: Phase 3
 
 Complete the three-role browser evidence for issue #8 at desktop and mobile

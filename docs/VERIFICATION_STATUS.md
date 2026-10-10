@@ -51,4 +51,4 @@ The recorded evidence sequence ended with a reset to generation 34 with zero act
 
 ## Remaining acceptance gate
 
-Real browser sessions must still prove operator, worker, and supervisor navigation and authenticated actions through Cognito and API Gateway. Direct Lambda invocations used realistic JWT claim contexts for some backend workflow tests, so those runs prove the deployed business workflow but do not replace the browser/authorizer evidence.
+Real browser sessions must still prove operator, worker, and supervisor navigation and authenticated actions through Cognito and API Gateway. An authenticated Ravi worker view was checked at a 375 × 812 viewport on 11 October 2026 in English and Hindi, while the demo was `SAFE`; that is a responsive clean-state baseline only, not active-flow proof or a submission screenshot. Chrome had no authenticated AWS Console session, so a redacted Step Functions execution-graph capture is also still required. Direct Lambda invocations used realistic JWT claim contexts for some backend workflow tests, so those runs prove the deployed business workflow but do not replace the browser/authorizer evidence.

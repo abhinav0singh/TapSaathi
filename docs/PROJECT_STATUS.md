@@ -32,6 +32,13 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 2. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
 3. Step Functions graph screenshots and browser evidence are captured for the submission package.
 
+On 11 October 2026, an authenticated Ravi worker view was manually checked at
+375 × 812 in English and Hindi while the demo was clean (`SAFE`). It establishes
+only a responsive baseline: it does not replace active-flow evidence for
+operator, worker, or supervisor actions, and its review-session capture is not
+yet a submission screenshot. The available Chrome profile had no AWS Console
+session, so Step Functions graph capture remains outstanding.
+
 Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
 
 ## Final rehearsal
