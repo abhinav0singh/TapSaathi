@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { DashboardResponse } from "@taapsaathi/contracts";
 import AppNav from "@/components/AppNav";
+import OperationsMap from "@/components/ops/OperationsMap";
 import { api } from "@/lib/api";
 import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
 import { useAuditEvents } from "@/lib/useAuditEvents";
@@ -170,6 +171,12 @@ export default function OperationsPage() {
                 </div>
               ))}
             </section>
+
+            <OperationsMap
+              hubName={data.hub.name}
+              workers={data.workers}
+              activeInterventions={data.activeInterventions}
+            />
 
             <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
