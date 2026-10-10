@@ -75,6 +75,13 @@ Step Functions `timeout`; these are not release blockers for this change.
 
 ## Phase 3 review checklist
 
+**Preflight (10 October 2026):** production `/health` returned `ok` and the
+public dashboard reported demo generation 22 with zero active interventions.
+The approved AWS verification profile authenticated successfully. No
+state-changing Phase 3 scenario has run in this session because fresh Cognito
+access tokens for the operator, Ravi, and Neha are not present; do not place
+tokens in this file, the repository, or chat evidence.
+
 1. Record deployed proof for break then rider resume, symptom escalation then
    supervisor acknowledgement and self-declared resume, timeout, duplicate
    event, and stale callback after reset.
