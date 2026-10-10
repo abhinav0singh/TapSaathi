@@ -55,8 +55,6 @@ export const WorkerViewResponseSchema = z.object({
   instruction: z.string(),
   intervention: PublicInterventionSchema.optional(),
   route: RouteViewSchema.optional(),
-  audioUrl: z.string().url().optional(),
-  audioExpiresAt: IsoDateSchema.optional(),
   simulated: z.literal(true),
   updatedAt: IsoDateSchema,
 });

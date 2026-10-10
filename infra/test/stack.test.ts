@@ -59,6 +59,7 @@ describe("TaapSaathi infrastructure", () => {
       "ResumeWorkerFunction",
       "HeatSpikeFunction",
       "ResetFunction",
+      "WorkerAudioFunction",
     ];
 
     const functions = Object.entries(resources).filter(
@@ -146,6 +147,7 @@ describe("TaapSaathi infrastructure", () => {
       "ResumeWorkerFunction",
       "HeatSpikeFunction",
       "ResetFunction",
+      "WorkerAudioFunction",
     ];
 
     const parameterName = "/taapsaathi/demo/identity-mapping";
@@ -181,7 +183,7 @@ describe("TaapSaathi infrastructure", () => {
       JSON.stringify(resource.Properties).includes("ssm:GetParameter")
     );
 
-    expect(ssmPolicies).toHaveLength(4);
+    expect(ssmPolicies).toHaveLength(5);
 
     for (const [logicalId, resource] of ssmPolicies) {
       const properties = resource.Properties as {

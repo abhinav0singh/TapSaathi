@@ -43,6 +43,10 @@ next safe action. It is a coordination record, not evidence of deployment.
 10. OpenAPI, runbook, and design/test documents now state that public worker
     and dashboard views omit private audio data, while the rider-specific audio
     endpoint requires a matching JWT and returns configuration failures as 500.
+11. `WorkerAudioFunction` now receives the SSM identity-mapping parameter name
+    and least-privilege `ssm:GetParameter` permission in CDK. The public worker
+    contract no longer permits audio URL fields; those remain exclusive to the
+    rider-specific audio response.
 
 ## Local verification run by Codex
 

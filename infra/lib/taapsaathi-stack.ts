@@ -310,7 +310,7 @@ export class TaapSaathiStack extends cdk.Stack {
       resourceName: identityMappingParameterName.replace(/^\//, ""),
     });
 
-    for (const fn of [respondFunction, resumeWorkerFunction, heatSpikeFunction, resetFunction]) {
+    for (const fn of [respondFunction, resumeWorkerFunction, heatSpikeFunction, resetFunction, workerAudioFunction]) {
       fn.addEnvironment(
         "DEMO_IDENTITY_MAPPING_PARAMETER",
         identityMappingParameterName
