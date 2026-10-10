@@ -10,6 +10,9 @@ import {
   WorkerSchema,
 } from "./entities.js";
 
+/** The intervention view safe to return from the public worker route. */
+export const PublicInterventionSchema = InterventionSchema.omit({ audioKey: true });
+
 export const ErrorEnvelopeSchema = z.object({
   error: z.object({
     code: z.string().min(1),
@@ -41,7 +44,7 @@ export const DashboardResponseSchema = z.object({
   }),
   workers: z.array(WorkerSchema),
   tasks: z.array(DeliveryTaskSchema),
-  activeInterventions: z.array(InterventionSchema),
+  activeInterventions: z.array(PublicInterventionSchema),
   recentEvents: z.array(AuditEventSchema),
   nextCursor: z.string().nullable(),
   updatedAt: IsoDateSchema,
@@ -50,12 +53,16 @@ export const DashboardResponseSchema = z.object({
 export const WorkerViewResponseSchema = z.object({
   worker: WorkerSchema,
   instruction: z.string(),
-  intervention: InterventionSchema.optional(),
+  intervention: PublicInterventionSchema.optional(),
   route: RouteViewSchema.optional(),
-  audioUrl: z.string().url().optional(),
-  audioExpiresAt: IsoDateSchema.optional(),
   simulated: z.literal(true),
   updatedAt: IsoDateSchema,
+});
+
+/** A short-lived audio URL, returned only to the authenticated rider it concerns. */
+export const WorkerAudioResponseSchema = z.object({
+  audioUrl: z.string().url(),
+  audioExpiresAt: IsoDateSchema,
 });
 
 export const EventsQuerySchema = z.object({

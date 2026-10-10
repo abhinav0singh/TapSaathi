@@ -13,15 +13,28 @@ paths:
     get:
       operationId: getDashboard
       responses:
-        "200": { description: Current hub state, content: { application/json: { schema: { type: object } } } }
+        "200": { description: Current public hub state; active interventions omit private S3 keys and signed URLs., content: { application/json: { schema: { type: object } } } }
   /workers/{workerId}:
     get:
       operationId: getWorker
       parameters:
         - { name: workerId, in: path, required: true, schema: { type: string, minLength: 1 } }
       responses:
-        "200": { description: Worker view, content: { application/json: { schema: { type: object } } } }
+        "200": { description: Public worker view; intervention omits private S3 keys and signed URLs., content: { application/json: { schema: { type: object } } } }
         "404": { $ref: "#/components/responses/Error" }
+  /workers/{workerId}/audio:
+    get:
+      operationId: getWorkerAudio
+      summary: Return a short-lived guidance-audio URL for the authenticated rider only.
+      security: [{ CognitoJwt: [] }]
+      parameters:
+        - { name: workerId, in: path, required: true, schema: { type: string, minLength: 1 } }
+      responses:
+        "200": { description: Short-lived private audio URL, content: { application/json: { schema: { $ref: "#/components/schemas/WorkerAudio" } } } }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "500": { description: Audio service configuration is unavailable., $ref: "#/components/responses/Error" }
   /events:
     get:
       operationId: getEvents
@@ -79,6 +92,12 @@ components:
         action: { enum: [TAKE_BREAK, FEEL_UNWELL, SUPERVISOR_ACK] }
         language: { enum: [en, hi] }
         clientRequestId: { type: string, format: uuid }
+    WorkerAudio:
+      type: object
+      required: [audioUrl, audioExpiresAt]
+      properties:
+        audioUrl: { type: string, format: uri }
+        audioExpiresAt: { type: string, format: date-time }
     Error:
       type: object
       additionalProperties: false
@@ -98,3 +117,8 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+  securitySchemes:
+    CognitoJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

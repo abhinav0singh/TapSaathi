@@ -217,7 +217,7 @@ aws s3api get-public-access-block --bucket "$AUDIO_BUCKET_NAME" | tee evidence/a
 aws s3api list-objects-v2 --bucket "$AUDIO_BUCKET_NAME" --output json | tee evidence/audio-objects.json
 ```
 
-The intervention route must say `provider: AMAZON_LOCATION`; otherwise the honest fallback is active and GD-001 remains failed. The worker response must contain a short-lived HTTPS audio URL, while direct public bucket access remains blocked.
+The intervention route must say `provider: AMAZON_LOCATION`; otherwise the honest fallback is active and GD-001 remains failed. Public dashboard and worker responses must contain neither `audioKey` nor a signed audio URL. Request audio only with the matching rider's JWT at `GET /workers/{workerId}/audio`; it returns a five-minute URL. Do not save or commit that URL as evidence. Direct public bucket access remains blocked.
 
 ## 7. Gate 5 — repeatability
 

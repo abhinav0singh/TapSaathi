@@ -215,12 +215,11 @@ interface WorkerView {
   instruction: string;
   interventionId?: string;
   route?: RouteView;
-  audioUrl?: string;
   updatedAt: string;
 }
 ```
 
-The exact exported schemas in the repository are authoritative. This document defines intent, not a second source of truth.
+The rider client fetches audio separately from the JWT-protected worker-audio endpoint; public worker and dashboard payloads never include an audio URL or private S3 key. The exact exported schemas in the repository are authoritative. This document defines intent, not a second source of truth.
 
 ## 8. API-client behavior
 

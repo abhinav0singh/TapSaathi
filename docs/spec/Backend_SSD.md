@@ -407,17 +407,21 @@ Returns:
 
 ### 14.2 `GET /dashboard`
 
-Returns summary, workers, tasks, active interventions, recent events, and `nextCursor`.
+Returns summary, workers, tasks, active interventions, recent events, and `nextCursor`. Public intervention views omit private `audioKey` values and signed URLs.
 
 ### 14.3 `GET /workers/{workerId}`
 
-Returns the worker view required by the mobile page. Never return task tokens.
+Returns the worker view required by the mobile page. Never return task tokens, private `audioKey` values, or signed audio URLs.
 
-### 14.4 `GET /events?after={cursor}`
+### 14.4 `GET /workers/{workerId}/audio`
+
+Requires a Cognito JWT for the worker mapped to `workerId`. Returns a five-minute signed audio URL only after identity validation. Missing intervention/audio is `404`; missing audio-bucket configuration is a `500` operator-remediation error.
+
+### 14.5 `GET /events?after={cursor}`
 
 Returns ordered audit events. Cursor is opaque to the frontend.
 
-### 14.5 `POST /interventions/{id}/respond`
+### 14.6 `POST /interventions/{id}/respond`
 
 Request:
 

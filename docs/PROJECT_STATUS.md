@@ -1,12 +1,12 @@
 # TaapSaathi project status
 
 **Updated:** 10 October 2026  
-**Current source:** `main` after PR #22  
-**Backend deployment:** `1f393fb734007a8a4e028ba7bed5c6388363d2da`
+**Current source:** `main` after PR #29 (`d33eb36`)  
+**Backend deployment:** post-PR #22 backend deployment status not fully confirmed
 
 ## Release assessment
 
-The project is backend-complete and deployed. The principal safety workflows have passed against AWS, including the stale-generation behavior fixed by PR #11. The remaining judge-readiness work is user-facing proof and rehearsal.
+The core implementation is complete and the public API/frontend are reachable. The v2 take-break and symptom flows are recorded, but the remaining AWS gates must be re-run before the project can claim complete deployed verification.
 
 ## Completed
 
@@ -18,9 +18,9 @@ The project is backend-complete and deployed. The principal safety workflows hav
 - API Gateway JWT authorization and server-side subject-to-role mapping enabled for all mutations.
 - EventBridge, Standard Step Functions, DynamoDB, Amazon Location, Polly, private S3, CloudWatch, and X-Ray integrated.
 - Safe delivery handling implemented before supervisor escalation.
-- `TAKE_BREAK`, `FEEL_UNWELL`, worker timeout, supervisor timeout, duplicate event, duplicate callback, negative authorization, and reset-isolation scenarios verified in AWS.
+- `TAKE_BREAK` and `FEEL_UNWELL` with supervisor acknowledgment and audited self-resume recorded against heat-policy-v2.
 - Backend and Web GitHub Actions checks passing on `main`.
-- Local verification passing: 139 Vitest tests, TypeScript, CDK synthesis, definition validation, and Next.js production build.
+- Local verification passing: 155 unit tests, TypeScript, CDK synthesis, definition validation, and Next.js production build.
 
 ## Open release gate
 
