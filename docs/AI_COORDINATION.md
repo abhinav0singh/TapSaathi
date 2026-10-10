@@ -75,16 +75,23 @@ Step Functions `timeout`; these are not release blockers for this change.
 
 ## Phase 3 review checklist
 
-**Preflight (10 October 2026):** production `/health` returned `ok` and the
-public dashboard reported demo generation 22 with zero active interventions.
-The approved AWS verification profile authenticated successfully. No
-state-changing Phase 3 scenario has run in this session because fresh Cognito
-access tokens for the operator, Ravi, and Neha are not present; do not place
-tokens in this file, the repository, or chat evidence.
+**Live verification (11 October 2026):** fresh Cognito sessions for the
+operator, Ravi, and Neha were created in process and discarded without writing
+tokens to disk or evidence. Three clean `TAKE_BREAK` then rider-resume runs
+passed on generations 23–25. Each used an `AMAZON_LOCATION` route, returned
+protected rider audio, reassigned `delivery-001` to Asha, completed its real
+Step Functions execution, returned Ravi to `SAFE` with zero active minutes, and
+left the reassigned delivery with Asha. A `FEEL_UNWELL` run on generation 28
+also passed through Neha's acknowledgement and Ravi's audited self-declared
+resume. Missing-token reset returned `401`, worker-token reset and rider
+impersonation returned `403`, same-request replay remained idempotent, and a
+new response after consumption returned `409`. All resets in this sequence
+succeeded on the first attempt. The final reset produced generation 29 with
+zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
 
-1. Record deployed proof for break then rider resume, symptom escalation then
-   supervisor acknowledgement and self-declared resume, timeout, duplicate
-   event, and stale callback after reset.
+1. Record deployed proof for timeout, duplicate EventBridge delivery, and a
+   stale callback after reset. Break/resume, symptom acknowledgement/resume,
+   callback idempotency, and JWT negatives now have current deployed proof.
 2. Capture execution ARNs, queried deployed records, or browser/API evidence
    for every scenario before marking it verified.
 3. Investigate the transient reset `500` before treating reset isolation as
@@ -92,10 +99,10 @@ tokens in this file, the repository, or chat evidence.
 
 ## Next action after deploy: Phase 3
 
-Run and record a clean v2 verification sequence: take-break then rider resume;
-symptom report then supervisor acknowledgment then self-declared resume; timeout
-escalation; duplicate-event replay; stale callback after reset; and real JWT
-negative checks. Capture Step Functions execution ARNs and graph screenshots.
+Run and record the remaining v2 sequence: timeout escalation, duplicate
+EventBridge replay, and stale callback after reset. Capture the remaining Step
+Functions execution ARNs and graph screenshots, then complete the three-role
+browser evidence for issue #8.
 
 ## Working rules
 

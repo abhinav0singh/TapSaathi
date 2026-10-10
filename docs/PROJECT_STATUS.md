@@ -28,14 +28,12 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 
 [Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) and the remaining workflow scenarios require live evidence:
 
-1. Operator signs in and successfully performs reset and heat spike.
-2. Ravi signs in, sees the live intervention, and submits a response.
-3. Neha signs in, sees the escalation, and acknowledges it.
-4. Worker and supervisor layouts are checked at a mobile viewport.
-5. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
-6. Take-break then rider resume; symptom escalation then acknowledgement and self-declared resume; timeout; duplicate event; and stale callback after reset are recorded with deployed evidence.
+1. Worker and supervisor layouts are checked in real browsers at a mobile viewport.
+2. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
+3. Timeout escalation, duplicate EventBridge delivery, and stale callback after reset are recorded with deployed evidence.
+4. Step Functions graph screenshots and the remaining DynamoDB audit evidence are captured.
 
-The demo is currently clean with zero active interventions. An immediate reset once returned `500` while a workflow was finishing; a retry succeeded. This is not yet reset-isolation proof.
+Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback behavior, and JWT role enforcement. The demo is clean at generation 29 with zero active interventions. This is still not deliberate stale-callback reset-isolation proof.
 
 ## Final rehearsal
 

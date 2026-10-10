@@ -45,3 +45,33 @@ This closes the failure observed before PR #11, where expected stale work ended 
 The Step Functions executions, EventBridge delivery, DynamoDB mutations, reassignment, timeout behavior, and reset isolation above used real deployed AWS resources. Several workflow tests invoked API Lambda handlers with realistic API Gateway JWT claim contexts derived from the encrypted runtime identity mapping. Separate negative tests exercised API Gateway's missing and invalid JWT rejection.
 
 The remaining browser gate is a successful real Cognito sign-in and action for each role through the Amplify application. That evidence is tracked in [issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8). No password, JWT, callback token, or SSM value is stored in this document.
+
+## Current-release Phase 3 evidence — 11 October 2026
+
+The deployed PR #30 release (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`)
+was exercised through API Gateway with fresh Cognito access tokens held only in
+process memory.
+
+- Three `TAKE_BREAK` then rider-resume runs passed on generations 23–25. All
+  used `AMAZON_LOCATION`, returned protected rider audio, reassigned the active
+  delivery to Asha, completed in Step Functions, and returned Ravi to `SAFE`
+  without reclaiming the delivery.
+- Generation 28 passed `FEEL_UNWELL`, Neha's supervisor acknowledgement, and
+  Ravi's self-declared resume. The delivery remained assigned to Asha.
+- Missing-token reset returned `401`; worker-token reset and Ravi-as-Asha
+  response returned `403`.
+- Replaying the same callback request stayed idempotent; sending a new request
+  after callback consumption returned `409`.
+- The final reset created generation 29 with zero active interventions, Ravi
+  `SAFE`, and `delivery-001` assigned to Ravi.
+
+Step Functions executions:
+
+- Break/resume generation 23: `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:494bea49-f5c6-6ab3-6b8f-bcaf426d6582_4bb81326-19a0-4f9d-0db2-53876aa2d0b7`
+- Break/resume generation 24: `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:97e03a7e-7ef3-b427-5561-babfcc8c814c_0b0c70c9-233a-2e18-ace8-d8cfa09be8f7`
+- Break/resume generation 25: `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:7a597279-9b38-cd59-0405-1da73d1a7068_7dba6ab3-99bd-c994-07f0-1d211cac4ae8`
+- Symptom/acknowledgement/resume generation 28: `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:f43cef9e-2cfa-6fc9-54f8-14a178eeb220_3b4735bd-d29d-2d64-8b10-0be9c6ac9ad7`
+
+This evidence does not yet verify current-release timeout behavior, duplicate
+EventBridge delivery, stale callbacks after an in-flight reset, Step Functions
+graph screenshots, or the real-browser/mobile acceptance gate.
