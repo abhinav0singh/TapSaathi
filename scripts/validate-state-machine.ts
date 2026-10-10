@@ -25,6 +25,7 @@ const requiredStates = [
   "MarkRiderResting",
   "EscalateSupervisor",
   "AwaitSupervisorAcknowledgement",
+  "StaleGenerationComplete",
   "InterventionFinished",
 ];
 for (const state of requiredStates) {

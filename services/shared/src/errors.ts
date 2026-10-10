@@ -25,5 +25,6 @@ export class NotFoundError extends AppError {
 export class StaleGenerationError extends ConflictError {
   public constructor() {
     super("STALE_DEMO_GENERATION", "This operation belongs to an earlier demo generation.");
+    this.name = "StaleGenerationError";
   }
 }

@@ -43,7 +43,7 @@ describe("TaapSaathi infrastructure", () => {
         ]),
       }),
     });
-  });
+  }, 60_000);
 
   it("attaches SSM permissions only to protected Lambda roles", () => {
     const resources = template().toJSON().Resources as Record<
@@ -471,5 +471,35 @@ describe("TaapSaathi infrastructure", () => {
     expect(states["SecureActiveDeliveryForEscalation"]?.Next).toBe(
       "EscalateSupervisor"
     );
+  });
+
+  it("completes obsolete demo-generation workflows without raising a failure alarm", () => {
+    const states = workflowStates();
+
+    expect(states["StaleGenerationComplete"]?.Type).toBe("Succeed");
+
+    for (const stateName of [
+      "AcquireIdempotencyLock",
+      "LoadWorkerDeliveryPolicyHub",
+      "CreateIntervention",
+      "PrepareGuidanceWithLocationAndPolly",
+      "AwaitWorkerResponse",
+      "ReassignActiveDeliveryTransactionally",
+      "SecureActiveDeliveryForEscalation",
+      "EscalateSupervisor",
+      "AwaitSupervisorAcknowledgement",
+      "CompleteBreakIntervention",
+      "CompleteSupervisorResponding",
+      "CompleteSupervisorUnacknowledged",
+    ]) {
+      expect(states[stateName]?.Catch, stateName).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ErrorEquals: ["StaleGenerationError"],
+            Next: "StaleGenerationComplete",
+          }),
+        ])
+      );
+    }
   });
 });

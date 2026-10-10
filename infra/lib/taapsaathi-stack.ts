@@ -149,6 +149,7 @@ export class TaapSaathiStack extends cdk.Stack {
       lambdaFunction: fn,
       payloadResponseOnly: true,
     });
+    const staleGenerationComplete = new sfn.Succeed(this, "StaleGenerationComplete");
     const acquireState = invoke("AcquireIdempotencyLock", acquireLock);
     const duplicateComplete = new sfn.Succeed(this, "DuplicateComplete");
     const loadState = invoke("LoadWorkerDeliveryPolicyHub", loadContext);
@@ -235,6 +236,26 @@ export class TaapSaathiStack extends cdk.Stack {
     const duplicateChoice = new sfn.Choice(this, "DuplicateRiskEvent");
     duplicateChoice.when(sfn.Condition.booleanEquals("$.duplicate", true), duplicateComplete).otherwise(loadState);
     acquireState.next(duplicateChoice);
+
+    for (const state of [
+      acquireState,
+      loadState,
+      createState,
+      guidanceState,
+      awaitWorker,
+      reassignState,
+      secureEscalationDelivery,
+      escalateState,
+      awaitSupervisor,
+      completeBreak,
+      completeSupervisor,
+      completeUnacknowledged,
+    ]) {
+      state.addCatch(staleGenerationComplete, {
+        errors: ["StaleGenerationError"],
+        resultPath: "$.staleGenerationError",
+      });
+    }
 
     const stateMachineLogGroup = new logs.LogGroup(this, "WorkflowLogGroup", { retention: logs.RetentionDays.ONE_WEEK, removalPolicy: cdk.RemovalPolicy.DESTROY });
     const stateMachine = new sfn.StateMachine(this, "InterventionStateMachine", {
