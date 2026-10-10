@@ -1,6 +1,20 @@
-# Judge demo runbook
+# Judge guide and demo runbook
 
-Use this runbook only after the three-role browser evidence in issue #8 passes. Keep operator, Ravi, and Neha signed in through separate browser profiles so role changes do not consume demo time.
+## For judges: two minutes, no live demo needed
+
+There is no live presentation, so everything below works without anyone on the team present.
+
+1. Open the app at <https://main.d6hf0wv24qbik.amplifyapp.com>.
+2. Choose **Recorded run** (landing page, top navigation or the sign-in page). No sign-in is needed. Step through either the *Rider takes a break* or the *Rider feels unwell* run. Each step is a real audit event written by the deployed AWS workflow, and the page says plainly that it is a replay.
+3. Open **Operations** for the read-only live board. It shows the current simulated demo state; the actions need an account.
+4. To try the actions yourself, sign in with `demo-operator` (trigger a heat spike), `demo-ravi` (rider screen) or `demo-neha` (supervisor). The demo password is in the submission writeup and is not stored in this repository. After a run, use **Reset** on the operations board.
+5. Evidence for what was verified, and what was not, is in `docs/GOLDEN_PATH_EVIDENCE.md`.
+
+Everything is simulated demonstration data. TaapSaathi makes no medical claims and does not contact emergency services.
+
+## For the team: recording the demo video
+
+Keep operator, Ravi, and Neha signed in through separate browser profiles so role changes do not consume recording time.
 
 ## Five-minute preflight
 

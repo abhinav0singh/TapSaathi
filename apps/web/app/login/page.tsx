@@ -84,6 +84,16 @@ export default function LoginPage() {
           </p>
         </div>
 
+        <aside aria-label="Judge access" className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-slate-800">
+          <p className="font-bold">Reviewing this project?</p>
+          <p className="mt-1 leading-6">
+            You can see everything without signing in: <Link href="/demo" className="font-semibold underline">watch a recorded run</Link>, or open the
+            read-only <Link href="/ops" className="font-semibold underline">operations board</Link>. To try the actions yourself, sign in with one of the demo
+            accounts <code className="rounded bg-white px-1">demo-operator</code>, <code className="rounded bg-white px-1">demo-ravi</code> or{" "}
+            <code className="rounded bg-white px-1">demo-neha</code>. The demo password is in the submission writeup.
+          </p>
+        </aside>
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label

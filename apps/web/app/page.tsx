@@ -38,6 +38,7 @@ export default function HomePage() {
           <div className="hidden items-center gap-8 text-sm text-white/65 md:flex">
             <a href="#how-it-works" className="transition hover:text-white">How it works</a>
             <a href="#architecture" className="transition hover:text-white">Architecture</a>
+            <Link href="/demo" className="transition hover:text-white">Recorded run</Link>
             <Link href="/login" className="transition hover:text-white">Sign in</Link>
           </div>
           <Link href="/ops" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#f4f1e8] px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-white">
@@ -59,12 +60,12 @@ export default function HomePage() {
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link href="/ops" className="inline-flex min-h-14 items-center gap-3 rounded-full bg-orange-500 px-7 font-bold text-slate-950 transition hover:-translate-y-1 hover:bg-orange-400">Explore the live demo <ArrowIcon /></Link>
-              <a href="#how-it-works" className="inline-flex min-h-14 items-center rounded-full border border-white/20 px-7 font-semibold text-white transition hover:border-white/40 hover:bg-white/5">See the safety loop</a>
+              <Link href="/demo" className="inline-flex min-h-14 items-center rounded-full border border-white/20 px-7 font-semibold text-white transition hover:border-white/40 hover:bg-white/5">Watch a recorded run</Link>
             </div>
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/10 pt-6 text-sm text-white/50">
               <span><strong className="mr-2 text-white">Real AWS</strong> orchestration</span>
               <span><strong className="mr-2 text-white">3 roles</strong> protected by Cognito</span>
-              <span><strong className="mr-2 text-white">139 tests</strong> passing</span>
+              <span><strong className="mr-2 text-white">140+ tests</strong> passing</span>
             </div>
           </div>
 
@@ -82,7 +83,7 @@ export default function HomePage() {
                 <div className="absolute right-[19%] top-[17%] h-5 w-5 rounded-full border-4 border-white bg-emerald-500 shadow-lg" />
 
                 <div className="absolute left-5 top-5 rounded-2xl border border-white/60 bg-white/85 p-4 shadow-lg backdrop-blur md:left-7 md:top-7">
-                  <p className="text-[10px] font-black uppercase tracking-[.18em] text-orange-700">Live safety network</p>
+                  <p className="text-[10px] font-black uppercase tracking-[.18em] text-orange-700">Illustration · simulated hub</p>
                   <p className="mt-2 text-lg font-black">Delhi North Hub</p>
                   <p className="mt-1 text-xs text-slate-500">3 riders · 1 needs follow-up</p>
                 </div>

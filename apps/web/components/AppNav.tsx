@@ -18,7 +18,7 @@ export default function AppNav() {
   const identity = state.status === "signed-in" ? state.identity : null;
 
   const items: NavItem[] = [];
-  items.push({ href: "/", label: "Home" });
+  items.push({ href: "/", label: "Home" }, { href: "/demo", label: "Recorded run" });
   if (!identity) {
     items.push({ href: "/ops", label: "Operations" }, { href: "/login", label: "Sign in" });
   } else {
