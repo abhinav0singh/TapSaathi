@@ -2,7 +2,7 @@
 
 # TaapSaathi
 
-### Heat safety that keeps people protected and deliveries moving.
+### When heat puts a rider at risk, TaapSaathi turns the warning into coordinated action.
 
 [![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml)
 [![Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml)
@@ -13,21 +13,50 @@
 
 </div>
 
-![TaapSaathi safety loop](docs/assets/taapsaathi-safety-loop.gif)
+![TaapSaathi turns rider heat risk into coordinated safety and delivery action](docs/assets/taapsaathi-value.gif)
 
-## The problem
+## What TaapSaathi does
 
-Delivery riders work through rising heat, traffic, and time pressure. A weather alert alone does not answer the operational questions that follow:
+**TaapSaathi is a heat-safety intervention and dispatch coordination system for delivery operations.** When heat and workload put a rider at risk, it creates a durable intervention, guides the rider toward safety, protects the active delivery, and brings in an authenticated supervisor when a human response is needed.
+
+> **Heat risk → rider guidance → delivery continuity → supervisor accountability**
+
+It closes the gap between detecting danger and acting on it. One intervention coordinates the rider, the delivery, and the operations team while recording every decision in an auditable timeline.
+
+## The value it creates
+
+| For | TaapSaathi provides | Why it matters |
+| --- | --- | --- |
+| **Riders** | Timely route-to-rest, bilingual text and voice guidance, and a clear way to report symptoms or take a break | Less uncertainty when every minute in the heat matters |
+| **Operations teams** | A live map, rider state, delivery ownership, and safe reassignment in one command center | Safety action and delivery continuity stay connected |
+| **Supervisors** | Authenticated escalation with the context needed to follow up | Human attention goes to interventions that need it most |
+| **Organizations** | A durable, role-aware record of risk, responses, timeouts, and decisions | The response is explainable, testable, and accountable |
+
+## The problem it solves
+
+Delivery riders work through changing heat, traffic, and time pressure. A weather alert can identify a hot day, but it does not complete the response:
 
 - Which rider is at risk **right now**?
 - Where is the nearest safe rest point?
 - What happens to an active delivery while the rider rests?
 - Who follows up if the rider does not respond?
+- Can the delivery continue safely?
 - Can every decision be explained afterward?
 
-TaapSaathi turns those questions into one durable, role-aware workflow. It detects risk, creates an intervention, prepares route and voice guidance, secures the delivery, waits for a human response, and escalates when needed.
+TaapSaathi connects those decisions in one workflow. Safety becomes an operational action instead of a notification that someone still has to interpret and coordinate manually.
 
-## What you can see in the live demo
+## Product features
+
+| Feature | What it does |
+| --- | --- |
+| **Live operations map** | Shows rider positions, current safety state, rest routes, active interventions, and delivery ownership |
+| **Shared heat-risk engine** | Processes scheduled weather observations and labelled demo heat spikes through the same deterministic policy |
+| **Rider safety guidance** | Delivers bilingual instructions, route context, protected audio, and explicit break or symptom responses |
+| **Delivery protection** | Secures active work before reassignment so a safety intervention does not create ambiguous ownership |
+| **Human escalation** | Uses durable waits and authenticated supervisor acknowledgment when a rider does not respond |
+| **Auditable recovery** | Records the intervention timeline and isolates demo generations so stale callbacks cannot corrupt a reset |
+
+## What the live demo proves
 
 | Experience | What it proves |
 | --- | --- |
@@ -39,7 +68,9 @@ TaapSaathi turns those questions into one durable, role-aware workflow. It detec
 > [!TIP]
 > Start at the [public landing page](https://main.d6hf0wv24qbik.amplifyapp.com), then open the live command center. State-changing demo controls require the configured Cognito role.
 
-## The safety loop
+## How an intervention works
+
+![Animated TaapSaathi safety intervention loop](docs/assets/taapsaathi-safety-loop.gif)
 
 1. **Sense** — scheduled weather and demo observations call the same deterministic risk processor.
 2. **Decide** — the risk engine publishes a versioned `HeatRiskRaised` event to EventBridge.
