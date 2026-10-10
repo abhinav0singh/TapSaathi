@@ -26,13 +26,16 @@ next safe action. It is a coordination record, not evidence of deployment.
    read-only rider preview without audio playback.
 5. README and project/verification status docs now separate recorded v2 proof
    from AWS scenarios that must be re-verified under v2.
+6. Direct handler tests now prove worker-audio authorization fails before any
+   DynamoDB read or URL signing for a missing JWT, a mismatched worker, and an
+   unavailable identity mapping.
 
 ## Local verification run by Codex
 
 Performed after building `@taapsaathi/contracts`:
 
 - `npm run typecheck` — PASS
-- `npm run test:unit` — PASS, 22 files / 142 tests
+- `npm run test:unit` — PASS, 23 files / 146 tests
 - `npm run test:infra` — PASS, 16 tests
 - `npm run synth` — PASS
 - `npm run verify:definition` — PASS
