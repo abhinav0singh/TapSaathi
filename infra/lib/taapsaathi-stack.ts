@@ -291,12 +291,14 @@ export class TaapSaathiStack extends cdk.Stack {
     const workerFunction = nodeFunction("WorkerFunction", "services/api/src/worker.ts");
     const eventsFunction = nodeFunction("EventsFunction", "services/api/src/events.ts");
     const respondFunction = nodeFunction("RespondFunction", "services/api/src/respond.ts");
+    const resumeWorkerFunction = nodeFunction("ResumeWorkerFunction", "services/api/src/resume-worker.ts");
     const heatSpikeFunction = nodeFunction("HeatSpikeFunction", "services/demo/src/heat-spike.ts");
     const resetFunction = nodeFunction("ResetFunction", "services/demo/src/reset.ts");
     table.grantReadData(dashboardFunction);
     table.grantReadData(workerFunction);
     table.grantReadData(eventsFunction);
     table.grantReadWriteData(respondFunction);
+    table.grantReadWriteData(resumeWorkerFunction);
     table.grantReadWriteData(heatSpikeFunction);
     table.grantReadWriteData(resetFunction);
     const identityMappingParameterName = "/taapsaathi/demo/identity-mapping";
@@ -306,7 +308,7 @@ export class TaapSaathiStack extends cdk.Stack {
       resourceName: identityMappingParameterName.replace(/^\//, ""),
     });
 
-    for (const fn of [respondFunction, heatSpikeFunction, resetFunction]) {
+    for (const fn of [respondFunction, resumeWorkerFunction, heatSpikeFunction, resetFunction]) {
       fn.addEnvironment(
         "DEMO_IDENTITY_MAPPING_PARAMETER",
         identityMappingParameterName
@@ -360,6 +362,7 @@ export class TaapSaathiStack extends cdk.Stack {
     route("/workers/{workerId}", apigwv2.HttpMethod.GET, workerFunction, "Worker");
     route("/events", apigwv2.HttpMethod.GET, eventsFunction, "Events");
     route("/interventions/{interventionId}/respond", apigwv2.HttpMethod.POST, respondFunction, "Respond", true);
+    route("/workers/{workerId}/resume", apigwv2.HttpMethod.POST, resumeWorkerFunction, "ResumeWorker", true);
     route("/demo/heat-spike", apigwv2.HttpMethod.POST, heatSpikeFunction, "HeatSpike", true);
     route("/demo/reset", apigwv2.HttpMethod.POST, resetFunction, "Reset", true);
 

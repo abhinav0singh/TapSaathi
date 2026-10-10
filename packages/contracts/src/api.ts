@@ -90,6 +90,18 @@ export const RespondAcceptedSchema = z.object({
   clientRequestId: z.string().uuid(),
 });
 
+export const ResumeWorkerRequestSchema = z.object({
+  actorId: z.string().min(1),
+  clientRequestId: z.string().uuid(),
+}).strict();
+
+export const ResumeWorkerAcceptedSchema = z.object({
+  workerId: z.string().min(1),
+  status: z.literal("RESUMED"),
+  resumedAt: IsoDateSchema,
+  clientRequestId: z.string().uuid(),
+});
+
 export const DemoHeatSpikeRequestSchema = z.object({}).strict().optional();
 export const DemoResetRequestSchema = z.object({}).strict().optional();
 export const DemoHeatSpikeResponseSchema = z.object({
@@ -118,3 +130,4 @@ export type ErrorEnvelope = z.infer<typeof ErrorEnvelopeSchema>;
 export type DashboardResponse = z.infer<typeof DashboardResponseSchema>;
 export type WorkerViewResponse = z.infer<typeof WorkerViewResponseSchema>;
 export type RespondRequest = z.infer<typeof RespondRequestSchema>;
+export type ResumeWorkerRequest = z.infer<typeof ResumeWorkerRequestSchema>;

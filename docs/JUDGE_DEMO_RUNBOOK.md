@@ -15,18 +15,28 @@ Use this runbook only after the three-role browser evidence in issue #8 passes. 
 | Time | Screen | Action and narration |
 | --- | --- | --- |
 | 0:00–0:20 | Operator | State the problem: heat exposure can make a rider unsafe while an active delivery still needs responsible handling. |
-| 0:20–0:40 | Architecture | Point out EventBridge, Standard Step Functions, Cognito, DynamoDB, Amazon Location, Polly, and Amplify. Explain that the UI observes the workflow; it does not manufacture the safety result. |
-| 0:40–1:00 | Operator | Trigger the labelled heat spike. Show Ravi moving from `SAFE` into an active intervention. |
-| 1:00–1:30 | Ravi mobile view | Show Hindi/English guidance, route summary, audio, and the two large actions. Submit **Take break**. |
-| 1:30–1:55 | Operator | Show `delivery-001` reassigned to Asha, Ravi `RESTING`, and the audit timeline. Briefly show the succeeded Step Functions execution. |
-| 1:55–2:25 | Operator and Ravi | Reset, trigger another heat spike, and submit **I feel unwell**. Explain that the delivery is secured before escalation. |
-| 2:25–2:45 | Neha | Acknowledge the escalation. Show the confirmation added by PR #13 and state clearly that acknowledgment does not clear Ravi to resume work. |
-| 2:45–3:00 | Evidence | Close with generation isolation, duplicate protection, wrong-role rejection, and the saved AWS execution evidence. |
+| 0:20–0:35 | Architecture | Point out EventBridge, Standard Step Functions, Cognito, DynamoDB, Amazon Location, Polly, and Amplify. Explain that the UI observes the workflow; it does not manufacture the safety result. |
+| 0:35–0:50 | Operator | Trigger the labelled heat spike. Show Ravi moving from `SAFE` into an active intervention. |
+| 0:50–1:15 | Ravi mobile view | Show Hindi/English guidance, route summary, audio, and the two large actions. Submit **Take break**. |
+| 1:15–1:35 | Operator | Show `delivery-001` reassigned to Asha, Ravi `RESTING`, and the completed workflow in the audit timeline. |
+| 1:35–1:50 | Ravi mobile view | After explaining that Ravi has rested and hydrated, select **I am ready to resume work**. |
+| 1:50–2:05 | Operator | Show Ravi back in `SAFE` with zero continuous active minutes. Point out that `delivery-001` stays with Asha; Ravi is available for new work and does not reclaim the old delivery. |
+| 2:05–2:20 | Operator | Reset and trigger another heat spike. |
+| 2:20–2:35 | Ravi mobile view | Submit **I feel unwell**. Explain that the delivery is secured before escalation. |
+| 2:35–2:50 | Neha | Acknowledge the escalation. State clearly that acknowledgment assigns human follow-up and does not medically clear Ravi to work. |
+| 2:50–3:00 | Evidence | Close with the audit trail, duplicate protection, wrong-role rejection, and saved AWS execution evidence. |
+
+## How Ravi returns to work
+
+- **After `TAKE_BREAK`:** Ravi rests and hydrates, then uses the authenticated **I am ready to resume work** action. TaapSaathi records `RIDER_RESUMED_WORK`, changes Ravi from `RESTING` to `SAFE`, and resets continuous active minutes to zero.
+- **Delivery ownership:** `delivery-001` remains with Asha. Ravi becomes available for new work; the system never silently takes the reassigned delivery back.
+- **After `FEEL_UNWELL` or a timeout:** Ravi cannot self-resume. Supervisor acknowledgment means a human has taken responsibility for follow-up; it is not a medical clearance. The hackathon prototype deliberately ends this path with Ravi off duty pending an external clearance process.
 
 ## Pass conditions
 
 - Every state-changing request uses the expected Cognito role.
 - Ravi never keeps an active delivery after taking a break or escalating.
+- Ravi can resume only after a completed break, and resuming never reclaims the reassigned delivery.
 - Supervisor acknowledgment remains distinct from worker clearance.
 - The audit timeline and Step Functions execution agree with the visible result.
 - Reset returns the demo to one clean generation with no active intervention.
@@ -36,6 +46,7 @@ Use this runbook only after the three-role browser evidence in issue #8 passes. 
 - If a browser session expires, use the role's `/login` flow and continue from the current backend state.
 - If a page stops polling, refresh it; the state is stored in DynamoDB and Step Functions, not the browser.
 - If a callback has already been consumed, reset and rerun rather than submitting a different request ID against the old intervention.
+- If the resume action does not appear, confirm Ravi is signed in as `demo-ravi`, the break workflow has completed, and his state is `RESTING`. Refresh once before resetting.
 - If the venue network fails, show the backup recording and the saved AWS evidence. Do not claim a live result while offline.
 
 ## Evidence to capture after rehearsal

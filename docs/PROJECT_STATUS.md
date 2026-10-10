@@ -1,7 +1,7 @@
 # TaapSaathi project status
 
 **Updated:** 10 October 2026  
-**Current source:** `main` after PR #18  
+**Current source:** `main` after PR #22  
 **Backend deployment:** `1f393fb734007a8a4e028ba7bed5c6388363d2da`
 
 ## Release assessment
