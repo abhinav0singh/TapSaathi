@@ -8,6 +8,8 @@ import OperationsMap from "@/components/ops/OperationsMap";
 import { api } from "@/lib/api";
 import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
 import { useAuditEvents } from "@/lib/useAuditEvents";
+import { auditImpact } from "@/lib/auditImpact";
+import { delhiArchiveWeatherDecision, delhiHistoricalDecision, delhiHistoricalReplay } from "@/lib/historicalHeatReplay";
 
 type Dashboard = DashboardResponse;
 
@@ -40,11 +42,7 @@ export default function OperationsPage() {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const auditEvents = useAuditEvents(
     data?.demoGeneration,
-    Boolean(data && data.activeInterventions.length === 0 &&
-      data.workers.some((worker) => worker.state === "AWAITING_SUPERVISOR")),
-    (events) => Boolean(data && data.workers
-      .filter((worker) => worker.state === "AWAITING_SUPERVISOR" && !worker.activeInterventionId)
-      .every((worker) => latestSupervisorOutcome(events, worker.workerId, data.demoGeneration)))
+    Boolean(data)
   );
   const displayedEvents = auditEvents.length > 0 && data
     ? auditEvents
@@ -52,6 +50,8 @@ export default function OperationsPage() {
         .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
         .slice(0, 50)
     : data?.recentEvents ?? [];
+  const impact = data ? auditImpact(auditEvents, data.demoGeneration) : null;
+  const formatDuration = (milliseconds: number | null) => milliseconds === null ? "Not yet recorded" : `${Math.round(milliseconds / 1000)} s`;
 
   const refresh = useCallback(async () => {
     try {
@@ -172,6 +172,30 @@ export default function OperationsPage() {
                   </p>
                 </div>
               ))}
+            </section>
+
+            <section className="grid gap-5 lg:grid-cols-2">
+              <div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">Historical replay · not live weather</p>
+                <h2 className="mt-2 text-lg font-bold">Delhi archive reanalysis value</h2>
+                <p className="mt-2 text-sm text-slate-700">{delhiHistoricalReplay.observedAt} · {delhiHistoricalReplay.temperatureC}°C air · {delhiHistoricalReplay.apparentTemperatureC}°C apparent · {delhiHistoricalReplay.relativeHumidity}% humidity</p>
+                <p className="mt-2 text-sm font-semibold text-orange-800">Weather alone: {delhiArchiveWeatherDecision.state} · {delhiArchiveWeatherDecision.matchedRule.replaceAll("_", " ")}. At the demo&apos;s 60-minute continuous-exposure limit: {delhiHistoricalDecision.state} · {delhiHistoricalDecision.matchedRule.replaceAll("_", " ")}.</p>
+                <a className="mt-3 inline-block text-xs font-semibold underline" href={delhiHistoricalReplay.sourceUrl} target="_blank" rel="noreferrer">Source: {delhiHistoricalReplay.sourceName}</a>
+                <p className="mt-2 text-xs text-slate-600">Requested point: {delhiHistoricalReplay.requestedLocation}; returned grid point: {delhiHistoricalReplay.gridPoint}. Retrieved {delhiHistoricalReplay.retrievedAt}. This fixed reanalysis value does not change the live demo or claim a current official alert.</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Audit-derived impact · full current-generation history</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><p><strong>{impact?.interventionCount ?? 0}</strong><br />interventions</p><p><strong>{impact?.escalationCount ?? 0}</strong><br />escalations</p><p><strong>{formatDuration(impact?.triggerToReassignmentMs ?? null)}</strong><br />trigger to reassignment</p><p><strong>{formatDuration(impact?.triggerToResponseMs ?? null)}</strong><br />trigger to worker response</p></div>
+                <p className="mt-4 text-xs text-slate-500">Timings describe the first intervention in this generation. Operational timings only; rider wellbeing and medical outcomes are not inferred.</p>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-teal-200 bg-teal-50 p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-800">Heat and water context · external survey</p>
+              <h2 className="mt-2 text-lg font-bold">Why rest-point routing includes a water-and-shade goal</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">In a June 2024 Hyderabad survey by HeatWatch and the Telangana Gig and Platform Workers Union, 65% of surveyed gig workers called for clean water and toilets and 55% called for shaded rest areas. This supports the product direction; it is not a claim about Delhi, the simulated riders, or the facilities at this demo&apos;s seeded rest points.</p>
+              <a className="mt-3 inline-block text-xs font-semibold underline" href="https://tgpwu.org/2024/08/17/impact-of-extreme-heat-on-gig-workers-a-survey-report/" target="_blank" rel="noreferrer">Read the 2024 TGPWU / HeatWatch survey</a>
+              <p className="mt-2 text-xs text-slate-600">Demo rest points are simulated. Their names and routes do not verify real water, shade, toilet, or cooling availability.</p>
             </section>
 
             <OperationsMap
