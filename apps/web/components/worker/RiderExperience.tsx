@@ -8,6 +8,8 @@ import type {
 } from "@taapsaathi/contracts";
 import type { z } from "zod";
 import { api } from "@/lib/api";
+import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
+import { useAuditEvents } from "@/lib/useAuditEvents";
 import RoutePreview from "@/components/worker/RoutePreview";
 import RiderSessionLink from "@/components/worker/RiderSessionLink";
 
@@ -28,6 +30,12 @@ const copy = {
     noAction: "No worker response is currently available.",
     stale: "Connection interrupted. Showing last known information.",
     accepted: "Response received. Waiting for backend confirmation.",
+    acknowledgedStatus: "SUPERVISOR ACKNOWLEDGED",
+    acknowledgedInstruction: "Your supervisor acknowledged the alert. Stay in a safe place until you are cleared to resume work.",
+    acknowledgedResponse: "Acknowledgment recorded. You are not yet cleared to resume work.",
+    overdueStatus: "SUPERVISOR RESPONSE OVERDUE",
+    overdueInstruction: "No supervisor acknowledgment was recorded in time. Stay in a safe place and seek help.",
+    overdueResponse: "The supervisor response window ended without acknowledgment.",
   },
   hi: {
     title: "आपकी सुरक्षा सबसे पहले",
@@ -43,6 +51,12 @@ const copy = {
     noAction: "अभी कोई प्रतिक्रिया उपलब्ध नहीं है।",
     stale: "कनेक्शन बाधित है। पिछली जानकारी दिखाई जा रही है।",
     accepted: "जवाब प्राप्त हुआ। सर्वर से पुष्टि की प्रतीक्षा है।",
+    acknowledgedStatus: "सुपरवाइज़र ने पुष्टि की",
+    acknowledgedInstruction: "सुपरवाइज़र ने अलर्ट स्वीकार कर लिया है। काम पर लौटने की अनुमति मिलने तक सुरक्षित स्थान पर रहें।",
+    acknowledgedResponse: "पुष्टि दर्ज हो गई है। आपको अभी काम पर लौटने की अनुमति नहीं मिली है।",
+    overdueStatus: "सुपरवाइज़र का जवाब लंबित है",
+    overdueInstruction: "समय पर सुपरवाइज़र की पुष्टि दर्ज नहीं हुई। सुरक्षित स्थान पर रहें और मदद लें।",
+    overdueResponse: "सुपरवाइज़र से पुष्टि की अवधि बिना जवाब के समाप्त हो गई।",
   },
 } as const;
 
@@ -72,6 +86,14 @@ export default function RiderExperience({
   const requestIdRef = useRef<string | null>(null);
 
   const t = copy[language];
+  const auditEvents = useAuditEvents(
+    data?.worker.demoGeneration,
+    data?.worker.state === "AWAITING_SUPERVISOR" && !data.intervention,
+    (events) => Boolean(data && latestSupervisorOutcome(events, workerId, data.worker.demoGeneration))
+  );
+  const supervisorOutcome = data?.worker.state === "AWAITING_SUPERVISOR" && !data.intervention
+    ? latestSupervisorOutcome(auditEvents, workerId, data.worker.demoGeneration)
+    : null;
 
   const refresh = useCallback(async () => {
     try {
@@ -227,7 +249,11 @@ export default function RiderExperience({
                 <div>
                   <p className="text-xs font-bold tracking-[0.16em]">CURRENT SAFETY STATUS</p>
                   <p className="mt-1 text-lg font-bold">
-                    {data.worker.state.replaceAll("_", " ")}
+                    {supervisorOutcome?.status === "ACKNOWLEDGED"
+                      ? t.acknowledgedStatus
+                      : supervisorOutcome?.status === "UNACKNOWLEDGED"
+                        ? t.overdueStatus
+                        : data.worker.state.replaceAll("_", " ")}
                   </p>
                 </div>
                 {data.intervention && (
@@ -237,7 +263,11 @@ export default function RiderExperience({
                 )}
               </div>
               <p className="mt-4 text-xl font-semibold leading-relaxed">
-                {data.instruction}
+                {supervisorOutcome?.status === "ACKNOWLEDGED"
+                  ? t.acknowledgedInstruction
+                  : supervisorOutcome?.status === "UNACKNOWLEDGED"
+                    ? t.overdueInstruction
+                    : data.instruction}
               </p>
               {data.intervention && (
                 <p className="mt-4 text-sm">
@@ -306,7 +336,11 @@ export default function RiderExperience({
                 </>
               ) : (
                 <div role="status" className="rounded-xl bg-white p-4 text-center text-sm text-slate-600">
-                  {accepted ? t.accepted : t.noAction}
+                  {supervisorOutcome?.status === "ACKNOWLEDGED"
+                    ? t.acknowledgedResponse
+                    : supervisorOutcome?.status === "UNACKNOWLEDGED"
+                      ? t.overdueResponse
+                      : accepted ? t.accepted : t.noAction}
                 </div>
               )}
             </section>

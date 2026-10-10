@@ -6,6 +6,8 @@ import type { DashboardResponse, Intervention } from "@taapsaathi/contracts";
 import AppNav from "@/components/AppNav";
 import { api } from "@/lib/api";
 import { getAuthenticatedIdentity } from "@/lib/auth";
+import { latestAcknowledgmentBySupervisor } from "@/lib/supervisorOutcome";
+import { useAuditEvents } from "@/lib/useAuditEvents";
 
 function waitingForSupervisor(intervention: Intervention) {
   return ["AWAITING_SUPERVISOR", "SUPERVISOR_UNACKNOWLEDGED"].includes(intervention.status);
@@ -15,7 +17,12 @@ export default function SupervisorPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(() => new Set());
+  const [acceptedAcknowledgment, setAcceptedAcknowledgment] = useState<{
+    interventionId: string;
+    workerId: string;
+    acceptedAt: string;
+    demoGeneration: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -55,13 +62,18 @@ export default function SupervisorPage() {
     setPendingId(interventionId);
     setError(null);
     try {
-      await api.respond(interventionId, {
+      const response = await api.respond(interventionId, {
         actorId: supervisorId,
         actorType: "SUPERVISOR",
         action: "SUPERVISOR_ACK",
         clientRequestId: crypto.randomUUID(),
       });
-      setAcknowledgedIds((current) => new Set(current).add(interventionId));
+      setAcceptedAcknowledgment({
+        interventionId,
+        workerId: data?.activeInterventions.find((item) => item.interventionId === interventionId)?.workerId ?? "",
+        acceptedAt: response.acceptedAt,
+        demoGeneration: data?.demoGeneration ?? -1,
+      });
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Acknowledgment could not be submitted.");
@@ -71,6 +83,23 @@ export default function SupervisorPage() {
   }
 
   const queue = data?.activeInterventions.filter(waitingForSupervisor) ?? [];
+  const auditEvents = useAuditEvents(
+    data?.demoGeneration,
+    Boolean(supervisorId && data?.workers.some((worker) => worker.state === "AWAITING_SUPERVISOR")),
+    (events) => Boolean(supervisorId && data &&
+      latestAcknowledgmentBySupervisor(events, supervisorId, data.demoGeneration))
+  );
+  const recentAcknowledgment = supervisorId && data
+    ? latestAcknowledgmentBySupervisor(auditEvents, supervisorId, data.demoGeneration)
+    : null;
+  const visibleAcknowledgment = acceptedAcknowledgment?.demoGeneration === data?.demoGeneration
+    ? acceptedAcknowledgment
+    : recentAcknowledgment
+      ? {
+          workerId: recentAcknowledgment.workerId,
+          acceptedAt: recentAcknowledgment.occurredAt,
+        }
+      : null;
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 text-slate-900 md:px-8">
@@ -101,6 +130,18 @@ export default function SupervisorPage() {
           </button>
         </section>
 
+        {visibleAcknowledgment && (
+          <section role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+            <h2 className="text-lg font-bold">Supervisor acknowledgment recorded</h2>
+            <p className="mt-2 text-sm">
+              {data?.workers.find((worker) => worker.workerId === visibleAcknowledgment.workerId)?.name ?? visibleAcknowledgment.workerId}
+              {" · "}
+              {new Date(visibleAcknowledgment.acceptedAt).toLocaleTimeString()}
+            </p>
+            <p className="mt-2 text-sm">The response was accepted. The rider is not automatically cleared to resume work.</p>
+          </section>
+        )}
+
         <section aria-labelledby="queue-title">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -121,7 +162,8 @@ export default function SupervisorPage() {
             <div className="grid gap-4 lg:grid-cols-2">
               {queue.map((intervention) => {
                 const worker = data.workers.find((candidate) => candidate.workerId === intervention.workerId);
-                const acknowledged = acknowledgedIds.has(intervention.interventionId);
+                const acknowledged = acceptedAcknowledgment?.interventionId === intervention.interventionId &&
+                  acceptedAcknowledgment.demoGeneration === data.demoGeneration;
                 return (
                   <article key={intervention.interventionId} className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-4">

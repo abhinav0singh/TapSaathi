@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { DashboardResponse } from "@taapsaathi/contracts";
 import AppNav from "@/components/AppNav";
 import { api } from "@/lib/api";
+import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
+import { useAuditEvents } from "@/lib/useAuditEvents";
 
 type Dashboard = DashboardResponse;
 
@@ -15,6 +17,8 @@ const statusStyles: Record<string, string> = {
   CRITICAL: "bg-red-50 text-red-700",
   RESTING: "bg-blue-50 text-blue-700",
   AWAITING_SUPERVISOR: "bg-violet-50 text-violet-700",
+  ACKNOWLEDGED: "bg-emerald-50 text-emerald-700",
+  UNACKNOWLEDGED: "bg-red-50 text-red-700",
 };
 
 const statusIcons: Record<string, string> = {
@@ -24,6 +28,8 @@ const statusIcons: Record<string, string> = {
   CRITICAL: "!",
   RESTING: "Ⅱ",
   AWAITING_SUPERVISOR: "!",
+  ACKNOWLEDGED: "✓",
+  UNACKNOWLEDGED: "!",
 };
 
 export default function OperationsPage() {
@@ -31,6 +37,20 @@ export default function OperationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const auditEvents = useAuditEvents(
+    data?.demoGeneration,
+    Boolean(data && data.activeInterventions.length === 0 &&
+      data.workers.some((worker) => worker.state === "AWAITING_SUPERVISOR")),
+    (events) => Boolean(data && data.workers
+      .filter((worker) => worker.state === "AWAITING_SUPERVISOR" && !worker.activeInterventionId)
+      .every((worker) => latestSupervisorOutcome(events, worker.workerId, data.demoGeneration)))
+  );
+  const displayedEvents = auditEvents.length > 0 && data
+    ? auditEvents
+        .filter((event) => event.demoGeneration === data.demoGeneration)
+        .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+        .slice(0, 50)
+    : data?.recentEvents ?? [];
 
   const refresh = useCallback(async () => {
     try {
@@ -140,7 +160,7 @@ export default function OperationsPage() {
                 ["Safe workers", data.summary.safe, "text-emerald-600"],
                 ["Caution", data.summary.caution, "text-amber-600"],
                 ["Interventions", data.summary.intervention, "text-orange-600"],
-                ["Awaiting supervisor", data.summary.awaitingSupervisor, "text-violet-600"],
+                ["Needs follow-up", data.summary.awaitingSupervisor, "text-violet-600"],
               ].map(([label, value, color]) => (
                 <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
@@ -159,7 +179,16 @@ export default function OperationsPage() {
                 </p>
 
                 <div className="space-y-3">
-                  {data.workers.map((worker) => (
+                  {data.workers.map((worker) => {
+                    const outcome = worker.state === "AWAITING_SUPERVISOR" && !worker.activeInterventionId
+                      ? latestSupervisorOutcome(auditEvents, worker.workerId, data.demoGeneration)
+                      : null;
+                    const displayStatus = outcome?.status === "ACKNOWLEDGED"
+                      ? "ACKNOWLEDGED"
+                      : outcome?.status === "UNACKNOWLEDGED"
+                        ? "UNACKNOWLEDGED"
+                        : worker.state;
+                    return (
                     <Link
                       key={worker.workerId}
                       href={`/worker/${worker.workerId}`}
@@ -172,11 +201,16 @@ export default function OperationsPage() {
                         </p>
                       </div>
 
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[worker.state] ?? "bg-slate-100"}`}>
-                        {statusIcons[worker.state] ?? "•"} {worker.state.replaceAll("_", " ")}
+                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[displayStatus] ?? "bg-slate-100"}`}>
+                        {statusIcons[displayStatus] ?? "•"} {outcome?.status === "ACKNOWLEDGED"
+                          ? "ACKNOWLEDGED · NOT CLEARED"
+                          : outcome?.status === "UNACKNOWLEDGED"
+                            ? "RESPONSE OVERDUE"
+                            : worker.state.replaceAll("_", " ")}
                       </span>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
 
@@ -244,12 +278,12 @@ export default function OperationsPage() {
                 <h2 className="text-lg font-bold">Audit timeline</h2>
 
                 <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
-                  {data.recentEvents.length === 0 ? (
+                  {displayedEvents.length === 0 ? (
                     <p className="text-sm text-slate-500">
                       No audit events recorded yet.
                     </p>
                   ) : (
-                    data.recentEvents.map((event) => (
+                    displayedEvents.map((event) => (
                       <div key={event.auditEventId} className="border-l-2 border-orange-400 pl-4">
                         <p className="text-sm font-semibold">{event.eventType}</p>
                         <p className="text-xs text-slate-500">
