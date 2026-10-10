@@ -30,15 +30,20 @@ import { handler } from "../src/worker-audio.js";
 
 const raviSub = "22222222-2222-4222-8222-222222222222";
 const ashaSub = "33333333-3333-4333-8333-333333333333";
+const operatorSub = "11111111-1111-4111-8111-111111111111";
+const supervisorSub = "44444444-4444-4444-8444-444444444444";
 
 const mapping = {
   [raviSub]: { role: "WORKER", actorId: "ravi-001" },
   [ashaSub]: { role: "WORKER", actorId: "asha-001" },
+  [operatorSub]: { role: "OPERATOR" },
+  [supervisorSub]: { role: "SUPERVISOR", actorId: "supervisor-neha-001" },
 };
 
 function event(
   sub: string | undefined,
-  workerId = "ravi-001"
+  workerId = "ravi-001",
+  groups = ["WORKER"]
 ): APIGatewayProxyEventV2 {
   return {
     version: "2.0",
@@ -50,7 +55,7 @@ function event(
         ? {
             authorizer: {
               jwt: {
-                claims: { sub, "cognito:groups": ["WORKER"] },
+                claims: { sub, "cognito:groups": groups },
                 scopes: null,
               },
             },
@@ -105,6 +110,20 @@ describe("Worker audio API authorization", () => {
     expect(mocks.getSignedUrl).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["a mapped operator", operatorSub, ["OPERATOR"]],
+    ["a mapped supervisor", supervisorSub, ["SUPERVISOR"]],
+    ["an unmapped subject", "55555555-5555-4555-8555-555555555555", ["WORKER"]],
+    ["a worker missing the required group", raviSub, []],
+  ])("rejects %s before reading DynamoDB or signing audio", async (_description, sub, groups) => {
+    const result = await invoke(event(sub, "ravi-001", groups));
+
+    expect(result.statusCode).toBe(403);
+    expect(mocks.getWorker).not.toHaveBeenCalled();
+    expect(mocks.getIntervention).not.toHaveBeenCalled();
+    expect(mocks.getSignedUrl).not.toHaveBeenCalled();
+  });
+
   it("allows the mapped rider to retrieve only their guidance audio", async () => {
     const result = await invoke(event(raviSub));
 
@@ -136,6 +155,37 @@ describe("Worker audio API authorization", () => {
     const result = await invoke(event(raviSub));
 
     expect(result.statusCode).toBe(500);
+    expect(mocks.getWorker).not.toHaveBeenCalled();
+    expect(mocks.getIntervention).not.toHaveBeenCalled();
+    expect(mocks.getSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("returns not found without signing when the rider has no active intervention", async () => {
+    mocks.getWorker.mockResolvedValue({ workerId: "ravi-001" });
+
+    const result = await invoke(event(raviSub));
+
+    expect(result.statusCode).toBe(404);
+    expect(mocks.getIntervention).not.toHaveBeenCalled();
+    expect(mocks.getSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("returns not found without signing when the intervention has no audio", async () => {
+    mocks.getIntervention.mockResolvedValue({ interventionId: "int-test-001" });
+
+    const result = await invoke(event(raviSub));
+
+    expect(result.statusCode).toBe(404);
+    expect(mocks.getSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("returns a server error before DynamoDB when audio configuration is missing", async () => {
+    delete process.env["AUDIO_BUCKET_NAME"];
+
+    const result = await invoke(event(raviSub));
+
+    expect(result.statusCode).toBe(500);
+    expect(JSON.parse(String(result.body)).error.code).toBe("AUDIO_CONFIGURATION_MISSING");
     expect(mocks.getWorker).not.toHaveBeenCalled();
     expect(mocks.getIntervention).not.toHaveBeenCalled();
     expect(mocks.getSignedUrl).not.toHaveBeenCalled();

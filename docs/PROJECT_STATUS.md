@@ -20,7 +20,7 @@ The core implementation is complete and the public API/frontend are reachable. T
 - Safe delivery handling implemented before supervisor escalation.
 - `TAKE_BREAK` and `FEEL_UNWELL` with supervisor acknowledgment and audited self-resume recorded against heat-policy-v2.
 - Backend and Web GitHub Actions checks passing on `main`.
-- Local verification passing: 148 unit tests, TypeScript, CDK synthesis, definition validation, and Next.js production build.
+- Local verification passing: 155 unit tests, TypeScript, CDK synthesis, definition validation, and Next.js production build.
 
 ## Open release gate
 

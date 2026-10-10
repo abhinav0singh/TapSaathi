@@ -35,13 +35,18 @@ next safe action. It is a coordination record, not evidence of deployment.
    rider UI uses the protected audio route whenever an intervention is present.
 8. The audio success test asserts the exact S3 bucket/key and the 300-second
    signing lifetime, so a wrong-object regression fails the test.
+9. Worker-audio handler tests also reject mapped non-workers, unmapped
+   subjects, and missing role groups before reads or signing. They cover both
+   no-active-intervention and no-audio-key 404s without signing. A missing
+   `AUDIO_BUCKET_NAME` now returns a 500 configuration error, rather than
+   disguising an operator-fixable deployment fault as an absent resource.
 
 ## Local verification run by Codex
 
 Performed after building `@taapsaathi/contracts`:
 
 - `npm run typecheck` — PASS
-- `npm run test:unit` — PASS, 25 files / 148 tests
+- `npm run test:unit` — PASS, 25 files / 155 tests
 - `npm run test:infra` — PASS, 16 tests
 - `npm run synth` — PASS
 - `npm run verify:definition` — PASS
@@ -77,7 +82,7 @@ negative checks. Capture Step Functions execution ARNs and graph screenshots.
 - Do not commit passwords, Cognito tokens, task tokens, or signed URLs.
 - Preserve the public read-only demo while keeping action and audio access
   identity-bound.
-- R3 and R4 from Claude's review remain optional follow-ups. A missing audio
-  bucket currently returns 404 because no guidance is available to the rider;
-  it has not been reclassified without an agreed operational error contract.
+- R3 and R4 from Claude's review are implemented. A missing audio bucket is a
+  500 configuration error because it needs operator remediation, while a
+  missing intervention or audio key remains a rider-visible 404.
 - Update this file when either agent changes the above state.

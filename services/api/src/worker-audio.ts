@@ -3,6 +3,7 @@ import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { WorkerAudioResponseSchema } from "@taapsaathi/contracts";
 import {
+  AppError,
   DynamoRepository,
   errorResponse,
   json,
@@ -24,7 +25,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     requireActor(event, await loadRuntimeIdentityMapping(), "WORKER", workerId);
 
     const environment = loadEnvironment();
-    if (!environment.AUDIO_BUCKET_NAME) throw new NotFoundError("Guidance audio is unavailable.");
+    if (!environment.AUDIO_BUCKET_NAME) {
+      throw new AppError(
+        "AUDIO_CONFIGURATION_MISSING",
+        "Guidance audio is temporarily unavailable.",
+        500
+      );
+    }
     const repository = new DynamoRepository(environment.TABLE_NAME);
     const worker = await repository.getWorker(workerId);
     if (!worker) throw new NotFoundError("Worker not found.");
