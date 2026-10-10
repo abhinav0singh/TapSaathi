@@ -7,7 +7,7 @@
 
 ## Current release state
 
-PR #30 is deployed and the protected-audio authorization checks passed in production. Current v2 evidence now includes three repeatable take-break/resume runs, one symptom/escalation/acknowledgement/resume run, callback idempotency, and real Cognito/JWT negative checks. Timeout, duplicate EventBridge delivery, stale-callback isolation, and the broader Phase 3 browser evidence remain unverified.
+PR #30 is deployed and the protected-audio authorization checks passed in production. Current v2 evidence includes three repeatable take-break/resume runs, one symptom/escalation/acknowledgement/resume run, callback idempotency, duplicate EventBridge delivery, both callback timeouts, stale-reset isolation, and real Cognito/JWT negative checks. Only the broader Phase 3 browser/mobile evidence remains unverified.
 
 ## Local and CI verification
 
@@ -32,11 +32,11 @@ The deployed release passed typecheck, 180 unit tests, 16 infrastructure tests, 
 | Protected rider audio | PASS | Ravi `200`; operator, supervisor, and cross-rider requests `403`; signed Polly audio downloaded successfully |
 | Public audio privacy | PASS | Public worker and dashboard responses exposed no audio URL, expiry, or storage key |
 | Hosted pages and CORS | PASS | All main pages returned `200`; Amplify origin remained configured |
-| Worker and supervisor timeout | NOT VERIFIED under v2 | Earlier evidence predates the reading-driven policy |
+| Worker and supervisor timeout | PASS | Generation 31 secured and reassigned the delivery, escalated once, timed out unacknowledged, and completed successfully |
 | Duplicate callback | PASS | Same `clientRequestId` replay returned the accepted result; a new request after consumption returned `409` |
-| Duplicate EventBridge delivery | NOT VERIFIED under v2 | Must replay the same deployed envelope against the current generation |
+| Duplicate EventBridge delivery | PASS | Generation 30 produced two successful executions but exactly one intervention creation and one delivery reassignment |
 | Wrong-role and missing-token requests | PASS | Missing-token reset returned `401`; worker-token reset and rider impersonation returned `403` |
-| Reset during an in-flight intervention | NOT VERIFIED under v2 | Must confirm stale callback isolation on the deployed workflow |
+| Reset during an in-flight intervention | PASS | Generation 32 was reset to 33 while waiting; the stale execution succeeded without altering the clean generation |
 
 Detailed identifiers and the verification boundary are recorded in [AWS verification evidence](AWS_VERIFICATION_EVIDENCE.md).
 
@@ -47,7 +47,7 @@ Detailed identifiers and the verification boundary are recorded in [AWS verifica
 - API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
 - CloudFormation stack: `TaapSaathiStack` — `UPDATE_COMPLETE`
 
-The demo was reset after verification to generation 29 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. Every reset in the 11 October sequence succeeded on its first attempt. The earlier transient `500` remains recorded and this successful sequence does not replace a deliberate in-flight stale-callback isolation test.
+The recorded evidence sequence ended with a reset to generation 34 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. A later public review snapshot observed generation 36 in the same clean state; it is a readiness baseline rather than additional scenario evidence. The deliberate generation 32 to 33 in-flight reset proved stale-callback isolation, and the final evidence reset succeeded on its first attempt.
 
 ## Remaining acceptance gate
 

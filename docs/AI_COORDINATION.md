@@ -89,20 +89,19 @@ new response after consumption returned `409`. All resets in this sequence
 succeeded on the first attempt. The final reset produced generation 29 with
 zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
 
-1. Record deployed proof for timeout, duplicate EventBridge delivery, and a
-   stale callback after reset. Break/resume, symptom acknowledgement/resume,
-   callback idempotency, and JWT negatives now have current deployed proof.
-2. Capture execution ARNs, queried deployed records, or browser/API evidence
-   for every scenario before marking it verified.
-3. Investigate the transient reset `500` before treating reset isolation as
-   verified.
+1. Complete the three-role browser/mobile evidence and close issue #8.
+2. Capture Step Functions graph and browser screenshots without exposing AWS
+   account identifiers, Cognito tokens, passwords, or signed URLs.
+3. Keep the final demo state clean. The recorded evidence sequence ended at
+   generation 34; a later public review snapshot observed generation 36 with
+   zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to
+   Ravi. That snapshot is a readiness baseline, not additional scenario proof.
 
 ## Next action after deploy: Phase 3
 
-Run and record the remaining v2 sequence: timeout escalation, duplicate
-EventBridge replay, and stale callback after reset. Capture the remaining Step
-Functions execution ARNs and graph screenshots, then complete the three-role
-browser evidence for issue #8.
+Complete the three-role browser evidence for issue #8 at desktop and mobile
+viewports, capture the successful Step Functions graph screenshots, and then
+move to the real-weather replay and demo-video rehearsal.
 
 ## Working rules
 
