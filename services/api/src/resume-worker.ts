@@ -64,7 +64,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     if (!intervention) {
       throw new ConflictError(
         "COMPLETED_BREAK_NOT_FOUND",
-        "The completed break intervention could not be verified."
+        "No completed break or acknowledged supervisor response could be verified."
       );
     }
 

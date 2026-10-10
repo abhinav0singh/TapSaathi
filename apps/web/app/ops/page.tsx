@@ -214,7 +214,7 @@ export default function OperationsPage() {
 
                       <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[displayStatus] ?? "bg-slate-100"}`}>
                         {statusIcons[displayStatus] ?? "•"} {outcome?.status === "ACKNOWLEDGED"
-                          ? "ACKNOWLEDGED · NOT CLEARED"
+                          ? "ACKNOWLEDGED · MAY RESUME"
                           : outcome?.status === "UNACKNOWLEDGED"
                             ? "RESPONSE OVERDUE"
                             : worker.state.replaceAll("_", " ")}
