@@ -45,8 +45,31 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f5f7fb] px-4 py-10 text-slate-900">
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07110f] px-4 py-8 text-slate-900">
+      <div className="landing-grid absolute inset-0 opacity-25" aria-hidden="true" />
+      <div className="heat-glow absolute -right-48 -top-48 h-[36rem] w-[36rem] rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
+      <div className="relative grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,.45)] lg:grid-cols-[1.05fr_.95fr]">
+        <section className="relative hidden min-h-[700px] flex-col justify-between overflow-hidden bg-[#f26b38] p-12 lg:flex">
+          <div className="absolute -bottom-28 -right-24 h-96 w-96 rounded-full border-[65px] border-slate-950/10" aria-hidden="true" />
+          <Link href="/" className="relative inline-flex items-center gap-3 text-lg font-black">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-950 text-sm text-orange-300">त</span>
+            TaapSaathi
+          </Link>
+          <div className="relative">
+            <p className="text-xs font-black uppercase tracking-[.2em]">Role-aware by design</p>
+            <h2 className="mt-5 max-w-lg text-6xl font-black leading-[.9] tracking-[-.055em]">The right action.<br /><span className="font-serif font-normal italic">To the right person.</span></h2>
+            <p className="mt-7 max-w-md text-lg leading-8 text-slate-900/70">Operators coordinate. Supervisors acknowledge. Riders act on clear safety guidance. Cognito keeps every role in its lane.</p>
+          </div>
+          <div className="relative grid grid-cols-3 gap-3">
+            {[["01", "Operator"], ["02", "Supervisor"], ["03", "Rider"]].map(([number, role]) => (
+              <div key={role} className="rounded-2xl border border-slate-950/15 bg-white/20 p-4">
+                <p className="font-mono text-xs">{number}</p><p className="mt-5 text-sm font-bold">{role}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="p-7 sm:p-10 lg:flex lg:flex-col lg:justify-center lg:p-14">
         <div className="mb-8">
           <p className="text-xs font-bold tracking-[0.25em] text-orange-600">
             TAAPSAATHI
@@ -57,7 +80,7 @@ export default function LoginPage() {
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Sign in with your configured Cognito account to access live, role-appropriate safety tools.
+            Use your configured Cognito account. We will take you directly to the workspace for your role.
           </p>
         </div>
 
@@ -114,13 +137,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="min-h-12 w-full rounded-xl bg-orange-600 px-5 font-semibold text-white transition hover:bg-orange-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-50"
+          className="min-h-14 w-full rounded-xl bg-slate-950 px-5 font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-50"
           >
             {pending ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
-        <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           <p className="font-semibold text-slate-800">Choose the right workspace after signing in</p>
           <ul className="mt-2 space-y-1 text-xs leading-relaxed">
             <li><span className="font-semibold">Operations:</span> monitor the live intervention workflow.</li>
@@ -130,9 +153,10 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/ops" className="text-sm font-medium text-slate-500 underline">
-            View operations dashboard
+          <Link href="/" className="text-sm font-semibold text-slate-500 underline underline-offset-4">
+            Return to the TaapSaathi story
           </Link>
+        </div>
         </div>
       </div>
     </main>

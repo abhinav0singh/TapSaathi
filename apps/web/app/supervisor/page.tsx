@@ -102,26 +102,27 @@ export default function SupervisorPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 text-slate-900 md:px-8">
+    <main className="min-h-screen bg-[#eef1ec] px-4 py-5 text-slate-900 md:px-8 md:py-7">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <p className="text-xs font-bold tracking-[0.25em] text-orange-600">TAAPSAATHI</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">Supervisor response desk</h1>
-            <p className="mt-2 max-w-xl text-sm text-slate-600">
+        <header className="relative flex flex-wrap items-start justify-between gap-7 overflow-hidden rounded-[2rem] bg-[#081411] p-6 text-white shadow-[0_25px_70px_rgba(8,20,17,.18)] md:p-8">
+          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[48px] border-violet-500/15" aria-hidden="true" />
+          <div className="relative">
+            <p className="text-xs font-bold tracking-[0.25em] text-orange-300">TAAPSAATHI</p>
+            <h1 className="mt-3 text-3xl font-black tracking-[-.035em] md:text-5xl">Supervisor response desk</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/55">
               Review heat-safety escalations and record supervisor acknowledgment. Actions are submitted through your authenticated Cognito session.
             </p>
           </div>
-          <AppNav />
+          <div className="relative"><AppNav /></div>
         </header>
 
         {error && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
 
-        <section className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_auto] md:items-end">
+        <section className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <p className="text-sm font-bold">Authenticated supervisor</p>
             <p className="mt-1 text-sm text-slate-500">Your signed-in identity is used for the audit trail.</p>
-            <p className="mt-3 min-h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800" aria-live="polite">
+            <p className="mt-3 min-h-12 rounded-xl border border-slate-200 bg-[#f7f8f4] px-4 py-3 text-sm font-semibold text-slate-800" aria-live="polite">
               {supervisorId ?? "Confirming your Cognito identity…"}
             </p>
           </div>
@@ -154,7 +155,7 @@ export default function SupervisorPage() {
           {!data ? (
             <div className="rounded-2xl bg-white p-10 text-center text-slate-500">Loading live supervisor queue…</div>
           ) : queue.length === 0 ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center">
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-12 text-center shadow-sm">
               <p className="text-lg font-bold text-emerald-900">No acknowledgment is currently required</p>
               <p className="mt-2 text-sm text-emerald-800">New escalations will appear here automatically.</p>
             </div>
@@ -165,7 +166,7 @@ export default function SupervisorPage() {
                 const acknowledged = acceptedAcknowledgment?.interventionId === intervention.interventionId &&
                   acceptedAcknowledgment.demoGeneration === data.demoGeneration;
                 return (
-                  <article key={intervention.interventionId} className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+                  <article key={intervention.interventionId} className="rounded-3xl border border-violet-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xs font-bold tracking-[0.14em] text-violet-700">SUPERVISOR ACTION REQUIRED</p>

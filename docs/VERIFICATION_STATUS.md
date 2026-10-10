@@ -1,7 +1,7 @@
 # Verification status
 
 **Verified:** 10 October 2026  
-**Source commit:** `f8c6b99c3455b1682989d26032e072ca5225bd6a`  
+**Source baseline:** `main` after PR #18  
 **Backend deployment:** `1f393fb734007a8a4e028ba7bed5c6388363d2da`  
 **AWS region:** `ap-south-1`
 
@@ -21,7 +21,7 @@ The backend and public frontend are deployed. The critical intervention paths, t
 | GitHub Backend workflow on `main` | PASS |
 | GitHub Web workflow on `main` | PASS |
 
-The full local checks were rerun against PR #13 before merge. The Backend and Web GitHub workflows also passed on its merge commit, `f8c6b99`.
+The full local checks were rerun against PR #18 before merge. The Backend and Web GitHub workflows passed on the final PR head before merge.
 
 ## Deployed AWS verification
 
@@ -41,7 +41,7 @@ Detailed identifiers and the verification boundary are recorded in [AWS verifica
 ## Public deployment
 
 - Frontend: <https://main.d6hf0wv24qbik.amplifyapp.com>
-- Amplify `main`: commit `f8c6b99` — `SUCCEED`; `/`, `/login`, `/ops`, `/supervisor`, and `/worker/ravi-001` return HTTP 200
+- Amplify `main`: PR #18 deployed; `/`, `/login`, `/ops`, `/supervisor`, and `/worker/ravi-001` return HTTP 200
 - API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
 - CloudFormation stack: `TaapSaathiStack` — `UPDATE_COMPLETE`
 

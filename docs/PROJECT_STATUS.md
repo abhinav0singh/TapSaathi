@@ -1,7 +1,7 @@
 # TaapSaathi project status
 
 **Updated:** 10 October 2026  
-**Current source:** `f8c6b99c3455b1682989d26032e072ca5225bd6a`  
+**Current source:** `main` after PR #18  
 **Backend deployment:** `1f393fb734007a8a4e028ba7bed5c6388363d2da`
 
 ## Release assessment
@@ -11,7 +11,8 @@ The project is backend-complete and deployed. The principal safety workflows hav
 ## Completed
 
 - AWS CDK stack deployed in `ap-south-1`.
-- Next.js frontend hosted on AWS Amplify; commit `f8c6b99` deployed successfully after PR #13.
+- Next.js frontend hosted on AWS Amplify with the Leaflet operations map from PR #18 deployed successfully.
+- Public product landing page and presentation refresh tracked in issue #19.
 - Cognito operator, worker, and supervisor groups configured.
 - Role-aware login, route guards, worker identity derivation, sign-out, and expired-session recovery merged.
 - API Gateway JWT authorization and server-side subject-to-role mapping enabled for all mutations.

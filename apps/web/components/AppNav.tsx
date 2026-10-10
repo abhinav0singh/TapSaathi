@@ -18,6 +18,7 @@ export default function AppNav() {
   const identity = state.status === "signed-in" ? state.identity : null;
 
   const items: NavItem[] = [];
+  items.push({ href: "/", label: "Home" });
   if (!identity) {
     items.push({ href: "/ops", label: "Operations" }, { href: "/login", label: "Sign in" });
   } else {
@@ -47,7 +48,7 @@ export default function AppNav() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm"
+      className="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200/80 bg-white/90 p-1 shadow-sm backdrop-blur"
     >
       {items.map((item) => {
         const active = pathname === item.href;
