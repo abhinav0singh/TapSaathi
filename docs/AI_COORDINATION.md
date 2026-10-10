@@ -114,6 +114,17 @@ Complete the three-role browser evidence for issue #8 at desktop and mobile
 viewports, capture the successful Step Functions graph screenshots, and then
 move to the real-weather replay and demo-video rehearsal.
 
+## Phase 4 implementation in progress
+
+The Phase 4 branch introduces a fixed, clearly labelled Delhi historical replay
+from Open-Meteo's archive (29 May 2024, 13:00 IST) and evaluates it through the
+same deterministic `heat-policy-v2` evaluator used by the backend. It is not a
+live reading or an official alert. The operations view also derives only
+operational timings (trigger-to-reassignment and trigger-to-response) and
+counts from audit records in the currently displayed generation; it makes no
+claim about wellbeing or medical outcomes. Focused web tests, the zero-dependency
+policy test, root typecheck, and the production web build passed locally.
+
 ## Working rules
 
 - Keep simulated data visibly labelled; do not make medical claims or imply an

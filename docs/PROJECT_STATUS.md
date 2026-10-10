@@ -39,6 +39,13 @@ operator, worker, or supervisor actions, and its review-session capture is not
 yet a submission screenshot. The available Chrome profile had no AWS Console
 session, so Step Functions graph capture remains outstanding.
 
+## Phase 4 in progress
+
+The next change adds a clearly labelled historical Delhi replay and audit-only
+operational metrics to the operations view. It does not convert the deployed
+cached-weather demo into live weather monitoring and must not be described as
+such until a separately reviewed live-weather deployment exists.
+
 Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
 
 ## Final rehearsal
