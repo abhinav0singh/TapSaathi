@@ -13,7 +13,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       repository.listInterventions(DEMO_HUB_ID),
       repository.listAuditEvents(undefined, DEMO_HUB_ID),
     ]);
-    const activeInterventions = interventions.filter((item) => !["COMPLETED", "SUPERVISOR_RESPONDING", "SUPERVISOR_UNACKNOWLEDGED"].includes(item.status));
+    const activeInterventions = interventions
+      .filter((item) => !["COMPLETED", "SUPERVISOR_RESPONDING", "SUPERVISOR_UNACKNOWLEDGED"].includes(item.status))
+      .map(({ audioKey: _audioKey, ...publicView }) => publicView);
     return json(200, DashboardResponseSchema.parse({
       hub: { hubId: DEMO_HUB_ID, name: "Delhi North Demo Hub", timeZone: "Asia/Kolkata", simulated: true },
       demoGeneration: generation,

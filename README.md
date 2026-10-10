@@ -130,7 +130,7 @@ The heat-spike endpoint does **not** start Step Functions directly. Scheduled an
 | Check | Status |
 | --- | --- |
 | TypeScript across the monorepo | ✅ Pass |
-| Unit tests | ✅ 24 files, 147 tests |
+| Unit tests | ✅ 25 files, 148 tests |
 | CDK synthesis and state-machine validation | ✅ Pass |
 | Next.js production build | ✅ Pass |
 | Deployed v2 take-break and symptom workflows | ✅ Recorded in [golden-path evidence](docs/GOLDEN_PATH_EVIDENCE.md) |

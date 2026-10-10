@@ -29,9 +29,10 @@ next safe action. It is a coordination record, not evidence of deployment.
 6. Direct handler tests now prove worker-audio authorization fails before any
    DynamoDB read or URL signing for a missing JWT, a mismatched worker, and an
    unavailable identity mapping.
-7. The public worker view now omits the private `audioKey`; the rider UI uses
-   the protected audio route whenever an intervention is present. Its test also
-   confirms the public body has neither an S3 key nor an audio URL.
+7. Both public intervention views (`GET /workers/{workerId}` and
+   `GET /dashboard`) now omit the private `audioKey`; their handlers strip it
+   before serialization and their contracts omit it as defense in depth. The
+   rider UI uses the protected audio route whenever an intervention is present.
 8. The audio success test asserts the exact S3 bucket/key and the 300-second
    signing lifetime, so a wrong-object regression fails the test.
 
@@ -40,7 +41,7 @@ next safe action. It is a coordination record, not evidence of deployment.
 Performed after building `@taapsaathi/contracts`:
 
 - `npm run typecheck` — PASS
-- `npm run test:unit` — PASS, 24 files / 147 tests
+- `npm run test:unit` — PASS, 25 files / 148 tests
 - `npm run test:infra` — PASS, 16 tests
 - `npm run synth` — PASS
 - `npm run verify:definition` — PASS

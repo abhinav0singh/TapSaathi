@@ -44,7 +44,7 @@ export const DashboardResponseSchema = z.object({
   }),
   workers: z.array(WorkerSchema),
   tasks: z.array(DeliveryTaskSchema),
-  activeInterventions: z.array(InterventionSchema),
+  activeInterventions: z.array(PublicInterventionSchema),
   recentEvents: z.array(AuditEventSchema),
   nextCursor: z.string().nullable(),
   updatedAt: IsoDateSchema,
