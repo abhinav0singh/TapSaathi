@@ -6,7 +6,7 @@ import {
 } from "@taapsaathi/contracts";
 import { evaluatePolicy } from "./policy.js";
 
-export const CURRENT_POLICY_VERSION = "heat-policy-v1";
+export const CURRENT_POLICY_VERSION = "heat-policy-v2";
 
 /**
  * Pure deterministic policy evaluation. The timestamp and policy version are

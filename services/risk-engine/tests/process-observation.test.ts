@@ -64,4 +64,36 @@ describe("shared observation processor", () => {
     }, { workers: [worker], demoGeneration: 3, maxContinuousMinutes: 60, now });
     expect(result.events).toEqual([]);
   });
+
+  it("raises an event from the readings alone, with no official alert", () => {
+    const result = processObservation({
+      schemaVersion: 1,
+      observationId: "readings-01",
+      source: "LIVE_WEATHER",
+      hubId: "hub-delhi-001",
+      temperatureC: 45.2,
+      relativeHumidity: 42,
+      apparentTemperatureC: 49.1,
+      officialHeatAlert: false,
+      observedAt: now,
+    }, { workers: [worker], demoGeneration: 3, maxContinuousMinutes: 60, now, idFactory: () => "fixed" });
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0]?.payload).toMatchObject({ riskLevel: "HIGH", matchedRule: "HEAT_THRESHOLD_WITH_ACTIVE_EXPOSURE", policyVersion: "heat-policy-v2" });
+  });
+
+  it("does not raise an event for the cached baseline even with a long exposure", () => {
+    const result = processObservation({
+      schemaVersion: 1,
+      observationId: "cached-01",
+      source: "CACHED_WEATHER",
+      hubId: "hub-delhi-001",
+      temperatureC: 34,
+      relativeHumidity: 38,
+      apparentTemperatureC: 36,
+      officialHeatAlert: false,
+      observedAt: now,
+    }, { workers: [worker], demoGeneration: 3, maxContinuousMinutes: 60, now });
+    expect(result.events).toEqual([]);
+    expect(result.decisions[0]).toMatchObject({ state: "CAUTION", matchedRule: "ELEVATED_HEAT_INDEX" });
+  });
 });
