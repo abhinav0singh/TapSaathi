@@ -160,7 +160,8 @@ All frontend fixtures and backend responses import types from `packages/contract
 | Method | Route | Purpose |
 | --- | --- | --- |
 | `GET` | `/dashboard` | Return summary counts, riders, tasks, active interventions, and event cursor. |
-| `GET` | `/workers/{workerId}` | Return the rider's current state, recommendation, route, audio URL, and intervention. |
+| `GET` | `/workers/{workerId}` | Return the rider's public state, recommendation, route, and intervention without private audio data. |
+| `GET` | `/workers/{workerId}/audio` | Return a short-lived audio URL only to the JWT-authenticated mapped rider. |
 | `GET` | `/events?after={cursor}` | Return ordered audit events for polling. |
 | `POST` | `/interventions/{id}/respond` | Submit `TAKE_BREAK`, `FEEL_UNWELL`, or `SUPERVISOR_ACK`. |
 | `POST` | `/demo/heat-spike` | Publish the labelled deterministic demo observation. |

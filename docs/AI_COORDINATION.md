@@ -40,6 +40,9 @@ next safe action. It is a coordination record, not evidence of deployment.
    no-active-intervention and no-audio-key 404s without signing. A missing
    `AUDIO_BUCKET_NAME` now returns a 500 configuration error, rather than
    disguising an operator-fixable deployment fault as an absent resource.
+10. OpenAPI, runbook, and design/test documents now state that public worker
+    and dashboard views omit private audio data, while the rider-specific audio
+    endpoint requires a matching JWT and returns configuration failures as 500.
 
 ## Local verification run by Codex
 

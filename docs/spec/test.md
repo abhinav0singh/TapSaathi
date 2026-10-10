@@ -344,7 +344,7 @@ The root README must contain the final working commands. Remove any command that
 ### GD-006 Audio privacy
 
 **Priority:** P0  
-**Expected:** Bucket is private; application receives a short-lived usable URL; direct unauthenticated bucket listing is impossible.
+**Expected:** Bucket is private; only the matching JWT-authenticated rider receives a short-lived usable URL from `GET /workers/{workerId}/audio`; public dashboard and worker responses expose neither signed URLs nor `audioKey`; direct unauthenticated bucket listing is impossible.
 
 ## 12. Reassignment tests
 

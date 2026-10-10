@@ -117,7 +117,7 @@ The heat-spike endpoint does **not** start Step Functions directly. Scheduled an
 | --- | --- |
 | AWS Amplify + Next.js | Public story, operations dashboard, rider experience, supervisor desk |
 | Amazon Cognito | Operator, worker, and supervisor identity |
-| API Gateway HTTP API | Public reads and protected state-changing routes |
+| API Gateway HTTP API | Public operational reads; JWT-protected state changes and rider-specific audio |
 | EventBridge | Scheduled observations and the versioned heat-risk event bus |
 | Standard Step Functions | Durable waits, callbacks, escalation, and completion |
 | DynamoDB | Workers, deliveries, interventions, audit events, idempotency, and demo generation |
