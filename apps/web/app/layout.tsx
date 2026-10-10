@@ -3,8 +3,11 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TaapSaathi | Operations",
-  description: "Heat-safety intervention and dispatch operations",
+  title: {
+    default: "TaapSaathi | Heat safety that keeps moving",
+    template: "%s | TaapSaathi",
+  },
+  description: "AWS-native heat-risk detection, rider guidance, safe reassignment, and supervisor escalation for delivery operations.",
 };
 
 export const viewport = {

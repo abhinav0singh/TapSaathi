@@ -111,28 +111,30 @@ export default function OperationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 text-slate-900 md:px-8">
+    <main className="min-h-screen bg-[#eef1ec] px-4 py-5 text-slate-900 md:px-8 md:py-7">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <p className="text-xs font-bold tracking-[0.25em] text-orange-600">
+        <header className="relative flex flex-wrap items-start justify-between gap-7 overflow-hidden rounded-[2rem] bg-[#081411] p-6 text-white shadow-[0_25px_70px_rgba(8,20,17,.18)] md:p-8">
+          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[48px] border-orange-500/10" aria-hidden="true" />
+          <div className="relative">
+            <p className="text-xs font-bold tracking-[0.25em] text-orange-300">
               TAAPSAATHI
             </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
+            <h1 className="mt-3 text-3xl font-black tracking-[-.035em] md:text-5xl">
               Intervention Command Center
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-white/55">
               {data?.hub.name ?? "Connecting to operations hub"}
             </p>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
+          <div className="relative flex flex-col items-end gap-3">
             <AppNav />
             <div className="text-right">
-              <span className="rounded-full bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800">
+              <span className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-2 text-xs font-semibold text-orange-200">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-300" />
                 SIMULATED DEMO
               </span>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-white/45">
                 {lastRefresh
                   ? `Last refreshed ${lastRefresh.toLocaleTimeString()}`
                   : "Waiting for first refresh"}
@@ -163,7 +165,7 @@ export default function OperationsPage() {
                 ["Interventions", data.summary.intervention, "text-orange-600"],
                 ["Needs follow-up", data.summary.awaitingSupervisor, "text-violet-600"],
               ].map(([label, value, color]) => (
-                <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div key={String(label)} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
                   <p className={`mt-3 text-3xl font-bold ${color}`}>
                     {value}
@@ -181,7 +183,7 @@ export default function OperationsPage() {
             />
 
             <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold">Worker roster</h2>
                 <p className="mb-5 text-xs text-slate-500">
                   Live backend-reported safety states
@@ -223,7 +225,7 @@ export default function OperationsPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold">Intervention lifecycle</h2>
                 <p className="mb-5 text-xs text-slate-500">
                   AWS Step Functions workflow
@@ -272,7 +274,7 @@ export default function OperationsPage() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold">Delivery assignments</h2>
 
                 <div className="mt-4 space-y-3">
@@ -290,7 +292,7 @@ export default function OperationsPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold">Audit timeline</h2>
 
                 <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
@@ -312,11 +314,11 @@ export default function OperationsPage() {
               </section>
             </div>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-3xl border border-white/10 bg-[#081411] p-6 text-white shadow-xl">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-bold">Demo controls</h2>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-white/50">
                     Simulated for demonstration. Uses real AWS backend workflows.
                   </p>
                 </div>
@@ -325,7 +327,7 @@ export default function OperationsPage() {
                   <button
                     disabled={pending}
                     onClick={() => void resetDemo()}
-                    className="min-h-12 rounded-xl border border-slate-300 px-5 text-sm font-semibold disabled:opacity-50"
+                    className="min-h-12 rounded-xl border border-white/20 px-5 text-sm font-semibold transition hover:bg-white/5 disabled:opacity-50"
                   >
                     Reset demo
                   </button>
