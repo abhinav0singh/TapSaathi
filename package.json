@@ -16,7 +16,7 @@
         "lint": "tsc -p tsconfig.json --noEmit",
         "test": "vitest run --coverage.enabled=false",
         "test:unit": "vitest run packages services",
-        "test:risk:zero-dependency": "node --experimental-strip-types --test services/risk-engine/tests/policy.node-test.ts",
+        "test:risk:policy": "node --experimental-strip-types --test services/risk-engine/tests/policy.node-test.ts",
         "test:infra": "vitest run infra/test",
         "cdk": "cdk --app \"tsx infra/bin/app.ts\"",
         "synth": "npm run cdk -- synth",

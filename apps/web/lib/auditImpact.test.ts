@@ -9,4 +9,9 @@ describe("auditImpact", () => {
     const result = auditImpact([event("INTERVENTION_CREATED", "2024-05-29T07:30:00.000Z"), event("INTERVENTION_CREATED", "2024-05-29T07:30:05.000Z", "int-2"), event("DELIVERY_REASSIGNED", "2024-05-29T07:30:06.000Z", "int-2"), event("RESPONSE_ACCEPTED", "2024-05-29T07:30:07.000Z", "int-2"), event("DELIVERY_REASSIGNED", "2024-05-29T07:30:15.000Z"), event("RESPONSE_ACCEPTED", "2024-05-29T07:30:45.000Z"), event("SUPERVISOR_ESCALATED", "2024-05-29T07:31:00.000Z"), { ...event("INTERVENTION_CREATED", "2024-05-29T07:00:00.000Z"), demoGeneration: 6 }], 7);
     expect(result).toEqual({ interventionCount: 2, escalationCount: 1, triggerToReassignmentMs: 15000, triggerToResponseMs: 45000 });
   });
+
+  it("counts the full current-generation history, not a timeline-sized window", () => {
+    const events = Array.from({ length: 55 }, (_, index) => event("INTERVENTION_CREATED", `2024-05-29T08:${String(index).padStart(2, "0")}:00.000Z`, `int-${index}`));
+    expect(auditImpact(events, 7).interventionCount).toBe(55);
+  });
 });

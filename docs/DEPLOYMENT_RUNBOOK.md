@@ -37,7 +37,7 @@ Do not save tokens in repository files or evidence artifacts.
 
 ```bash
 npm install
-npm run test:risk:zero-dependency
+npm run test:risk:policy
 npm run typecheck
 npm run lint
 npm run test:unit
