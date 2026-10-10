@@ -30,14 +30,15 @@ Use this runbook only after the three-role browser evidence in issue #8 passes. 
 
 - **After `TAKE_BREAK`:** Ravi rests and hydrates, then uses the authenticated **I am ready to resume work** action. TaapSaathi records `RIDER_RESUMED_WORK`, changes Ravi from `RESTING` to `SAFE`, and resets continuous active minutes to zero.
 - **Delivery ownership:** `delivery-001` remains with Asha. Ravi becomes available for new work; the system never silently takes the reassigned delivery back.
-- **After `FEEL_UNWELL` or a timeout:** Ravi cannot self-resume. Supervisor acknowledgment means a human has taken responsibility for follow-up; it is not a medical clearance. The hackathon prototype deliberately ends this path with Ravi off duty pending an external clearance process.
+- **After `FEEL_UNWELL`:** once the supervisor acknowledges, Ravi can resume by ticking "I feel well enough" and using **I am ready to resume work**. The audit event records `afterSymptomReport` and `selfDeclaredFit`. Supervisor acknowledgment means a human has taken responsibility for follow-up; it is not a medical clearance.
+- **After a timeout with no supervisor acknowledgment:** Ravi cannot self-resume, because no human has seen the report.
 
 ## Pass conditions
 
 - Every state-changing request uses the expected Cognito role.
 - Ravi never keeps an active delivery after taking a break or escalating.
-- Ravi can resume only after a completed break, and resuming never reclaims the reassigned delivery.
-- Supervisor acknowledgment remains distinct from worker clearance.
+- Ravi can resume only after a completed break, or after a supervisor-acknowledged symptom report with his confirmation, and resuming never reclaims the reassigned delivery.
+- Supervisor acknowledgment is not a medical clearance; the rider's resume confirmation is self-declared and audited.
 - The audit timeline and Step Functions execution agree with the visible result.
 - Reset returns the demo to one clean generation with no active intervention.
 

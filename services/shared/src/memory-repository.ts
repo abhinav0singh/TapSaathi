@@ -289,7 +289,7 @@ export class MemoryRepository implements Repository {
     if (worker.state !== input.fromState || worker.activeInterventionId) {
       throw new ConflictError(
         "WORKER_NOT_RESTING",
-        "Only a rider with a completed break can resume work."
+        "This rider is not currently eligible to resume work."
       );
     }
 

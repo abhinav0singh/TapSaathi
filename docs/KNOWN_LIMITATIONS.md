@@ -7,7 +7,7 @@
 - `heat-policy-v2` decides from the weather readings (apparent temperature bands of 32, 39 and 52 C, and 45 C air temperature) as well as an official alert. These thresholds are demonstration policy, not medical advice, and must be checked against IMD, NDMA or NWS guidance before they are cited as authoritative. Live Open-Meteo readings never assert an official alert.
 - Rest points and rider positions are seeded demonstration data.
 - Exposure thresholds are demonstration policy and are not medical advice.
-- The rider can self-resume only after the normal `TAKE_BREAK` path. Symptom and timeout escalations intentionally require an external human clearance process that this prototype does not model.
+- The rider can self-resume after a `TAKE_BREAK`, or after a supervisor acknowledges a symptom report and the rider confirms they feel well enough. That confirmation is self-declared and is not a medical clearance. An unacknowledged (timed-out) escalation does not allow self-resume, and this prototype has no external clearance process.
 - Reset scans the small demo dataset by marker. A production system should partition reset/version data by tenant and hub.
 - The product does not integrate with a real dispatch provider, push notification service, SMS/WhatsApp, or emergency services.
 - CDK reports deprecation warnings for `logRetention` and Step Functions `timeout`; these are maintenance items and do not affect the verified deployment.

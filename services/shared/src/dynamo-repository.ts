@@ -768,7 +768,7 @@ export class DynamoRepository implements Repository {
       }
       throw new ConflictError(
         "WORKER_NOT_RESTING",
-        "Only a rider with a completed break can resume work."
+        "This rider is not currently eligible to resume work."
       );
     }
   }

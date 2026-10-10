@@ -45,8 +45,8 @@ const copy = {
     resumeAfterSymptomHelp: "You reported feeling unwell and your supervisor has acknowledged it. Resume only if you feel well enough. If you still feel unwell, keep resting and seek help. Your previous delivery stays reassigned.",
     fitConfirm: "I confirm I feel well enough to return to work.",
     resuming: "Updating work status...",
-    riderSessionRequired: "This is a read-only preview. Ravi must use his signed-in rider session to respond.",
-    resumeSessionRequired: "After resting and hydrating, Ravi can return to SAFE from his authenticated rider session. The previous delivery stays reassigned.",
+    riderSessionRequired: "This is a read-only preview. {name} must use their own signed-in rider session to respond.",
+    resumeSessionRequired: "After resting and hydrating, {name} can return to SAFE from their own authenticated rider session. The previous delivery stays reassigned.",
     signIn: "Open rider sign-in",
   },
   hi: {
@@ -75,8 +75,8 @@ const copy = {
     resumeAfterSymptomHelp: "आपने तबीयत खराब बताई थी और सुपरवाइज़र ने इसे स्वीकार कर लिया है। ठीक महसूस होने पर ही काम पर लौटें। अगर अब भी तबीयत ठीक नहीं है, तो आराम करें और मदद लें। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
     fitConfirm: "मैं पुष्टि करता/करती हूँ कि मैं काम पर लौटने के लिए ठीक महसूस कर रहा/रही हूँ।",
     resuming: "काम की स्थिति अपडेट हो रही है...",
-    riderSessionRequired: "यह केवल देखने के लिए है। जवाब देने के लिए रवि को अपने राइडर खाते से साइन इन करना होगा।",
-    resumeSessionRequired: "आराम और पानी पीने के बाद रवि अपने राइडर खाते से SAFE स्थिति में लौट सकता है। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
+    riderSessionRequired: "यह केवल देखने के लिए है। जवाब देने के लिए {name} को अपने राइडर खाते से साइन इन करना होगा।",
+    resumeSessionRequired: "आराम और पानी पीने के बाद {name} अपने राइडर खाते से SAFE स्थिति में लौट सकते हैं। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
     signIn: "राइडर साइन-इन खोलें",
   },
 } as const;
@@ -110,6 +110,7 @@ export default function RiderExperience({
   const [fitConfirmed, setFitConfirmed] = useState(false);
 
   const t = copy[language];
+  const withName = (text: string) => text.replace("{name}", data?.worker.name ?? (language === "hi" ? "राइडर" : "The rider"));
   const auditEvents = useAuditEvents(
     data?.worker.demoGeneration,
     data?.worker.state === "AWAITING_SUPERVISOR" && !data.intervention,
@@ -402,7 +403,7 @@ export default function RiderExperience({
                 </>
               ) : awaitingWorker ? (
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center">
-                  <p className="text-sm leading-relaxed text-slate-700">{t.riderSessionRequired}</p>
+                  <p className="text-sm leading-relaxed text-slate-700">{withName(t.riderSessionRequired)}</p>
                   {identity.status === "anonymous" && (
                     <Link
                       href="/login"
@@ -449,7 +450,7 @@ export default function RiderExperience({
                 </div>
               ) : data.worker.state === "RESTING" ? (
                 <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
-                  <p className="text-sm leading-relaxed text-blue-900">{t.resumeSessionRequired}</p>
+                  <p className="text-sm leading-relaxed text-blue-900">{withName(t.resumeSessionRequired)}</p>
                   {identity.status === "anonymous" && (
                     <Link
                       href="/login"
