@@ -176,6 +176,8 @@ export default function OperationsPage() {
               hubName={data.hub.name}
               workers={data.workers}
               activeInterventions={data.activeInterventions}
+              demoPending={pending}
+              onStartDemo={() => void triggerHeatSpike()}
             />
 
             <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
@@ -233,6 +235,13 @@ export default function OperationsPage() {
                     <p className="mt-2 text-sm text-slate-500">
                       Trigger a simulated heat spike to begin.
                     </p>
+                    <button
+                      disabled={pending}
+                      onClick={() => void triggerHeatSpike()}
+                      className="mt-5 min-h-12 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:opacity-50"
+                    >
+                      {pending ? "Processing..." : "Start intervention demo"}
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-3">

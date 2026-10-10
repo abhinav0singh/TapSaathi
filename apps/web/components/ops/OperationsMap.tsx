@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DashboardResponse, RiskState } from "@taapsaathi/contracts";
-import type { GeoJSONSource, Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
+import type { LayerGroup, Map as LeafletMap } from "leaflet";
 
 type Worker = DashboardResponse["workers"][number];
 type Intervention = DashboardResponse["activeInterventions"][number];
@@ -11,6 +11,8 @@ type OperationsMapProps = {
   hubName: string;
   workers: Worker[];
   activeInterventions: Intervention[];
+  demoPending?: boolean;
+  onStartDemo?: () => void;
 };
 
 const statusColors: Record<RiskState, string> = {
@@ -22,31 +24,8 @@ const statusColors: Record<RiskState, string> = {
   AWAITING_SUPERVISOR: "#7c3aed",
 };
 
-const emptyRoutes = { type: "FeatureCollection" as const, features: [] };
-
-function routeFeatures(interventions: Intervention[]) {
-  return {
-    type: "FeatureCollection" as const,
-    features: interventions.flatMap((intervention) => {
-      const route = intervention.route;
-      if (!route || route.geometry.coordinates.length < 2) return [];
-
-      return [{
-        type: "Feature" as const,
-        properties: {
-          interventionId: intervention.interventionId,
-          restPointName: route.restPointName,
-          provider: route.provider,
-        },
-        geometry: route.geometry,
-      }];
-    }),
-  };
-}
-
 function centreOf(workers: Worker[]): [number, number] {
-  if (workers.length === 0) return [77.209, 28.6139];
-
+  if (workers.length === 0) return [28.6139, 77.209];
   const [longitude, latitude] = workers.reduce(
     ([longitudeSum, latitudeSum], worker) => [
       longitudeSum + worker.position[0],
@@ -54,8 +33,17 @@ function centreOf(workers: Worker[]): [number, number] {
     ],
     [0, 0]
   );
+  return [latitude / workers.length, longitude / workers.length];
+}
 
-  return [longitude / workers.length, latitude / workers.length];
+function fallbackPosition(workers: Worker[], worker: Worker): { left: string; top: string } {
+  const longitudes = workers.map((item) => item.position[0]);
+  const latitudes = workers.map((item) => item.position[1]);
+  const longitudeRange = Math.max(...longitudes) - Math.min(...longitudes) || 1;
+  const latitudeRange = Math.max(...latitudes) - Math.min(...latitudes) || 1;
+  const x = 18 + ((worker.position[0] - Math.min(...longitudes)) / longitudeRange) * 64;
+  const y = 18 + (1 - (worker.position[1] - Math.min(...latitudes)) / latitudeRange) * 64;
+  return { left: `${x}%`, top: `${y}%` };
 }
 
 function popupContent(worker: Worker): HTMLElement {
@@ -80,79 +68,52 @@ function popupContent(worker: Worker): HTMLElement {
   return content;
 }
 
-export default function OperationsMap({ hubName, workers, activeInterventions }: OperationsMapProps) {
+export default function OperationsMap({
+  hubName,
+  workers,
+  activeInterventions,
+  demoPending = false,
+  onStartDemo,
+}: OperationsMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<MapLibreMap | null>(null);
-  const markersRef = useRef<MapLibreMarker[]>([]);
-  const mapLibraryRef = useRef<typeof import("maplibre-gl") | null>(null);
-  const lastViewportRef = useRef("");
+  const mapRef = useRef<LeafletMap | null>(null);
+  const dynamicLayersRef = useRef<LayerGroup | null>(null);
+  const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const [ready, setReady] = useState(false);
   const [tileUnavailable, setTileUnavailable] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState(
     activeInterventions[0]?.workerId ?? workers[0]?.workerId ?? ""
   );
-
   const selectedWorker = workers.find((worker) => worker.workerId === selectedWorkerId) ?? workers[0];
-  const routes = useMemo(() => routeFeatures(activeInterventions), [activeInterventions]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
 
     async function initialise() {
-      const maplibre = await import("maplibre-gl");
+      const leaflet = await import("leaflet");
       if (cancelled || !containerRef.current) return;
 
-      mapLibraryRef.current = maplibre;
-      maplibre.setWorkerUrl("/maplibre-gl-worker.mjs");
-      const map = new maplibre.Map({
-        container: containerRef.current,
-        center: centreOf(workers),
-        zoom: 14,
+      leafletRef.current = leaflet;
+      const map = leaflet.map(containerRef.current, {
+        attributionControl: true,
+        zoomControl: true,
         minZoom: 10,
         maxZoom: 18,
-        attributionControl: false,
-        style: {
-          version: 8,
-          sources: {
-            "open-street-map": {
-              type: "raster",
-              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-              tileSize: 256,
-              attribution: "© OpenStreetMap contributors",
-            },
-          },
-          layers: [{ id: "open-street-map", type: "raster", source: "open-street-map" }],
-        },
-      });
+      }).setView(centreOf(workers), 14);
 
-      map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
-      map.addControl(new maplibre.AttributionControl({ compact: true }), "bottom-right");
-      map.on("error", (event) => {
-        const message = event.error?.message ?? "";
-        if (/tile|source|network|fetch/i.test(message)) setTileUnavailable(true);
+      const tiles = leaflet.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+        maxZoom: 19,
       });
-      map.on("load", () => {
-        map.addSource("active-routes", { type: "geojson", data: emptyRoutes });
-        map.addLayer({
-          id: "active-route-shadow",
-          type: "line",
-          source: "active-routes",
-          paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.9 },
-        });
-        map.addLayer({
-          id: "active-route",
-          type: "line",
-          source: "active-routes",
-          paint: { "line-color": "#ea580c", "line-width": 5, "line-opacity": 0.95 },
-        });
-        setReady(true);
-      });
+      tiles.on("tileerror", () => setTileUnavailable(true));
+      tiles.on("load", () => setTileUnavailable(false));
+      tiles.addTo(map);
+      map.whenReady(() => setReady(true));
 
       mapRef.current = map;
-      resizeObserver = new ResizeObserver(() => map.resize());
+      resizeObserver = new ResizeObserver(() => map.invalidateSize({ animate: false }));
       resizeObserver.observe(containerRef.current);
     }
 
@@ -163,97 +124,68 @@ export default function OperationsMap({ hubName, workers, activeInterventions }:
 
     return () => {
       cancelled = true;
-      markersRef.current.forEach((marker) => marker.remove());
-      markersRef.current = [];
       resizeObserver?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;
-      mapLibraryRef.current = null;
+      dynamicLayersRef.current = null;
+      leafletRef.current = null;
     };
   }, []);
 
   useEffect(() => {
     const map = mapRef.current;
-    const maplibre = mapLibraryRef.current;
-    if (!map || !maplibre || !ready) return;
+    const leaflet = leafletRef.current;
+    if (!map || !leaflet || !ready) return;
 
-    const source = map.getSource("active-routes") as GeoJSONSource | undefined;
-    source?.setData(routes);
-
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = [];
+    dynamicLayersRef.current?.remove();
+    const layers = leaflet.layerGroup().addTo(map);
+    dynamicLayersRef.current = layers;
+    const bounds = leaflet.latLngBounds([]);
 
     for (const worker of workers) {
-      const markerButton = document.createElement("button");
-      markerButton.type = "button";
-      markerButton.setAttribute("aria-label", `${worker.name}: ${worker.state.replaceAll("_", " ")}`);
-      markerButton.title = `${worker.name} · ${worker.state.replaceAll("_", " ")}`;
-      markerButton.style.width = worker.workerId === selectedWorker?.workerId ? "30px" : "24px";
-      markerButton.style.height = worker.workerId === selectedWorker?.workerId ? "30px" : "24px";
-      markerButton.style.borderRadius = "9999px";
-      markerButton.style.background = statusColors[worker.state];
-      markerButton.style.border = "4px solid white";
-      markerButton.style.boxShadow = "0 3px 12px rgba(15, 23, 42, 0.3)";
-      markerButton.style.cursor = "pointer";
-      markerButton.style.zIndex = "4";
-      markerButton.addEventListener("click", () => setSelectedWorkerId(worker.workerId));
-
-      const popup = new maplibre.Popup({ closeButton: false, closeOnClick: false, offset: 20 })
-        .setDOMContent(popupContent(worker));
-      const marker = new maplibre.Marker({ element: markerButton })
-        .setLngLat(worker.position)
-        .setPopup(popup)
-        .addTo(map);
-      markersRef.current.push(marker);
+      const position: [number, number] = [worker.position[1], worker.position[0]];
+      const selected = worker.workerId === selectedWorker?.workerId;
+      const marker = leaflet.circleMarker(position, {
+        radius: selected ? 12 : 9,
+        color: "#ffffff",
+        weight: 4,
+        fillColor: statusColors[worker.state],
+        fillOpacity: 1,
+      });
+      marker.bindPopup(popupContent(worker), { offset: [0, -8] });
+      marker.bindTooltip(worker.name, { direction: "top", offset: [0, -10] });
+      marker.on("click", () => setSelectedWorkerId(worker.workerId));
+      marker.addTo(layers);
+      marker.getElement()?.setAttribute("aria-label", `${worker.name}: ${worker.state.replaceAll("_", " ")}`);
+      bounds.extend(position);
     }
 
     for (const intervention of activeInterventions) {
       const route = intervention.route;
-      const destination = route?.geometry.coordinates.at(-1);
-      if (!route || !destination) continue;
+      if (!route || route.geometry.coordinates.length < 2) continue;
 
-      const destinationMarker = document.createElement("div");
-      destinationMarker.setAttribute("role", "img");
-      destinationMarker.setAttribute("aria-label", `Rest point: ${route.restPointName}`);
-      destinationMarker.title = route.restPointName;
-      destinationMarker.style.display = "grid";
-      destinationMarker.style.placeItems = "center";
-      destinationMarker.style.width = "30px";
-      destinationMarker.style.height = "30px";
-      destinationMarker.style.borderRadius = "9px 9px 9px 2px";
-      destinationMarker.style.transform = "rotate(-45deg)";
-      destinationMarker.style.background = "#0f766e";
-      destinationMarker.style.color = "white";
-      destinationMarker.style.border = "3px solid white";
-      destinationMarker.style.boxShadow = "0 3px 12px rgba(15, 23, 42, 0.25)";
-      destinationMarker.style.zIndex = "3";
-
-      const destinationLabel = document.createElement("span");
-      destinationLabel.textContent = "R";
-      destinationLabel.style.transform = "rotate(45deg)";
-      destinationLabel.style.fontSize = "11px";
-      destinationLabel.style.fontWeight = "800";
-      destinationMarker.append(destinationLabel);
-
-      const marker = new maplibre.Marker({ element: destinationMarker }).setLngLat(destination).addTo(map);
-      markersRef.current.push(marker);
-    }
-
-    const coordinates = [
-      ...workers.map((worker) => worker.position),
-      ...activeInterventions.flatMap((intervention) => intervention.route?.geometry.coordinates ?? []),
-    ];
-    const viewportSignature = JSON.stringify(coordinates);
-
-    if (coordinates.length > 0 && viewportSignature !== lastViewportRef.current) {
-      const bounds = coordinates.reduce(
-        (current, coordinate) => current.extend(coordinate),
-        new maplibre.LngLatBounds(coordinates[0], coordinates[0])
+      const routePositions = route.geometry.coordinates.map(
+        (coordinate) => [coordinate[1], coordinate[0]] as [number, number]
       );
-      map.fitBounds(bounds, { padding: 70, maxZoom: 15, duration: 650 });
-      lastViewportRef.current = viewportSignature;
+      leaflet.polyline(routePositions, { color: "#ffffff", weight: 9, opacity: 0.9 }).addTo(layers);
+      leaflet.polyline(routePositions, { color: "#ea580c", weight: 5, opacity: 0.95 }).addTo(layers);
+
+      const destination = routePositions.at(-1);
+      if (destination) {
+        leaflet.circleMarker(destination, {
+          radius: 11,
+          color: "#ffffff",
+          weight: 3,
+          fillColor: "#0f766e",
+          fillOpacity: 1,
+        }).bindTooltip(`Rest point: ${route.restPointName}`, { permanent: true, direction: "top" })
+          .addTo(layers);
+      }
+      routePositions.forEach((position) => bounds.extend(position));
     }
-  }, [activeInterventions, ready, routes, selectedWorker?.workerId, workers]);
+
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
+  }, [activeInterventions, ready, selectedWorker?.workerId, workers]);
 
   useEffect(() => {
     if (!selectedWorkerId && workers[0]) setSelectedWorkerId(workers[0].workerId);
@@ -262,15 +194,25 @@ export default function OperationsMap({ hubName, workers, activeInterventions }:
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-xl shadow-slate-200/60">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="relative min-h-[390px] bg-slate-900">
+        <div className="relative min-h-[320px] bg-slate-900 md:min-h-[390px]">
           <div ref={containerRef} className="absolute inset-0" aria-label={`Live rider map for ${hubName}`} />
 
-          <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-[calc(100%-2rem)] rounded-2xl border border-white/20 bg-slate-950/85 px-4 py-3 text-white shadow-lg backdrop-blur">
+          <div className="absolute left-4 top-4 z-[1000] max-w-[calc(100%-2rem)] rounded-2xl border border-white/20 bg-slate-950/90 px-4 py-3 text-white shadow-lg backdrop-blur">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-300">Live operations map</p>
             <p className="mt-1 text-sm font-semibold">{hubName}</p>
             <p className="mt-1 text-xs text-slate-300">
               {workers.length} riders · {activeInterventions.length} active intervention{activeInterventions.length === 1 ? "" : "s"}
             </p>
+            {activeInterventions.length === 0 && onStartDemo && (
+              <button
+                type="button"
+                disabled={demoPending}
+                onClick={onStartDemo}
+                className="mt-3 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-500 disabled:opacity-50"
+              >
+                {demoPending ? "Starting…" : "Start live demo"}
+              </button>
+            )}
           </div>
 
           {!ready && (
@@ -278,8 +220,34 @@ export default function OperationsMap({ hubName, workers, activeInterventions }:
           )}
 
           {tileUnavailable && (
-            <div role="status" className="absolute bottom-8 left-4 z-10 max-w-sm rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-xs text-amber-100 shadow-lg">
-              Map tiles are unavailable. Live rider states, route details, and controls remain active.
+            <div
+              className="absolute inset-0 z-[900] overflow-hidden bg-slate-900"
+              style={{
+                backgroundImage: "linear-gradient(rgba(148,163,184,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.09) 1px, transparent 1px), radial-gradient(circle at center, #1e293b 0, #0f172a 70%)",
+                backgroundSize: "42px 42px, 42px 42px, auto",
+              }}
+            >
+              {workers.map((worker) => (
+                <button
+                  key={worker.workerId}
+                  type="button"
+                  aria-label={`${worker.name}: ${worker.state.replaceAll("_", " ")}`}
+                  title={`${worker.name} · ${worker.state.replaceAll("_", " ")}`}
+                  onClick={() => setSelectedWorkerId(worker.workerId)}
+                  className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white text-[10px] font-black text-white shadow-xl transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300"
+                  style={{
+                    ...fallbackPosition(workers, worker),
+                    width: worker.workerId === selectedWorker?.workerId ? 36 : 30,
+                    height: worker.workerId === selectedWorker?.workerId ? 36 : 30,
+                    backgroundColor: statusColors[worker.state],
+                  }}
+                >
+                  {worker.name.slice(0, 1)}
+                </button>
+              ))}
+              <div role="status" className="absolute bottom-4 left-4 right-4 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-xs text-amber-100 shadow-lg md:right-auto md:max-w-sm">
+                Street tiles are unavailable. Live relative positions and rider states remain active.
+              </div>
             </div>
           )}
         </div>
