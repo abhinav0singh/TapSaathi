@@ -11,6 +11,8 @@ type OperationsMapProps = {
   hubName: string;
   workers: Worker[];
   activeInterventions: Intervention[];
+  demoPending?: boolean;
+  onStartDemo?: () => void;
 };
 
 const statusColors: Record<RiskState, string> = {
@@ -58,6 +60,17 @@ function centreOf(workers: Worker[]): [number, number] {
   return [longitude / workers.length, latitude / workers.length];
 }
 
+function fallbackPosition(workers: Worker[], worker: Worker): { left: string; top: string } {
+  const longitudes = workers.map((item) => item.position[0]);
+  const latitudes = workers.map((item) => item.position[1]);
+  const longitudeRange = Math.max(...longitudes) - Math.min(...longitudes) || 1;
+  const latitudeRange = Math.max(...latitudes) - Math.min(...latitudes) || 1;
+  const x = 18 + ((worker.position[0] - Math.min(...longitudes)) / longitudeRange) * 64;
+  const y = 18 + (1 - (worker.position[1] - Math.min(...latitudes)) / latitudeRange) * 64;
+
+  return { left: `${x}%`, top: `${y}%` };
+}
+
 function popupContent(worker: Worker): HTMLElement {
   const content = document.createElement("div");
   content.className = "min-w-36 text-slate-900";
@@ -80,7 +93,13 @@ function popupContent(worker: Worker): HTMLElement {
   return content;
 }
 
-export default function OperationsMap({ hubName, workers, activeInterventions }: OperationsMapProps) {
+export default function OperationsMap({
+  hubName,
+  workers,
+  activeInterventions,
+  demoPending = false,
+  onStartDemo,
+}: OperationsMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<MapLibreMarker[]>([]);
@@ -102,6 +121,16 @@ export default function OperationsMap({ hubName, workers, activeInterventions }:
     let resizeObserver: ResizeObserver | undefined;
 
     async function initialise() {
+      const supportCanvas = document.createElement("canvas");
+      const supportsWebGL = Boolean(
+        supportCanvas.getContext("webgl2") || supportCanvas.getContext("webgl")
+      );
+      if (!supportsWebGL) {
+        setTileUnavailable(true);
+        setReady(true);
+        return;
+      }
+
       const maplibre = await import("maplibre-gl");
       if (cancelled || !containerRef.current) return;
 
@@ -262,15 +291,25 @@ export default function OperationsMap({ hubName, workers, activeInterventions }:
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-xl shadow-slate-200/60">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="relative min-h-[390px] bg-slate-900">
+        <div className="relative min-h-[320px] bg-slate-900 md:min-h-[390px]">
           <div ref={containerRef} className="absolute inset-0" aria-label={`Live rider map for ${hubName}`} />
 
-          <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-[calc(100%-2rem)] rounded-2xl border border-white/20 bg-slate-950/85 px-4 py-3 text-white shadow-lg backdrop-blur">
+          <div className="absolute left-4 top-4 z-10 max-w-[calc(100%-2rem)] rounded-2xl border border-white/20 bg-slate-950/85 px-4 py-3 text-white shadow-lg backdrop-blur">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-300">Live operations map</p>
             <p className="mt-1 text-sm font-semibold">{hubName}</p>
             <p className="mt-1 text-xs text-slate-300">
               {workers.length} riders · {activeInterventions.length} active intervention{activeInterventions.length === 1 ? "" : "s"}
             </p>
+            {activeInterventions.length === 0 && onStartDemo && (
+              <button
+                type="button"
+                disabled={demoPending}
+                onClick={onStartDemo}
+                className="mt-3 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-500 disabled:opacity-50"
+              >
+                {demoPending ? "Starting…" : "Start live demo"}
+              </button>
+            )}
           </div>
 
           {!ready && (
@@ -278,8 +317,35 @@ export default function OperationsMap({ hubName, workers, activeInterventions }:
           )}
 
           {tileUnavailable && (
-            <div role="status" className="absolute bottom-8 left-4 z-10 max-w-sm rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-xs text-amber-100 shadow-lg">
-              Map tiles are unavailable. Live rider states, route details, and controls remain active.
+            <div
+              className="absolute inset-0 z-[5] overflow-hidden bg-slate-900"
+              style={{
+                backgroundImage: "linear-gradient(rgba(148,163,184,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.09) 1px, transparent 1px), radial-gradient(circle at center, #1e293b 0, #0f172a 70%)",
+                backgroundSize: "42px 42px, 42px 42px, auto",
+              }}
+            >
+              {workers.map((worker) => (
+                <button
+                  key={worker.workerId}
+                  type="button"
+                  aria-label={`${worker.name}: ${worker.state.replaceAll("_", " ")}`}
+                  title={`${worker.name} · ${worker.state.replaceAll("_", " ")}`}
+                  onClick={() => setSelectedWorkerId(worker.workerId)}
+                  className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white text-[10px] font-black text-white shadow-xl transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300"
+                  style={{
+                    ...fallbackPosition(workers, worker),
+                    width: worker.workerId === selectedWorker?.workerId ? 36 : 30,
+                    height: worker.workerId === selectedWorker?.workerId ? 36 : 30,
+                    backgroundColor: statusColors[worker.state],
+                  }}
+                >
+                  {worker.name.slice(0, 1)}
+                </button>
+              ))}
+
+              <div role="status" className="absolute bottom-4 left-4 right-4 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-xs text-amber-100 shadow-lg md:right-auto md:max-w-sm">
+                Interactive map rendering is unavailable. Live relative positions and rider states remain active.
+              </div>
             </div>
           )}
         </div>
