@@ -10,6 +10,7 @@ function input() {
     generation: 16,
     interventionId: "int-break",
     clientRequestId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    fromState: "RESTING" as "RESTING" | "AWAITING_SUPERVISOR",
     now,
     audit: {
       auditEventId: "audit-resume-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -47,12 +48,12 @@ describe("DynamoDB rider resume", () => {
     const items = transaction.input.TransactItems;
     const workerUpdate = items?.[1]?.Update;
 
-    expect(workerUpdate?.ConditionExpression).toContain("#state = :resting");
+    expect(workerUpdate?.ConditionExpression).toContain("#state = :from");
     expect(workerUpdate?.ConditionExpression).toContain("attribute_not_exists(activeInterventionId)");
     expect(workerUpdate?.UpdateExpression).toContain("activeMinutes = :zero");
     expect(workerUpdate?.ExpressionAttributeValues).toMatchObject({
       ":safe": "SAFE",
-      ":resting": "RESTING",
+      ":from": "RESTING",
       ":zero": 0,
     });
     expect(JSON.stringify(items)).not.toContain("activeTaskIds");
@@ -78,5 +79,23 @@ describe("DynamoDB rider resume", () => {
       duplicate: true,
       resumedAt: now,
     });
+  });
+
+  it("returns a rider whose symptom report was acknowledged to SAFE", async () => {
+    const send = vi.fn(async (command: unknown) => {
+      if (command instanceof GetCommand) return { Item: { value: 16 } };
+      if (command instanceof TransactWriteCommand) return {};
+      throw new Error("Unexpected command");
+    });
+    const repository = new DynamoRepository("TaapSaathiTest", { send } as never);
+
+    await repository.resumeWorker({ ...input(), fromState: "AWAITING_SUPERVISOR" });
+
+    const transaction = send.mock.calls
+      .map((call) => call[0])
+      .find((command) => command instanceof TransactWriteCommand) as TransactWriteCommand;
+    const workerUpdate = transaction.input.TransactItems?.[1]?.Update;
+    expect(workerUpdate?.ExpressionAttributeValues).toMatchObject({ ":from": "AWAITING_SUPERVISOR", ":safe": "SAFE" });
+    expect(workerUpdate?.ConditionExpression).toContain("attribute_not_exists(activeInterventionId)");
   });
 });

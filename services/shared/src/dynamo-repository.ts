@@ -715,11 +715,11 @@ export class DynamoRepository implements Repository {
               TableName: this.tableName,
               Key: { PK: `WORKER#${input.workerId}`, SK: "PROFILE" },
               UpdateExpression: "SET #state = :safe, GSI1SK = :gsi, activeMinutes = :zero, updatedAt = :now",
-              ConditionExpression: "demoGeneration = :generation AND #state = :resting AND attribute_not_exists(activeInterventionId)",
+              ConditionExpression: "demoGeneration = :generation AND #state = :from AND attribute_not_exists(activeInterventionId)",
               ExpressionAttributeNames: { "#state": "state" },
               ExpressionAttributeValues: {
                 ":safe": "SAFE",
-                ":resting": "RESTING",
+                ":from": input.fromState,
                 ":gsi": `STATE#SAFE#WORKER#${input.workerId}`,
                 ":zero": 0,
                 ":now": input.now,

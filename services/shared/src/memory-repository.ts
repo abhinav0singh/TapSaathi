@@ -286,7 +286,7 @@ export class MemoryRepository implements Repository {
 
     const worker = this.workers.get(input.workerId);
     if (!worker) throw new NotFoundError("Worker not found.");
-    if (worker.state !== "RESTING" || worker.activeInterventionId) {
+    if (worker.state !== input.fromState || worker.activeInterventionId) {
       throw new ConflictError(
         "WORKER_NOT_RESTING",
         "Only a rider with a completed break can resume work."

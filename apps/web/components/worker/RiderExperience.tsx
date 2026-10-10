@@ -34,14 +34,16 @@ const copy = {
     stale: "Connection interrupted. Showing last known information.",
     accepted: "Response received. Waiting for backend confirmation.",
     acknowledgedStatus: "SUPERVISOR ACKNOWLEDGED",
-    acknowledgedInstruction: "Your supervisor acknowledged the alert. Stay in a safe place until you are cleared to resume work.",
-    acknowledgedResponse: "Acknowledgment recorded. You are not yet cleared to resume work.",
+    acknowledgedInstruction: "Your supervisor acknowledged the alert. Rest in a safe place. You can resume work once you feel well enough.",
+    acknowledgedResponse: "Acknowledgment recorded. Resume only when you feel well enough.",
     overdueStatus: "SUPERVISOR RESPONSE OVERDUE",
     overdueInstruction: "No supervisor acknowledgment was recorded in time. Stay in a safe place and seek help.",
     overdueResponse: "The supervisor response window ended without acknowledgment.",
     resumeTitle: "Ready to return?",
     resumeHelp: "After resting and hydrating, confirm when you are ready. Your previous delivery stays reassigned.",
     resume: "I am ready to resume work",
+    resumeAfterSymptomHelp: "You reported feeling unwell and your supervisor has acknowledged it. Resume only if you feel well enough. If you still feel unwell, keep resting and seek help. Your previous delivery stays reassigned.",
+    fitConfirm: "I confirm I feel well enough to return to work.",
     resuming: "Updating work status...",
     riderSessionRequired: "This is a read-only preview. Ravi must use his signed-in rider session to respond.",
     resumeSessionRequired: "After resting and hydrating, Ravi can return to SAFE from his authenticated rider session. The previous delivery stays reassigned.",
@@ -62,14 +64,16 @@ const copy = {
     stale: "कनेक्शन बाधित है। पिछली जानकारी दिखाई जा रही है।",
     accepted: "जवाब प्राप्त हुआ। सर्वर से पुष्टि की प्रतीक्षा है।",
     acknowledgedStatus: "सुपरवाइज़र ने पुष्टि की",
-    acknowledgedInstruction: "सुपरवाइज़र ने अलर्ट स्वीकार कर लिया है। काम पर लौटने की अनुमति मिलने तक सुरक्षित स्थान पर रहें।",
-    acknowledgedResponse: "पुष्टि दर्ज हो गई है। आपको अभी काम पर लौटने की अनुमति नहीं मिली है।",
+    acknowledgedInstruction: "सुपरवाइज़र ने अलर्ट स्वीकार कर लिया है। सुरक्षित स्थान पर आराम करें। ठीक महसूस होने पर ही काम पर लौटें।",
+    acknowledgedResponse: "पुष्टि दर्ज हो गई है। ठीक महसूस होने पर ही काम पर लौटें।",
     overdueStatus: "सुपरवाइज़र का जवाब लंबित है",
     overdueInstruction: "समय पर सुपरवाइज़र की पुष्टि दर्ज नहीं हुई। सुरक्षित स्थान पर रहें और मदद लें।",
     overdueResponse: "सुपरवाइज़र से पुष्टि की अवधि बिना जवाब के समाप्त हो गई।",
     resumeTitle: "काम पर लौटने के लिए तैयार हैं?",
     resumeHelp: "आराम और पानी पीने के बाद तैयार होने पर पुष्टि करें। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
     resume: "मैं काम पर लौटने के लिए तैयार हूँ",
+    resumeAfterSymptomHelp: "आपने तबीयत खराब बताई थी और सुपरवाइज़र ने इसे स्वीकार कर लिया है। ठीक महसूस होने पर ही काम पर लौटें। अगर अब भी तबीयत ठीक नहीं है, तो आराम करें और मदद लें। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
+    fitConfirm: "मैं पुष्टि करता/करती हूँ कि मैं काम पर लौटने के लिए ठीक महसूस कर रहा/रही हूँ।",
     resuming: "काम की स्थिति अपडेट हो रही है...",
     riderSessionRequired: "यह केवल देखने के लिए है। जवाब देने के लिए रवि को अपने राइडर खाते से साइन इन करना होगा।",
     resumeSessionRequired: "आराम और पानी पीने के बाद रवि अपने राइडर खाते से SAFE स्थिति में लौट सकता है। पिछली डिलीवरी दूसरे राइडर के पास रहेगी।",
@@ -103,6 +107,7 @@ export default function RiderExperience({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const requestIdRef = useRef<string | null>(null);
   const resumeRequestIdRef = useRef<string | null>(null);
+  const [fitConfirmed, setFitConfirmed] = useState(false);
 
   const t = copy[language];
   const auditEvents = useAuditEvents(
@@ -154,6 +159,14 @@ export default function RiderExperience({
   const canResume =
     data?.worker.state === "RESTING" &&
     !data.worker.activeInterventionId &&
+    isRiderSession &&
+    !stale;
+
+  const canResumeAfterSymptom =
+    data?.worker.state === "AWAITING_SUPERVISOR" &&
+    !data.worker.activeInterventionId &&
+    !data.intervention &&
+    supervisorOutcome?.status === "ACKNOWLEDGED" &&
     isRiderSession &&
     !stale;
 
@@ -214,7 +227,7 @@ export default function RiderExperience({
   }
 
   async function resumeWork() {
-    if (!canResume || pending) return;
+    if (!(canResume || (canResumeAfterSymptom && fitConfirmed)) || pending) return;
 
     const clientRequestId = resumeRequestIdRef.current ?? crypto.randomUUID();
     resumeRequestIdRef.current = clientRequestId;
@@ -222,7 +235,12 @@ export default function RiderExperience({
     setError(null);
 
     try {
-      await api.resumeWorker(workerId, { actorId: workerId, clientRequestId });
+      await api.resumeWorker(workerId, {
+        actorId: workerId,
+        clientRequestId,
+        ...(canResumeAfterSymptom ? { selfDeclaredFit: true as const } : {}),
+      });
+      setFitConfirmed(false);
       resumeRequestIdRef.current = null;
       await refresh();
     } catch (err) {
@@ -401,6 +419,28 @@ export default function RiderExperience({
                   <button
                     type="button"
                     disabled={pending}
+                    onClick={() => void resumeWork()}
+                    className="mt-4 min-h-14 w-full rounded-xl bg-emerald-700 px-5 text-base font-bold text-white disabled:opacity-50"
+                  >
+                    {pending ? t.resuming : t.resume}
+                  </button>
+                </div>
+              ) : canResumeAfterSymptom ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <h2 className="text-lg font-bold text-emerald-950">{t.resumeTitle}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900">{t.resumeAfterSymptomHelp}</p>
+                  <label className="mt-4 flex min-h-12 items-start gap-3 text-sm font-semibold text-emerald-950">
+                    <input
+                      type="checkbox"
+                      checked={fitConfirmed}
+                      onChange={(event) => setFitConfirmed(event.target.checked)}
+                      className="mt-1 h-5 w-5 accent-emerald-700"
+                    />
+                    <span>{t.fitConfirm}</span>
+                  </label>
+                  <button
+                    type="button"
+                    disabled={pending || !fitConfirmed}
                     onClick={() => void resumeWork()}
                     className="mt-4 min-h-14 w-full rounded-xl bg-emerald-700 px-5 text-base font-bold text-white disabled:opacity-50"
                   >

@@ -61,5 +61,5 @@ export interface Repository {
   reassignTask(input: { interventionId: string; generation: number; workerId: string; taskId: string; hubId: string; now: string; correlationId: string; preserveIntervention?: boolean }): Promise<{ replacementWorkerId?: string; status: "REASSIGNED" | "REASSIGNMENT_REQUIRED" }>;
   escalate(input: { interventionId: string; generation: number; reason: "FEEL_UNWELL" | "WORKER_TIMEOUT" | "NO_ELIGIBLE_WORKER"; now: string; audit: AuditEvent }): Promise<void>;
   complete(input: { interventionId: string; generation: number; status: Intervention["status"]; now: string; audit: AuditEvent }): Promise<void>;
-  resumeWorker(input: { workerId: string; generation: number; interventionId: string; clientRequestId: string; now: string; audit: AuditEvent }): Promise<{ duplicate: boolean; resumedAt: string }>;
+  resumeWorker(input: { workerId: string; generation: number; interventionId: string; clientRequestId: string; fromState: "RESTING" | "AWAITING_SUPERVISOR"; now: string; audit: AuditEvent }): Promise<{ duplicate: boolean; resumedAt: string }>;
 }

@@ -139,7 +139,7 @@ export default function SupervisorPage() {
               {" · "}
               {new Date(visibleAcknowledgment.acceptedAt).toLocaleTimeString()}
             </p>
-            <p className="mt-2 text-sm">The response was accepted. The rider is not automatically cleared to resume work.</p>
+            <p className="mt-2 text-sm">The response was accepted. The rider can resume work after confirming they feel well enough.</p>
           </section>
         )}
 
