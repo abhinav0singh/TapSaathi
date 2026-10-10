@@ -32,7 +32,7 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 2. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
 3. Step Functions graph screenshots and browser evidence are captured for the submission package.
 
-Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The demo is clean at generation 34 with zero active interventions.
+Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
 
 ## Final rehearsal
 

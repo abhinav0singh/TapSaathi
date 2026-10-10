@@ -92,8 +92,10 @@ zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
 1. Complete the three-role browser/mobile evidence and close issue #8.
 2. Capture Step Functions graph and browser screenshots without exposing AWS
    account identifiers, Cognito tokens, passwords, or signed URLs.
-3. Keep the final demo state clean; generation 34 currently has zero active
-   interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
+3. Keep the final demo state clean. The recorded evidence sequence ended at
+   generation 34; a later public review snapshot observed generation 36 with
+   zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to
+   Ravi. That snapshot is a readiness baseline, not additional scenario proof.
 
 ## Next action after deploy: Phase 3
 

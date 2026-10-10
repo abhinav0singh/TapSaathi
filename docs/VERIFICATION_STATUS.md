@@ -47,7 +47,7 @@ Detailed identifiers and the verification boundary are recorded in [AWS verifica
 - API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
 - CloudFormation stack: `TaapSaathiStack` — `UPDATE_COMPLETE`
 
-The demo was reset after verification to generation 34 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. The deliberate generation 32 to 33 in-flight reset proved stale-callback isolation, and the final reset succeeded on its first attempt.
+The recorded evidence sequence ended with a reset to generation 34 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. A later public review snapshot observed generation 36 in the same clean state; it is a readiness baseline rather than additional scenario evidence. The deliberate generation 32 to 33 in-flight reset proved stale-callback isolation, and the final evidence reset succeeded on its first attempt.
 
 ## Remaining acceptance gate
 
