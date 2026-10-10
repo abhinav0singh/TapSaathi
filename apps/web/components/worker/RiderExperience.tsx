@@ -102,6 +102,7 @@ export default function RiderExperience({
   const [pending, setPending] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const identity = useIdentity();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -172,6 +173,22 @@ export default function RiderExperience({
     !stale;
 
   useEffect(() => {
+    let cancelled = false;
+    if (!isRiderSession || !data?.intervention?.audioKey) {
+      setAudioUrl(null);
+      return;
+    }
+    void api.workerAudio(workerId)
+      .then((result) => {
+        if (!cancelled) setAudioUrl(result.audioUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setAudioUrl(null);
+      });
+    return () => { cancelled = true; };
+  }, [data?.intervention?.audioKey, isRiderSession, workerId]);
+
+  useEffect(() => {
     const interval = window.setInterval(
       () => void refresh(),
       awaitingWorker ? 2000 : 5000
@@ -215,12 +232,12 @@ export default function RiderExperience({
   }
 
   async function replayAudio() {
-    if (!data?.audioUrl || !audioRef.current) return;
+    if (!audioUrl || !audioRef.current) return;
 
     setAudioError(null);
 
     try {
-      audioRef.current.src = data.audioUrl;
+      audioRef.current.src = audioUrl;
       await audioRef.current.play();
     } catch {
       setAudioError("Audio playback is unavailable. Read the instruction above.");
@@ -362,7 +379,7 @@ export default function RiderExperience({
               </section>
             )}
 
-            {data.audioUrl && (
+            {audioUrl && (
               <section className="rounded-2xl border border-slate-200 bg-white p-5">
                 <button
                   type="button"

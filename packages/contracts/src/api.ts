@@ -58,6 +58,12 @@ export const WorkerViewResponseSchema = z.object({
   updatedAt: IsoDateSchema,
 });
 
+/** A short-lived audio URL, returned only to the authenticated rider it concerns. */
+export const WorkerAudioResponseSchema = z.object({
+  audioUrl: z.string().url(),
+  audioExpiresAt: IsoDateSchema,
+});
+
 export const EventsQuerySchema = z.object({
   after: z.string().max(2048).optional(),
 }).strict();

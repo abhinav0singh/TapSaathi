@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RouteView } from "@taapsaathi/contracts";
 import { selectShortestSuccessfulRoute } from "../src/guidance.js";
+import { guidanceMessage } from "../src/prepare-guidance.js";
 
 const route = (restPointId: string, durationSeconds: number): RouteView => ({
   provider: "AMAZON_LOCATION",
@@ -11,6 +12,14 @@ const route = (restPointId: string, durationSeconds: number): RouteView => ({
   restPointName: restPointId,
   geometry: { type: "LineString", coordinates: [[77.2, 28.6], [77.21, 28.61]] },
   generatedAt: "2026-10-08T10:00:00.000Z",
+});
+
+describe("personalized guidance", () => {
+  it("addresses the worker receiving the intervention in both languages", () => {
+    expect(guidanceMessage("en", "Asha")).toContain("Asha,");
+    expect(guidanceMessage("hi", "इमरान")).toContain("इमरान,");
+    expect(guidanceMessage("en", "Asha")).not.toContain("Ravi");
+  });
 });
 
 describe("guidance route selection", () => {

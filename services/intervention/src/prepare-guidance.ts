@@ -66,10 +66,14 @@ async function amazonRoute(origin: Position, points: RestPoint[], now: string): 
   return selected;
 }
 
-async function audio(language: "en" | "hi", bucket: string, interventionId: string): Promise<string> {
-  const message = language === "hi"
-    ? "रवि, गर्मी का खतरा अधिक है। कृपया काम रोकें और बताए गए विश्राम स्थान पर जाएँ।"
-    : "Ravi, heat risk is high. Please stop work and go to the shown rest point.";
+export function guidanceMessage(language: "en" | "hi", workerName: string): string {
+  return language === "hi"
+    ? `${workerName}, गर्मी का खतरा अधिक है। कृपया काम रोकें और बताए गए विश्राम स्थान पर जाएँ।`
+    : `${workerName}, heat risk is high. Please stop work and go to the shown rest point.`;
+}
+
+async function audio(language: "en" | "hi", bucket: string, interventionId: string, workerName: string): Promise<string> {
+  const message = guidanceMessage(language, workerName);
   const key = `audio/${language}/${createHash("sha256").update(`${language}:${message}`).digest("hex")}.mp3`;
   const s3 = new S3Client({});
   try {
@@ -95,6 +99,8 @@ export const handler: Handler<WorkflowState> = async (input) => {
   if (!environment.AUDIO_BUCKET_NAME) throw new Error("AUDIO_BUCKET_NAME is required");
   if (!input.workerPosition || !input.workerLanguage) throw new Error("Workflow context is incomplete");
   const repository = new DynamoRepository(environment.TABLE_NAME);
+  const worker = await repository.getWorker(input.envelope.payload.workerId);
+  if (!worker) throw new Error("Worker not found for guidance preparation");
   const points = await repository.getRestPoints(input.envelope.payload.hubId);
   const now = new Date().toISOString();
   let route: RouteView;
@@ -102,7 +108,7 @@ export const handler: Handler<WorkflowState> = async (input) => {
   try { route = await amazonRoute(input.workerPosition, points, now); }
   catch { route = fallbackRoute(input.workerPosition, points, now); failure = "GUIDANCE_ROUTE_FAILED"; }
   let audioKey: string | undefined;
-  try { audioKey = await audio(input.workerLanguage, environment.AUDIO_BUCKET_NAME, input.interventionId); }
+  try { audioKey = await audio(input.workerLanguage, environment.AUDIO_BUCKET_NAME, input.interventionId, worker.name); }
   catch (error) { failure = "GUIDANCE_AUDIO_FAILED"; log("ERROR", "GenerateAudioFailed", { interventionId: input.interventionId, workerId: input.envelope.payload.workerId, errorName: error instanceof Error ? error.name : "Unknown" }); }
   await repository.updateGuidance({
     interventionId: input.interventionId,

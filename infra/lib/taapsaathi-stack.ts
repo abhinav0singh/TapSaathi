@@ -289,6 +289,7 @@ export class TaapSaathiStack extends cdk.Stack {
     const healthFunction = nodeFunction("HealthFunction", "services/api/src/health.ts");
     const dashboardFunction = nodeFunction("DashboardFunction", "services/api/src/dashboard.ts");
     const workerFunction = nodeFunction("WorkerFunction", "services/api/src/worker.ts");
+    const workerAudioFunction = nodeFunction("WorkerAudioFunction", "services/api/src/worker-audio.ts");
     const eventsFunction = nodeFunction("EventsFunction", "services/api/src/events.ts");
     const respondFunction = nodeFunction("RespondFunction", "services/api/src/respond.ts");
     const resumeWorkerFunction = nodeFunction("ResumeWorkerFunction", "services/api/src/resume-worker.ts");
@@ -296,6 +297,7 @@ export class TaapSaathiStack extends cdk.Stack {
     const resetFunction = nodeFunction("ResetFunction", "services/demo/src/reset.ts");
     table.grantReadData(dashboardFunction);
     table.grantReadData(workerFunction);
+    table.grantReadData(workerAudioFunction);
     table.grantReadData(eventsFunction);
     table.grantReadWriteData(respondFunction);
     table.grantReadWriteData(resumeWorkerFunction);
@@ -319,7 +321,7 @@ export class TaapSaathiStack extends cdk.Stack {
         resources: [identityMappingParameterArn],
       }));
     }
-    audioBucket.grantRead(workerFunction);
+    audioBucket.grantRead(workerAudioFunction);
     eventBus.grantPutEventsTo(heatSpikeFunction);
     respondFunction.addToRolePolicy(new iam.PolicyStatement({ actions: ["states:SendTaskSuccess"], resources: ["*"] }));
 
@@ -360,6 +362,7 @@ export class TaapSaathiStack extends cdk.Stack {
     route("/health", apigwv2.HttpMethod.GET, healthFunction, "Health");
     route("/dashboard", apigwv2.HttpMethod.GET, dashboardFunction, "Dashboard");
     route("/workers/{workerId}", apigwv2.HttpMethod.GET, workerFunction, "Worker");
+    route("/workers/{workerId}/audio", apigwv2.HttpMethod.GET, workerAudioFunction, "WorkerAudio", true);
     route("/events", apigwv2.HttpMethod.GET, eventsFunction, "Events");
     route("/interventions/{interventionId}/respond", apigwv2.HttpMethod.POST, respondFunction, "Respond", true);
     route("/workers/{workerId}/resume", apigwv2.HttpMethod.POST, resumeWorkerFunction, "ResumeWorker", true);

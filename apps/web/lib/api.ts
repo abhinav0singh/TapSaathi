@@ -5,6 +5,7 @@ import {
   DemoResetResponseSchema,
   EventsResponseSchema,
   WorkerViewResponseSchema,
+  WorkerAudioResponseSchema,
   RespondRequestSchema,
   RespondAcceptedSchema,
   ResumeWorkerAcceptedSchema,
@@ -21,7 +22,8 @@ const API_URL =
 async function apiRequest<T>(
   path: string,
   schema: { parse: (value: unknown) => T },
-  init?: RequestInit
+  init?: RequestInit,
+  authenticated = false,
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -30,7 +32,7 @@ async function apiRequest<T>(
     const headers = new Headers(init?.headers);
     headers.set("content-type", "application/json");
 
-    if (init?.method?.toUpperCase() === "POST") {
+    if (init?.method?.toUpperCase() === "POST" || authenticated) {
       const accessToken = await getAccessToken();
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
@@ -84,6 +86,14 @@ export const api = {
     apiRequest(
       `/workers/${encodeURIComponent(workerId)}`,
       WorkerViewResponseSchema
+    ),
+
+  workerAudio: (workerId: string) =>
+    apiRequest(
+      `/workers/${encodeURIComponent(workerId)}/audio`,
+      WorkerAudioResponseSchema,
+      undefined,
+      true,
     ),
 
   eventsPage: (after?: string) =>

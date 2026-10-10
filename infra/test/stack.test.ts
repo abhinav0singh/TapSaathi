@@ -231,6 +231,7 @@ describe("TaapSaathi infrastructure", () => {
       "POST /demo/heat-spike",
       "POST /interventions/{interventionId}/respond",
       "POST /workers/{workerId}/resume",
+      "GET /workers/{workerId}/audio",
     ];
 
     for (const routeKey of protectedRoutes) {

@@ -51,7 +51,7 @@ TaapSaathi connects those decisions in one workflow. Safety becomes an operation
 | --- | --- |
 | **Live operations map** | Shows rider positions, current safety state, rest routes, active interventions, and delivery ownership |
 | **Shared heat-risk engine** | Processes scheduled weather observations and labelled demo heat spikes through the same deterministic policy |
-| **Rider safety guidance** | Delivers bilingual instructions, route context, protected audio, explicit break or symptom responses, and an auditable return-to-work action after a completed break |
+| **Rider safety guidance** | Delivers bilingual instructions, route context, rider-authorized short-lived audio, explicit break or symptom responses, and an auditable return-to-work action after a completed break |
 | **Delivery protection** | Secures active work before reassignment so a safety intervention does not create ambiguous ownership |
 | **Human escalation** | Uses durable waits and authenticated supervisor acknowledgment when a rider does not respond |
 | **Auditable recovery** | Records the intervention timeline and isolates demo generations so stale callbacks cannot corrupt a reset |
@@ -130,14 +130,13 @@ The heat-spike endpoint does **not** start Step Functions directly. Scheduled an
 | Check | Status |
 | --- | --- |
 | TypeScript across the monorepo | ✅ Pass |
-| Vitest | ✅ 24 files, 144 tests |
+| Unit tests | ✅ 22 files, 142 tests |
 | CDK synthesis and state-machine validation | ✅ Pass |
 | Next.js production build | ✅ Pass |
-| Break and symptom workflows in deployed AWS | ✅ Pass |
-| Worker and supervisor timeout paths | ✅ Pass |
-| Duplicate event/callback protection | ✅ Pass |
-| Wrong-role and missing-token rejection | ✅ Pass |
-| Reset during an in-flight workflow | ✅ Pass |
+| Deployed v2 take-break and symptom workflows | ✅ Recorded in [golden-path evidence](docs/GOLDEN_PATH_EVIDENCE.md) |
+| v2 timeout, duplicate replay, stale callback after reset | ⏳ Not yet re-verified; do not treat earlier-policy evidence as v2 proof |
+| Wrong-role and missing-token rejection | ⏳ Needs fresh browser/API evidence on this release |
+| Reset during an in-flight workflow | ⏳ Needs fresh v2 evidence |
 | Three-role Cognito browser evidence | ⏳ In progress — [issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) |
 
 Detailed execution identifiers and verification boundaries live in [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md).
@@ -150,6 +149,7 @@ Node.js 22 or newer is required.
 git clone https://github.com/abhinav0singh/TapSaathi.git
 cd TapSaathi
 npm ci
+npm run build --workspace=@taapsaathi/contracts
 npm run typecheck
 npm run test
 npm --workspace apps/web run dev

@@ -1,20 +1,20 @@
 # Verification status
 
 **Verified:** 10 October 2026  
-**Source baseline:** `main` after PR #22  
-**Backend deployment:** `1f393fb734007a8a4e028ba7bed5c6388363d2da`  
+**Source baseline:** `main` after PR #29 (`d33eb36`)  
+**Backend deployment:** not confirmed to include every post-PR #22 backend change  
 **AWS region:** `ap-south-1`
 
 ## Current release state
 
-The backend and public frontend are deployed. The critical intervention paths, timeout handling, idempotency, authorization failures, and reset isolation have been exercised against the live AWS resources. The remaining release gate is browser evidence from real Cognito sign-ins for all three roles, tracked in [GitHub issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8).
+The public frontend and API are reachable. The v2 evidence records one take-break run and one symptom/escalation/resume run. Timeout, duplicate, stale-callback, reset-isolation, and full browser-role evidence must be re-run against v2 before being reported as verified.
 
 ## Local and CI verification
 
 | Check | Result |
 | --- | --- |
 | Backend TypeScript | PASS |
-| Vitest | PASS — 24 files, 144 tests |
+| Unit tests | PASS — 22 files, 142 tests |
 | CDK synthesis | PASS |
 | Step Functions definition validator | PASS |
 | Next.js production build | PASS |
@@ -29,19 +29,17 @@ The full local checks were rerun for the rider-resume release candidate. The Bac
 | --- | --- | --- |
 | `TAKE_BREAK` | PASS | Delivery moved from Ravi to Asha and Ravi entered `RESTING` |
 | `FEEL_UNWELL` | PASS | Delivery secured, supervisor acknowledgement accepted, execution succeeded |
-| Worker timeout | PASS | Delivery secured before supervisor escalation |
-| Supervisor timeout | PASS | Terminal status `SUPERVISOR_UNACKNOWLEDGED`; no stuck execution |
-| Duplicate callback | PASS | Same request replayed prior result; different request rejected with `409 ALREADY_RESPONDED` |
-| Duplicate event | PASS | One intervention and one delivery-reassignment effect |
-| Wrong-role and missing-token requests | PASS | Rejected with `401` or `403` without advancing the generation |
-| Reset during an in-flight intervention | PASS | Old execution ended `SUCCEEDED`; clean generation stayed unchanged |
+| Worker and supervisor timeout | NOT VERIFIED under v2 | Earlier evidence predates the reading-driven policy |
+| Duplicate callback and event | NOT VERIFIED under v2 | Must replay against the current deployment |
+| Wrong-role and missing-token requests | NOT VERIFIED on this release | Unit coverage exists; deploy-time proof is still needed |
+| Reset during an in-flight intervention | NOT VERIFIED under v2 | Must confirm stale callback isolation on the deployed workflow |
 
 Detailed identifiers and the verification boundary are recorded in [AWS verification evidence](AWS_VERIFICATION_EVIDENCE.md).
 
 ## Public deployment
 
 - Frontend: <https://main.d6hf0wv24qbik.amplifyapp.com>
-- Amplify `main`: PR #20 presentation refresh deployed; `/`, `/login`, `/ops`, `/supervisor`, and `/worker/ravi-001` return HTTP 200
+- Amplify `main`: `/demo` returned HTTP 200 on 10 October 2026; browser-role actions remain unverified
 - API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
 - CloudFormation stack: `TaapSaathiStack` — `UPDATE_COMPLETE`
 
