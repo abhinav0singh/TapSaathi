@@ -72,6 +72,28 @@ Step Functions executions:
 - Break/resume generation 25: `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:7a597279-9b38-cd59-0405-1da73d1a7068_7dba6ab3-99bd-c994-07f0-1d211cac4ae8`
 - Symptom/acknowledgement/resume generation 28: `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:f43cef9e-2cfa-6fc9-54f8-14a178eeb220_3b4735bd-d29d-2d64-8b10-0be9c6ac9ad7`
 
-This evidence does not yet verify current-release timeout behavior, duplicate
-EventBridge delivery, stale callbacks after an in-flight reset, Step Functions
-graph screenshots, or the real-browser/mobile acceptance gate.
+### Remaining backend scenarios
+
+- **Duplicate EventBridge delivery, generation 30:** replaying the same
+  `HeatRiskRaised` envelope started two Step Functions executions. Both ended
+  `SUCCEEDED`, while DynamoDB contained exactly one `INTERVENTION_CREATED` and
+  one `DELIVERY_REASSIGNED` audit event for intervention
+  `int-97456278169d91787069`.
+  - `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:f144a9c9-477d-19a3-3caf-e82c2f70b634_b457f1a2-2a97-5d30-8d28-2731087f9ded`
+  - `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:b43d2d3c-816f-06c5-a9c0-4300e6ed9552_86256b7d-fca7-d261-cab3-fc80a20f4eab`
+- **Worker and supervisor timeout, generation 31:** worker timeout secured and
+  reassigned the delivery, escalated exactly once, and then the supervisor
+  callback timed out. The execution ended `SUCCEEDED` with terminal status
+  `SUPERVISOR_UNACKNOWLEDGED`; Ravi remained `AWAITING_SUPERVISOR` and the
+  delivery remained with Asha.
+  - `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:f74e0bb8-afb5-dc6a-1bbe-74a0e3d6effa_5b29ced3-63d4-4962-d4aa-cd5b61314661`
+- **Stale callback after reset, generations 32 to 33:** the demo was reset
+  while the old execution waited for Ravi. After its timeout, the stale
+  execution ended `SUCCEEDED` through the generation guard. Generation 33
+  remained clean with zero active interventions, Ravi `SAFE`, and the delivery
+  assigned to Ravi.
+  - `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:9eec45af-229c-d25c-a939-e5507bf601ba_963fa98a-d9be-458c-a78c-6482660be0c6`
+
+The final reset created generation 34 in the same clean state. Current-release
+backend Phase 3 scenarios are now verified. Step Functions graph screenshots
+and the real-browser/mobile acceptance gate remain to be captured.

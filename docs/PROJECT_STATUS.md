@@ -30,10 +30,9 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 
 1. Worker and supervisor layouts are checked in real browsers at a mobile viewport.
 2. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
-3. Timeout escalation, duplicate EventBridge delivery, and stale callback after reset are recorded with deployed evidence.
-4. Step Functions graph screenshots and the remaining DynamoDB audit evidence are captured.
+3. Step Functions graph screenshots and browser evidence are captured for the submission package.
 
-Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback behavior, and JWT role enforcement. The demo is clean at generation 29 with zero active interventions. This is still not deliberate stale-callback reset-isolation proof.
+Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The demo is clean at generation 34 with zero active interventions.
 
 ## Final rehearsal
 
