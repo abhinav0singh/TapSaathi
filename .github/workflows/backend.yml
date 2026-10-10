@@ -1,0 +1,39 @@
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - "packages/**"
+      - "scripts/**"
+      - "services/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "vitest.config.ts"
+      - ".github/workflows/backend.yml"
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-backend:
+    name: Typecheck, test, and synthesize
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace=@taapsaathi/contracts
+      - run: npm run typecheck
+      - run: npm run test:risk:zero-dependency
+      - run: npm test
+      - run: npm run synth
+      - run: npm run verify:definition

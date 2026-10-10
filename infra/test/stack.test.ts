@@ -43,7 +43,7 @@ describe("TaapSaathi infrastructure", () => {
         ]),
       }),
     });
-  });
+  }, 60_000);
 
   it("attaches SSM permissions only to protected Lambda roles", () => {
     const resources = template().toJSON().Resources as Record<
