@@ -472,4 +472,34 @@ describe("TaapSaathi infrastructure", () => {
       "EscalateSupervisor"
     );
   });
+
+  it("completes obsolete demo-generation workflows without raising a failure alarm", () => {
+    const states = workflowStates();
+
+    expect(states["StaleGenerationComplete"]?.Type).toBe("Succeed");
+
+    for (const stateName of [
+      "AcquireIdempotencyLock",
+      "LoadWorkerDeliveryPolicyHub",
+      "CreateIntervention",
+      "PrepareGuidanceWithLocationAndPolly",
+      "AwaitWorkerResponse",
+      "ReassignActiveDeliveryTransactionally",
+      "SecureActiveDeliveryForEscalation",
+      "EscalateSupervisor",
+      "AwaitSupervisorAcknowledgement",
+      "CompleteBreakIntervention",
+      "CompleteSupervisorResponding",
+      "CompleteSupervisorUnacknowledged",
+    ]) {
+      expect(states[stateName]?.Catch, stateName).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ErrorEquals: ["StaleGenerationError"],
+            Next: "StaleGenerationComplete",
+          }),
+        ])
+      );
+    }
+  });
 });
