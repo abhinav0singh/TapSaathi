@@ -1,61 +1,50 @@
 # Verification status
 
-Generated for the greenfield backend handoff on 2026-10-08.
+**Verified:** 10 October 2026  
+**Source commit:** `f8c6b99c3455b1682989d26032e072ca5225bd6a`  
+**Backend deployment:** `1f393fb734007a8a4e028ba7bed5c6388363d2da`  
+**AWS region:** `ap-south-1`
 
-## CODE COMPLETE
+## Current release state
 
-Implemented source areas:
+The backend and public frontend are deployed. The critical intervention paths, timeout handling, idempotency, authorization failures, and reset isolation have been exercised against the live AWS resources. The remaining release gate is browser evidence from real Cognito sign-ins for all three roles, tracked in [GitHub issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8).
 
-- shared Zod contracts and OpenAPI description;
-- deterministic risk policy and shared observation publisher;
-- DynamoDB production adapter and in-memory repository test double;
-- exact seed/reset generation logic and stale-generation conditions;
-- API Gateway Lambda handlers for every frozen route;
-- EventBridge Scheduler weather adapter and custom event-bus publishing;
-- Standard Step Functions callback workflow tasks;
-- transactional delivery reassignment and supervisor escalation;
-- Amazon Location Routes scooter request and honest fallback;
-- Polly/S3 private audio generation and presigned retrieval;
-- CDK infrastructure, assertions, deployed smoke script, and runbook.
+## Local and CI verification
 
-## LOCALLY VERIFIED
+| Check | Result |
+| --- | --- |
+| Backend TypeScript | PASS |
+| Vitest | PASS — 22 files, 139 tests |
+| CDK synthesis | PASS |
+| Step Functions definition validator | PASS |
+| Next.js production build | PASS |
+| GitHub Backend workflow on `main` | PASS |
+| GitHub Web workflow on `main` | PASS |
 
-| Check | Command | Observed result |
+The full local checks were rerun against PR #13 before merge. The Backend and Web GitHub workflows also passed on its merge commit, `f8c6b99`.
+
+## Deployed AWS verification
+
+| Scenario | Result | Key observation |
 | --- | --- | --- |
-| Deterministic policy core | `npm run test:risk:zero-dependency` | 2 tests passed; 0 failed |
-| TypeScript syntax transform | Node 24 `stripTypeScriptTypes` over all `.ts` files | 54 files parsed successfully |
-| JSON manifests | Node JSON parse command | Valid |
-| Whitespace/conflict markers | `git diff --check` and repository search | No reported errors |
-| Secret-pattern scan | Repository regex scan | No AWS keys or private-key markers found |
-| Demo bypass scan | Search for Step Functions start calls in demo/weather/risk services | No direct start call found |
+| `TAKE_BREAK` | PASS | Delivery moved from Ravi to Asha and Ravi entered `RESTING` |
+| `FEEL_UNWELL` | PASS | Delivery secured, supervisor acknowledgement accepted, execution succeeded |
+| Worker timeout | PASS | Delivery secured before supervisor escalation |
+| Supervisor timeout | PASS | Terminal status `SUPERVISOR_UNACKNOWLEDGED`; no stuck execution |
+| Duplicate callback | PASS | Same request replayed prior result; different request rejected with `409 ALREADY_RESPONDED` |
+| Duplicate event | PASS | One intervention and one delivery-reassignment effect |
+| Wrong-role and missing-token requests | PASS | Rejected with `401` or `403` without advancing the generation |
+| Reset during an in-flight intervention | PASS | Old execution ended `SUCCEEDED`; clean generation stayed unchanged |
 
-Not locally verified in the restricted build environment:
+Detailed identifiers and the verification boundary are recorded in [AWS verification evidence](AWS_VERIFICATION_EVIDENCE.md).
 
-- TypeScript compilation;
-- Zod/Vitest suites;
-- CDK assertions and synthesis;
-- generated Step Functions definition validation.
+## Public deployment
 
-Cause:
+- Frontend: <https://main.d6hf0wv24qbik.amplifyapp.com>
+- Amplify `main`: commit `f8c6b99` — `SUCCEED`; `/`, `/login`, `/ops`, `/supervisor`, and `/worker/ravi-001` return HTTP 200
+- API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
+- CloudFormation stack: `TaapSaathiStack` — `UPDATE_COMPLETE`
 
-```text
-npm install
-npm error 403 Forbidden - GET https://registry.npmjs.org/@aws-sdk%2fclient-dynamodb
-```
+## Remaining acceptance gate
 
-Required command in an unrestricted development environment:
-
-```bash
-npm install
-npm run typecheck
-npm run test
-npm run test:infra
-npm run synth
-npm run verify:definition
-```
-
-## AWS VERIFIED
-
-**AWS VERIFICATION PENDING.** No AWS credentials or AWS CLI were available in the implementation environment. No deployment, ARN, endpoint, AWS execution, DynamoDB record, Location route, Polly object, or CloudWatch result is claimed.
-
-Follow `docs/DEPLOYMENT_RUNBOOK.md` and update the release evidence table in `README.md` only with real outputs.
+Real browser sessions must still prove operator, worker, and supervisor navigation and authenticated actions through Cognito and API Gateway. Direct Lambda invocations used realistic JWT claim contexts for some backend workflow tests, so those runs prove the deployed business workflow but do not replace the browser/authorizer evidence.
