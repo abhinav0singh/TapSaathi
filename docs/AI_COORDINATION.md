@@ -546,3 +546,20 @@ and a perfectly north-south route). No horizontal overflow; tiles loaded. A real
 route from an active intervention on the deployed backend was not viewed, and
 the tile-failure message and the SVG fallback were reviewed in code only.
 
+### Heat spike after Ravi resumes work
+
+Seen on the deployed site on 11 October: after a full alert cycle (spike, Ravi
+reports unwell, supervisor acknowledges, Ravi resumes), the next *Start heat
+spike* failed with "The request could not be completed". Cause: resuming sets
+Ravi's active time to zero, and the spike readings (45.2 C air, 49.1 C apparent)
+only reach HIGH for a rider at or above the 60-minute continuous-exposure limit;
+below it they give CAUTION, which raises no event. The handler then threw a plain
+error, which the API reports as a generic 500. This is the policy working as
+designed, not a broken button, and a reset restores Ravi's seeded 75 minutes.
+
+Change: the handler now answers `409 DEMO_NOT_READY` with a message that says why
+and what to do (reset, then start the spike), and the Sandbox controls text now
+lists the three situations in which a spike does nothing. The message change is
+backend code and is **not deployed**; until it is, the card shows the old generic
+message. Unit tests cover the no-event case and an event for a different rider.
+

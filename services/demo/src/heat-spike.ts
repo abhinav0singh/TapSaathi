@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import { DemoHeatSpikeRequestSchema, DemoHeatSpikeResponseSchema, HeatObservationSchema } from "@taapsaathi/contracts";
-import { DynamoRepository, errorResponse, evaluateAndPublishObservation, json, loadEnvironment, loadRuntimeIdentityMapping, parseJson, requestContext, requireOperatorOrSupervisor } from "@taapsaathi/shared";
+import { ConflictError, DynamoRepository, errorResponse, evaluateAndPublishObservation, json, loadEnvironment, loadRuntimeIdentityMapping, parseJson, requestContext, requireOperatorOrSupervisor } from "@taapsaathi/shared";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const context = requestContext(event);
@@ -35,7 +35,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       now,
     });
     const riskEvent = result.events.find((candidate) => candidate.payload.workerId === "ravi-001");
-    if (!riskEvent) throw new Error("Demo fixture did not produce Ravi's required risk event");
+    if (!riskEvent) {
+      // The spike readings only raise an alert for a rider who has been working long enough. After a
+      // reset Ravi starts at 75 minutes; resuming work sets his active time back to zero.
+      throw new ConflictError(
+        "DEMO_NOT_READY",
+        "This heat reading did not raise an alert because Ravi has not been working long enough, for example because he just resumed work. Reset the demo to restore his active time, then start the heat spike again.",
+      );
+    }
     return json(202, DemoHeatSpikeResponseSchema.parse({
       eventId: riskEvent.eventId,
       source: "DEMO_SIMULATOR",

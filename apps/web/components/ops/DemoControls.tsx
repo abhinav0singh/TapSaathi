@@ -59,7 +59,7 @@ export default function DemoControls({ onChanged }: { onChanged: () => void }) {
         <div className="max-w-xl">
           <h2 className="text-[1.0625rem] font-medium">Sandbox controls</h2>
           <p className="mt-1 text-[0.875rem] leading-relaxed text-label-2">
-            These change the shared demo for everyone. They start the real AWS workflow with simulated data. A spike is skipped while Ravi is already in an alert or waiting for a supervisor, so reset first if the demo looks stuck.
+            These change the shared demo for everyone. They start the real AWS workflow with simulated data. A spike only raises an alert when Ravi has been working long enough. It does nothing while he is already in an alert or waiting for a supervisor, or right after he resumes work (his active time goes back to zero), so reset first in any of those cases.
           </p>
         </div>
         <div className="flex items-center gap-2.5">
