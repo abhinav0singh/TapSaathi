@@ -138,8 +138,10 @@ callback secrets.
 The stale-execution class is not fully closed. The post-PR #30 execution
 `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
 ended `FAILED` with `AppError: Intervention not found.` in
-`CompleteSupervisorUnacknowledged` on 11 October 2026. It did not corrupt the
-new generation because the missing-record error occurred before a write.
+`CompleteSupervisorUnacknowledged` on 11 October 2026. It began in demo
+generation 26 and the demo had advanced to generation 28 before it ended. It
+did not corrupt the new generation because the missing-record error occurred
+before a write.
 
 `DynamoRepository.complete` looks up the intervention before it compares the
 execution generation, so a reset that removes the old intervention raises

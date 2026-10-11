@@ -269,11 +269,13 @@ Do not describe the stale-execution class as closed. The execution
 `7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
 ended `FAILED` with `AppError: Intervention not found.` in
 `CompleteSupervisorUnacknowledged` after a reset removed its old intervention.
-It made no write to the new generation, but `DynamoRepository.complete` looks
-up the intervention before comparing generations and therefore raises
-`NotFoundError`, which the state machine does not catch as stale. Similar
-lookup-first paths require review. Fix, test, deploy, and re-verify this in a
-separate backend change; do not treat this documentation update as a fix.
+It began in demo generation 26 and the demo had advanced to generation 28 by
+completion. It made no write to the new generation, but
+`DynamoRepository.complete` looks up the intervention before comparing
+generations and therefore raises `NotFoundError`, which the state machine does
+not catch as stale. Similar lookup-first paths require review. Fix, test,
+deploy, and re-verify this in a separate backend change; do not treat this
+documentation update as a fix.
 
 The manually observed browser flows correlate to successful execution
 `d33ed3c9-a765-b419-8abd-04139ac552f6_e46772c5-f792-2d9d-eee4-fb09b024c713`
