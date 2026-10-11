@@ -166,7 +166,7 @@ export default function OperationsPage() {
           <p className="max-w-xs text-[0.8125rem] leading-relaxed text-label-2 sm:text-right">This authenticated workspace displays deployment-backed sandbox data. The interactive walkthrough on Home is separate and cannot change it.</p>
         </div>
 
-        <DemoControls onChanged={() => void refresh()} />
+        <DemoControls dashboard={data} onChanged={() => void refresh()} />
 
         {error && (
           <p role="alert" className="mt-5 flex items-start gap-3 rounded-2xl bg-critical-tint px-4 py-3.5 text-[0.9375rem] text-critical-ink">

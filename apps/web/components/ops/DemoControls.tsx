@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIdentity } from "@/components/useIdentity";
 import { api } from "@/lib/api";
-import { canUseDemoControls, demoControlErrorMessage } from "@/lib/demoControls";
+import type { DashboardResponse } from "@taapsaathi/contracts";
+import { canUseDemoControls, demoControlErrorMessage, isDemoNotReady, planHeatSpike } from "@/lib/demoControls";
 
 type Notice = { tone: "ok" | "error"; text: string };
 
@@ -14,7 +15,7 @@ type Notice = { tone: "ok" | "error"; text: string };
  * Reset and heat-spike controls for the shared sandbox. Only a signed-in operator or supervisor
  * sees them; the API checks the role again, so a hidden button is never the only protection.
  */
-export default function DemoControls({ onChanged }: { onChanged: () => void }) {
+export default function DemoControls({ dashboard, onChanged }: { dashboard: DashboardResponse | null; onChanged: () => void }) {
   const identity = useIdentity();
   const [pending, setPending] = useState<"spike" | "reset" | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -22,15 +23,44 @@ export default function DemoControls({ onChanged }: { onChanged: () => void }) {
 
   if (identity.status !== "signed-in" || !canUseDemoControls(identity.identity.groups)) return null;
 
+  /**
+   * One click starts the spike. If Ravi is not in the opening state the demo is reset first, so the
+   * operator never has to know about exposure minutes. It does not reset underneath a running alert.
+   */
   async function startSpike() {
     if (pending) return;
-    setPending("spike");
     setNotice(null);
+    const plan = dashboard ? planHeatSpike(dashboard) : ({ kind: "start" } as const);
+    if (plan.kind === "blocked") {
+      setNotice({ tone: "error", text: plan.reason });
+      return;
+    }
+    setPending("spike");
+    let didReset = false;
     try {
-      await api.heatSpike();
-      setNotice({ tone: "ok", text: "Heat spike started. Ravi's guidance should appear within a few seconds." });
+      if (plan.kind === "reset-then-start") {
+        await api.reset();
+        didReset = true;
+      }
+      try {
+        await api.heatSpike();
+      } catch (error) {
+        // The page's picture of the demo can be a few seconds old. If the server says Ravi was not
+        // ready after all, reset once and try again instead of making the operator do it.
+        if (didReset || !isDemoNotReady(error)) throw error;
+        await api.reset();
+        didReset = true;
+        await api.heatSpike();
+      }
+      setNotice({
+        tone: "ok",
+        text: didReset
+          ? "The demo was reset first so Ravi was ready, then the heat spike started. His guidance should appear within a few seconds."
+          : "Heat spike started. Ravi's guidance should appear within a few seconds.",
+      });
       onChanged();
     } catch (error) {
+      if (didReset) onChanged();
       setNotice({ tone: "error", text: demoControlErrorMessage("start a heat spike", error) });
     } finally {
       setPending(null);
@@ -59,7 +89,7 @@ export default function DemoControls({ onChanged }: { onChanged: () => void }) {
         <div className="max-w-xl">
           <h2 className="text-[1.0625rem] font-medium">Sandbox controls</h2>
           <p className="mt-1 text-[0.875rem] leading-relaxed text-label-2">
-            These change the shared demo for everyone. They start the real AWS workflow with simulated data. A spike only raises an alert when Ravi has been working long enough. It does nothing while he is already in an alert or waiting for a supervisor, or right after he resumes work (his active time goes back to zero), so reset first in any of those cases.
+            These change the shared demo for everyone. They start the real AWS workflow with simulated data. Start heat spike resets the demo first when Ravi is not ready, so it works every time.
           </p>
         </div>
         <div className="flex items-center gap-2.5">
