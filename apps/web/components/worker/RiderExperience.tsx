@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Language, ResponseAction, WorkerViewResponseSchema } from "@taapsaathi/contracts";
 import type { z } from "zod";
 import { api } from "@/lib/api";
-import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
 import { useAuditEvents } from "@/lib/useAuditEvents";
+import { supervisorFollowUpForWorker } from "@/lib/supervisorFollowUp";
 import RiderSessionLink from "@/components/worker/RiderSessionLink";
 import RiderView, { type RiderMode } from "@/components/rider/RiderView";
 import { useIdentity } from "@/components/useIdentity";
@@ -34,12 +34,11 @@ export default function RiderExperience({ workerId }: { workerId: string }) {
   const auditEvents = useAuditEvents(
     data?.worker.demoGeneration,
     data?.worker.state === "AWAITING_SUPERVISOR" && !data.intervention,
-    (events) => Boolean(data && latestSupervisorOutcome(events, workerId, data.worker.demoGeneration)),
+    (events) => Boolean(data && supervisorFollowUpForWorker(data.worker, events, data.worker.demoGeneration)),
   );
-  const supervisorOutcome =
-    data?.worker.state === "AWAITING_SUPERVISOR" && !data.intervention
-      ? latestSupervisorOutcome(auditEvents, workerId, data.worker.demoGeneration)
-      : null;
+  const supervisorOutcome = data
+    ? supervisorFollowUpForWorker(data.worker, auditEvents, data.worker.demoGeneration)
+    : null;
 
   const refresh = useCallback(async () => {
     try {

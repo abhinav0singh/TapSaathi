@@ -13,6 +13,7 @@ type Props = {
   hubName: string;
   workers: Worker[];
   activeInterventions: Intervention[];
+  overdueWorkerIds: string[];
   selectedId: string | null;
   onSelect: (workerId: string) => void;
   className?: string;
@@ -38,8 +39,19 @@ function fallbackPosition(workers: Worker[], worker: Worker): { left: string; to
 }
 
 /** Marker as a DOM node: backend strings go in as text, never parsed as HTML. */
-function markerElement(worker: Worker, selected: boolean): HTMLElement {
-  const color = TONE_HEX[STATE_META[worker.state].tone];
+function workerTone(worker: Worker, overdueWorkerIds: string[]): keyof typeof TONE_HEX {
+  return overdueWorkerIds.includes(worker.workerId) ? "critical" : STATE_META[worker.state].tone;
+}
+
+function workerLabel(worker: Worker, overdueWorkerIds: string[]): string {
+  return overdueWorkerIds.includes(worker.workerId)
+    ? "Supervisor follow-up overdue"
+    : STATE_META[worker.state].short.en;
+}
+
+function markerElement(worker: Worker, selected: boolean, overdueWorkerIds: string[]): HTMLElement {
+  const tone = workerTone(worker, overdueWorkerIds);
+  const color = TONE_HEX[tone];
   const size = selected ? 40 : 34;
   const element = document.createElement("div");
   element.textContent = worker.name.slice(0, 1).toUpperCase();
@@ -48,7 +60,7 @@ function markerElement(worker: Worker, selected: boolean): HTMLElement {
     height: `${size}px`,
     borderRadius: "9999px",
     background: color,
-    color: STATE_META[worker.state].tone === "caution" ? "#000" : "#fff",
+    color: tone === "caution" ? "#000" : "#fff",
     border: "3px solid #fff",
     boxShadow: `${selected ? "0 0 0 4px rgba(0,0,0,0.85)," : ""}0 2px 8px rgba(0,0,0,.25)`,
     display: "grid",
@@ -68,11 +80,12 @@ const LEGEND: Array<[string, keyof typeof TONE_DOT]> = [
   ["Safe", "safe"],
   ["Caution", "caution"],
   ["At risk", "high"],
+  ["Follow-up overdue", "critical"],
   ["Resting", "rest"],
   ["Waiting", "wait"],
 ];
 
-export default function OperationsMap({ hubName, workers, activeInterventions, selectedId, onSelect, className }: Props) {
+export default function OperationsMap({ hubName, workers, activeInterventions, overdueWorkerIds, selectedId, onSelect, className }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layersRef = useRef<LayerGroup | null>(null);
@@ -89,6 +102,7 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
     .join("|");
   const riderKey = workers.map((worker) => `${worker.workerId}:${worker.state}:${worker.position.join(",")}`).join("|");
   const idsKey = workers.map((worker) => worker.workerId).join("|");
+  const overdueKey = overdueWorkerIds.join("|");
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -179,13 +193,13 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
       const marker = leaflet.marker(position, {
         icon: leaflet.divIcon({
           className: "",
-          html: markerElement(worker, selected),
+          html: markerElement(worker, selected, overdueWorkerIds),
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],
         }),
         zIndexOffset: selected ? 1000 : 0,
         keyboard: true,
-        title: `${worker.name}: ${STATE_META[worker.state].short.en}`,
+        title: `${worker.name}: ${workerLabel(worker, overdueWorkerIds)}`,
       });
       marker.on("click", () => onSelect(worker.workerId));
       marker.addTo(layers);
@@ -200,7 +214,7 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
     // activeInterventions and workers are read through their keys above so a poll that changes
     // nothing does not rebuild the layers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeKey, riderKey, idsKey, onSelect, ready, selectedId]);
+  }, [routeKey, riderKey, idsKey, overdueKey, onSelect, ready, selectedId]);
 
   const legend = (
     <ul className="flex flex-wrap gap-x-3.5 gap-y-1 text-[0.8125rem] text-label-2">
@@ -234,12 +248,12 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
               <button
                 key={worker.workerId}
                 type="button"
-                aria-label={`${worker.name}: ${STATE_META[worker.state].short.en}`}
+                aria-label={`${worker.name}: ${workerLabel(worker, overdueWorkerIds)}`}
                 onClick={() => onSelect(worker.workerId)}
                 className={cn(
                   "absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white text-sm font-semibold shadow-md",
-                  TONE_DOT[STATE_META[worker.state].tone],
-                  STATE_META[worker.state].tone === "caution" ? "text-black" : "text-white",
+                  TONE_DOT[workerTone(worker, overdueWorkerIds)],
+                  workerTone(worker, overdueWorkerIds) === "caution" ? "text-black" : "text-white",
                   worker.workerId === selectedId ? "size-10 ring-4 ring-black/85" : "size-[34px]",
                 )}
                 style={fallbackPosition(workers, worker)}
