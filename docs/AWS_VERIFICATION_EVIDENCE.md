@@ -38,7 +38,10 @@ The test reset the demo into generation 12, started a heat-risk intervention, wa
 - Ravi remained `SAFE`;
 - `delivery-001` remained assigned to Ravi.
 
-This closes the failure observed before PR #11, where expected stale work ended as a failed execution even though it could not corrupt the new generation.
+This proves one stale-reset path completed safely, but it does not close the
+stale-execution failure class. See the known limitation below for a later
+post-PR #30 execution that ended `FAILED` when its intervention record had
+already been removed by a reset.
 
 ## Verification boundary
 
@@ -103,16 +106,21 @@ Fresh Cognito sessions exercised the hosted Amplify application through the
 operator, worker, and supervisor roles. The test credentials, access tokens,
 callback values, and any short-lived audio URL were not saved.
 
-- The operator triggered a heat spike and observed Ravi's active
-  `AWAITING_WORKER` intervention in the operations view.
+- The operator triggered a heat spike and manually observed Ravi's active
+  `AWAITING_WORKER` intervention in the operations view. The associated
+  generation-36 execution completed successfully:
+  `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:d33ed3c9-a765-b419-8abd-04139ac552f6_e46772c5-f792-2d9d-eee4-fb09b024c713`.
 - Ravi used the Hindi worker view, which showed the active intervention,
   location route, and an audio element loaded through the protected endpoint.
   Ravi selected `TAKE_BREAK`; the UI then showed `RESTING` and the delivery
   reassigned to Asha. That `RESTING` state was also checked at a 375 × 812
-  mobile viewport.
+  mobile viewport. The Hindi, audio-element, and viewport details are manual
+  browser observations; AWS execution history cannot confirm them.
 - In a separate active run, Ravi selected `FEEL_UNWELL`. Neha acknowledged the
   supervisor request, after which Ravi completed the required self-declaration
-  and returned to `SAFE`.
+  and returned to `SAFE`. The associated generation-37 execution completed
+  successfully:
+  `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:648edea5-abd5-51b5-78ca-003d8647deeb_7fc910bf-9b3c-8931-abe2-7ada04eab9a9`.
 - An authenticated AWS Console session opened the execution detail and graph
   for the documented stale-callback execution (generations 32 to 33). This
   confirms console access for the recorded execution; it is not a new workflow
@@ -124,3 +132,21 @@ No redacted browser or Step Functions screenshot is committed to the
 repository. If a submission requires a persistent screenshot artifact, capture
 and redact it separately without account metadata, tokens, signed URLs, or
 callback secrets.
+
+## Known limitation: missing intervention after reset
+
+The stale-execution class is not fully closed. The post-PR #30 execution
+`arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
+ended `FAILED` with `AppError: Intervention not found.` in
+`CompleteSupervisorUnacknowledged` on 11 October 2026. It did not corrupt the
+new generation because the missing-record error occurred before a write.
+
+`DynamoRepository.complete` looks up the intervention before it compares the
+execution generation, so a reset that removes the old intervention raises
+`NotFoundError` instead of `StaleGenerationError`. The same lookup-first
+pattern exists in the relevant callback/escalation paths. The Step Functions
+definition catches only `StaleGenerationError`, so this terminal stale path is
+reported as failed. The corrective backend change must treat a missing
+intervention as stale when the execution generation is older than the current
+demo generation, cover those paths with handler-level tests, and be deployed
+and re-verified separately. This documentation PR does not claim that fix.

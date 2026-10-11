@@ -262,3 +262,23 @@ the hosted system. A submission-ready, redacted Step Functions graph image is
 not stored in the repository. Capture it separately only if the submission
 package requires a persistent artifact; do not include account metadata,
 tokens, signed URLs, or callback secrets.
+
+### Review correction: stale execution after reset
+
+Do not describe the stale-execution class as closed. The execution
+`7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
+ended `FAILED` with `AppError: Intervention not found.` in
+`CompleteSupervisorUnacknowledged` after a reset removed its old intervention.
+It made no write to the new generation, but `DynamoRepository.complete` looks
+up the intervention before comparing generations and therefore raises
+`NotFoundError`, which the state machine does not catch as stale. Similar
+lookup-first paths require review. Fix, test, deploy, and re-verify this in a
+separate backend change; do not treat this documentation update as a fix.
+
+The manually observed browser flows correlate to successful execution
+`d33ed3c9-a765-b419-8abd-04139ac552f6_e46772c5-f792-2d9d-eee4-fb09b024c713`
+(generation 36, operator/`TAKE_BREAK`) and
+`648edea5-abd5-51b5-78ca-003d8647deeb_7fc910bf-9b3c-8931-abe2-7ada04eab9a9`
+(generation 37, `FEEL_UNWELL`/supervisor acknowledgement). The Hindi,
+audio-element, and mobile-viewport details remain manual observations, not
+facts independently established by the Step Functions records.
