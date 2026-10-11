@@ -563,3 +563,23 @@ lists the three situations in which a spike does nothing. The message change is
 backend code and is **not deployed**; until it is, the card shows the old generic
 message. Unit tests cover the no-event case and an event for a different rider.
 
+### Reset confirmation hidden behind the Operations map
+
+Reported from the deployed site: pressing *Reset demo* dimmed and blurred the page
+but showed no confirmation box. The dialog was open, but the Leaflet map painted
+above it. Leaflet gives its panes and controls z-indexes from 400 to 1000, and the
+map's container did not start its own stacking context, so those values competed
+with the whole page and beat the dialog's z-50. The map container
+(`apps/web/components/ops/OperationsMap.tsx`) now uses Tailwind `isolate`, which
+keeps Leaflet's z-indexes inside the map; the rider route map already did.
+
+Checked in a browser at 1600x1000 (the window size where the map sits behind the
+dialog): the dialog is drawn in front with the page blurred behind it, Cancel
+closes it, and Reset sends the request (a fake local token was refused with 401
+and the card showed the plain error). An earlier check of this dialog only
+confirmed that it existed in the page, which missed the problem; a hit test also
+looked fine because Leaflet's tile layers ignore pointer events, so the screenshot
+is the real test. `apps/web/lib/leafletIsolation.test.ts` now fails if any map
+component stops isolating its container. The deployed site shows the fix after the
+Amplify rebuild; no backend change.
+
