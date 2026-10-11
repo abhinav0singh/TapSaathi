@@ -12,11 +12,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/85",
-        secondary: "bg-fill text-foreground hover:bg-fill-strong",
+        secondary: "bg-black/[0.06] text-foreground hover:bg-black/[0.1]",
         outline: "bg-surface text-foreground shadow-[inset_0_0_0_1px_var(--separator)] hover:bg-fill",
-        ghost: "text-foreground hover:bg-fill",
+        ghost: "text-foreground hover:bg-black/[0.06]",
         destructive: "bg-critical-tint text-critical-ink hover:bg-critical-tint/70",
-        danger: "bg-fill text-critical-ink hover:bg-fill-strong",
+        danger: "bg-black/[0.06] text-critical-ink hover:bg-black/[0.1]",
         link: "text-foreground underline-offset-4 hover:underline",
       },
       size: {

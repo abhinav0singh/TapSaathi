@@ -136,9 +136,9 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
               iconAnchor: [9, 9],
               html: '<div style="width:18px;height:18px;border-radius:5px;background:#000;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.3)"></div>',
             }),
-            interactive: false,
+            title: `Shade: ${route.restPointName}`,
           })
-          .bindTooltip(`Shade: ${route.restPointName}`, { permanent: true, direction: "right", offset: [12, 0] })
+          .bindTooltip(`Shade: ${route.restPointName}`, { direction: "top", offset: [0, -10] })
           .addTo(layers);
       }
       points.forEach((point) => bounds.extend(point));
@@ -167,45 +167,69 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [70, 70], maxZoom: 15, animate: false });
   }, [activeInterventions, onSelect, ready, selectedId, workers]);
 
+  const legend = (
+    <ul className="flex flex-wrap gap-x-3.5 gap-y-1 text-[0.8125rem] text-label-2">
+      {LEGEND.map(([label, tone]) => (
+        <li key={label} className="flex items-center gap-1.5">
+          <span className={cn("size-2.5 rounded-full", TONE_DOT[tone])} />
+          {label}
+        </li>
+      ))}
+      <li className="flex items-center gap-1.5">
+        <span className="size-2.5 rounded-[3px] bg-black" />
+        Shade
+      </li>
+    </ul>
+  );
+
+  const shades = Array.from(
+    new Set(activeInterventions.flatMap((item) => (item.route ? [`${item.route.restPointName}, ${Math.round(item.route.distanceMeters)} m`] : []))),
+  );
+
   return (
-    <section className={cn("relative overflow-hidden rounded-3xl bg-fill-strong", className)}>
-      <div ref={containerRef} className="map-quiet absolute inset-0" aria-label={`Rider map for ${hubName}`} />
+    <div>
+      <section className={cn("relative overflow-hidden rounded-3xl bg-fill-strong", className)}>
+        <div ref={containerRef} className="map-quiet absolute inset-0" aria-label={`Rider map for ${hubName}`} />
 
-      {!ready && <div className="absolute inset-0 grid place-items-center text-[0.9375rem] text-label-2">Loading map…</div>}
+        {!ready && <div className="absolute inset-0 grid place-items-center text-[0.9375rem] text-label-2">Loading map…</div>}
 
-      {tileUnavailable && (
-        <div className="absolute inset-0 z-[900] overflow-hidden bg-fill-strong">
-          {workers.map((worker) => (
-            <button
-              key={worker.workerId}
-              type="button"
-              aria-label={`${worker.name}: ${STATE_META[worker.state].short.en}`}
-              onClick={() => onSelect(worker.workerId)}
-              className={cn(
-                "absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white text-sm font-semibold shadow-md",
-                TONE_DOT[STATE_META[worker.state].tone],
-                STATE_META[worker.state].tone === "caution" ? "text-black" : "text-white",
-                worker.workerId === selectedId ? "size-10 ring-4 ring-black/85" : "size-[34px]",
-              )}
-              style={fallbackPosition(workers, worker)}
-            >
-              {worker.name.slice(0, 1).toUpperCase()}
-            </button>
-          ))}
-          <p role="status" className="absolute inset-x-4 bottom-4 rounded-2xl bg-surface px-4 py-3 text-[0.875rem] text-label-2 shadow-sm sm:right-auto sm:max-w-sm">
-            Street tiles are unavailable. Rider positions are relative and states are still live.
-          </p>
+        {tileUnavailable && (
+          <div className="absolute inset-0 z-[900] overflow-hidden bg-fill-strong">
+            {workers.map((worker) => (
+              <button
+                key={worker.workerId}
+                type="button"
+                aria-label={`${worker.name}: ${STATE_META[worker.state].short.en}`}
+                onClick={() => onSelect(worker.workerId)}
+                className={cn(
+                  "absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white text-sm font-semibold shadow-md",
+                  TONE_DOT[STATE_META[worker.state].tone],
+                  STATE_META[worker.state].tone === "caution" ? "text-black" : "text-white",
+                  worker.workerId === selectedId ? "size-10 ring-4 ring-black/85" : "size-[34px]",
+                )}
+                style={fallbackPosition(workers, worker)}
+              >
+                {worker.name.slice(0, 1).toUpperCase()}
+              </button>
+            ))}
+            <p role="status" className="absolute inset-x-4 bottom-4 rounded-2xl bg-surface px-4 py-3 text-[0.875rem] text-label-2 shadow-sm sm:right-auto sm:max-w-sm">
+              Street tiles are unavailable. Rider positions are relative and states are still live.
+            </p>
+          </div>
+        )}
+
+        <div className="pointer-events-none absolute left-4 top-4 z-[1000] hidden rounded-full bg-surface/95 px-3.5 py-2 shadow-sm backdrop-blur sm:block">
+          {legend}
         </div>
-      )}
-
-      <ul className="pointer-events-none absolute left-4 top-4 z-[1000] flex flex-wrap gap-x-3.5 gap-y-1 rounded-full bg-surface/95 px-3.5 py-2 text-[0.8125rem] text-label-2 shadow-sm backdrop-blur">
-        {LEGEND.map(([label, tone]) => (
-          <li key={label} className="flex items-center gap-1.5">
-            <span className={cn("size-2.5 rounded-full", TONE_DOT[tone])} />
-            {label}
-          </li>
+      </section>
+      <div className="mt-3 space-y-1 px-1 text-[0.875rem]">
+        <div className="sm:hidden">{legend}</div>
+        {shades.map((shade) => (
+          <p key={shade} className="text-label-2">
+            Shade: <span className="text-label">{shade}</span>
+          </p>
         ))}
-      </ul>
-    </section>
+      </div>
+    </div>
   );
 }

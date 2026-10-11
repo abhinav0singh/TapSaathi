@@ -301,11 +301,14 @@ export default function OperationsPage() {
                     <ol className="max-h-80 space-y-1 overflow-y-auto pr-2">
                       {displayedEvents.map((event) => (
                         <li key={event.auditEventId} className="flex items-baseline gap-4 rounded-xl px-1 py-2">
-                          <span className="w-24 shrink-0 text-[0.875rem] tabular-nums text-label-2" suppressHydrationWarning>
+                          <span className="w-[5.5rem] shrink-0 text-[0.8125rem] tabular-nums text-label-2 sm:w-24 sm:text-[0.875rem]" suppressHydrationWarning>
                             {clockWithSeconds(new Date(event.occurredAt))}
                           </span>
-                          <span className="flex-1 text-[1rem]">{eventText(event, nameOf(event.workerId))}</span>
-                          <span className="shrink-0 text-[0.8125rem] text-label-2">{ACTOR_LABEL[event.actorType]}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[1rem] leading-snug">{eventText(event, nameOf(event.workerId))}</span>
+                            <span className="block text-[0.8125rem] text-label-2 sm:hidden">{ACTOR_LABEL[event.actorType]}</span>
+                          </span>
+                          <span className="hidden shrink-0 text-[0.8125rem] text-label-2 sm:block">{ACTOR_LABEL[event.actorType]}</span>
                         </li>
                       ))}
                     </ol>

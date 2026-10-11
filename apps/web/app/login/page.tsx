@@ -103,9 +103,9 @@ export default function LoginPage() {
             Reviewing this project? You can see everything without signing in:{" "}
             <Link href="/demo" className="text-rest underline-offset-4 hover:underline">watch a recorded run</Link> or open the read-only{" "}
             <Link href="/ops" className="text-rest underline-offset-4 hover:underline">operations board</Link>. To try the actions yourself, sign in with{" "}
-            <code className="rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-operator</code>,{" "}
-            <code className="rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-ravi</code> or{" "}
-            <code className="rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-neha</code>. The demo password is in the submission writeup.
+            <code className="whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-operator</code>,{" "}
+            <code className="whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-ravi</code> or{" "}
+            <code className="whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-neha</code>. The demo password is in the submission writeup.
           </p>
         </aside>
       </div>
