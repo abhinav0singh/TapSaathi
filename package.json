@@ -23,6 +23,8 @@
         "deploy": "npm run cdk -- deploy --require-approval never",
         "destroy": "npm run cdk -- destroy",
         "smoke:deployed": "tsx scripts/deployed-smoke.ts",
+        "demo:status": "tsx scripts/reset-demo.ts --check",
+        "demo:reset": "tsx scripts/reset-demo.ts",
         "verify:definition": "tsx scripts/validate-state-machine.ts"
     },
     "engines": {
