@@ -237,3 +237,58 @@ build. The Web GitHub Actions workflow also passed on the reviewed PR head
 `297a7b9` (run `38114232259`).
 
 No deployed-browser or AWS verification is claimed.
+
+### Authenticated Phase 3 browser evidence — 11 October 2026
+
+Fresh Cognito sessions were used against the hosted Amplify application. No
+password, token, callback value, or signed audio URL was recorded in the
+repository or this coordination log.
+
+- An operator triggered a heat spike and observed Ravi's active intervention.
+- Ravi used the Hindi active-intervention screen, loaded the protected audio
+  element, selected `TAKE_BREAK`, and reached `RESTING` after the delivery was
+  reassigned to Asha. The `RESTING` view was checked at a 375 × 812 viewport.
+- In a separate run, Ravi selected `FEEL_UNWELL`; Neha acknowledged the
+  supervisor request; Ravi completed the required self-declaration and
+  returned to `SAFE`.
+- An authenticated AWS Console session opened the detail and graph for the
+  documented stale-callback execution (generations 32 to 33). This confirms
+  console access, not a new workflow result.
+- The final reset completed cleanly at generation 38 with zero active
+  interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
+
+**Evidence boundary:** all Phase 3 behavioral checks above were observed in
+the hosted system. A submission-ready, redacted Step Functions graph image is
+not stored in the repository. Capture it separately only if the submission
+package requires a persistent artifact; do not include account metadata,
+tokens, signed URLs, or callback secrets.
+
+### Review correction: stale execution after reset
+
+Do not describe the stale-execution class as closed. The execution
+`7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
+ended `FAILED` with `AppError: Intervention not found.` in
+`CompleteSupervisorUnacknowledged` after a reset removed its old intervention.
+It made no write to the new generation, but `DynamoRepository.complete` looks
+up the intervention before comparing generations and therefore raises
+`NotFoundError`, which the state machine does not catch as stale. Similar
+lookup-first paths require review. Fix, test, deploy, and re-verify this in a
+separate backend change; do not treat this documentation update as a fix.
+
+The manually observed browser flows correlate to successful execution
+`d33ed3c9-a765-b419-8abd-04139ac552f6_e46772c5-f792-2d9d-eee4-fb09b024c713`
+(generation 36, operator/`TAKE_BREAK`) and
+`648edea5-abd5-51b5-78ca-003d8647deeb_7fc910bf-9b3c-8931-abe2-7ada04eab9a9`
+(generation 37, `FEEL_UNWELL`/supervisor acknowledgement). The Hindi,
+audio-element, and mobile-viewport details remain manual observations, not
+facts independently established by the Step Functions records.
+
+### Release-baseline correction — 11 October 2026
+
+The current reviewed source baseline is PR #35 merge
+`a87a17b3bf4061582a0e14403782942d62301763`, which was deployed on 11 October
+2026. PR #30 (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`) remains historical
+production evidence for the protected-audio work, not the current release
+baseline. The independently reviewed PR #35 suite was 31 Vitest files / 189
+tests plus 3 standalone deterministic risk-policy tests; do not repeat the
+superseded 180-test count as the current figure.

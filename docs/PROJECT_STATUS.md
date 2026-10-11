@@ -1,12 +1,13 @@
 # TaapSaathi project status
 
-**Updated:** 10 October 2026  
-**Current source and deployment:** `main` at `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
-**Backend deployment:** confirmed; CloudFormation `UPDATE_COMPLETE`, Amplify build `SUCCEED`
+**Updated:** 11 October 2026  
+**Current source baseline:** `a87a17b3bf4061582a0e14403782942d62301763` (PR #35 merge)  
+**Backend deployment:** confirmed 11 October 2026; CloudFormation `UPDATE_COMPLETE`, Amplify `main` build `SUCCEED`  
+**Historical production evidence:** PR #30 (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`) remains the protected-audio deployment baseline
 
 ## Release assessment
 
-PR #30 is deployed correctly and its rider-audio authorization/privacy checks passed in production. The core implementation is complete, but the broader Phase 3 workflow evidence remains incomplete.
+PR #30 is deployed correctly and its rider-audio authorization/privacy checks passed in production. The core implementation and most Phase 3 behavioral evidence are complete, but a stale execution can still fail after reset when its intervention record has already been removed. It cannot corrupt the new generation; its backend correction, deploy, and re-verification remain required. A submission-ready, redacted Step Functions graph image is also a documentation artifact if required by the final package.
 
 ## Completed
 
@@ -20,37 +21,45 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 - Safe delivery handling implemented before supervisor escalation.
 - `TAKE_BREAK` and `FEEL_UNWELL` with supervisor acknowledgment and audited self-resume recorded against heat-policy-v2.
 - Backend and Web GitHub Actions checks passing on `main`.
-- Deployed release checks passing: typecheck, 180 unit tests, 16 infrastructure tests, CDK synthesis, and Next.js production build.
+- PR #35 release baseline checks passing: root and web typecheck, 31 Vitest files / 189 tests, 3 deterministic risk-policy tests, 16 infrastructure tests, CDK synthesis, state-machine definition validation, and Next.js production build.
 - Ravi can retrieve only Ravi's protected audio; operator, supervisor, and cross-rider audio requests are rejected in production.
 - Public worker and dashboard APIs expose no audio URL, expiry, or storage key; signed Polly audio downloads successfully only through the protected route.
 
-## Remaining Phase 3 evidence
+## Phase 3 evidence boundary
 
-[Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) and the remaining workflow scenarios require live evidence:
+[Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) tracked the live browser evidence. On 11 October 2026, fresh Cognito sessions exercised the following hosted flows without recording passwords, tokens, callback secrets, or signed URLs:
 
-1. Worker and supervisor layouts are checked in real browsers at a mobile viewport.
-2. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
-3. Step Functions graph screenshots and browser evidence are captured for the submission package.
+1. Operator heat spike and active intervention in the operations view (manual browser observation; successful generation-36 execution `d33ed3c9-a765-b419-8abd-04139ac552f6_e46772c5-f792-2d9d-eee4-fb09b024c713`).
+2. Ravi's Hindi active-intervention view, protected audio element, `TAKE_BREAK`, and delivery reassignment; Ravi's `RESTING` state was also viewed at 375 × 812. These are manual browser observations.
+3. Ravi's `FEEL_UNWELL`, Neha's supervisor acknowledgement, and Ravi's self-declared return to work (manual browser observation; successful generation-37 execution `648edea5-abd5-51b5-78ca-003d8647deeb_7fc910bf-9b3c-8931-abe2-7ada04eab9a9`).
+4. Authenticated AWS Console access to the documented stale-callback execution detail and graph.
 
-On 11 October 2026, an authenticated Ravi worker view was manually checked at
-375 × 812 in English and Hindi while the demo was clean (`SAFE`). It establishes
-only a responsive baseline: it does not replace active-flow evidence for
-operator, worker, or supervisor actions, and its review-session capture is not
-yet a submission screenshot. The available Chrome profile had no AWS Console
-session, so Step Functions graph capture remains outstanding.
+The demonstration was reset cleanly to generation 38 afterwards: zero active
+interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. No repository
+asset currently stores a redacted Step Functions graph screenshot. Create one
+only if a submission package explicitly requires a persistent image artifact.
 
-## Phase 4 in progress
+The stale-execution failure
+`7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
+ended `FAILED` after a reset had removed its intervention. The repository
+looks up the intervention before performing the generation comparison, so it
+throws `NotFoundError` instead of the state machine's caught
+`StaleGenerationError`. This is a known backend limitation, not a completed
+Phase 3 scenario; see [AWS verification evidence](AWS_VERIFICATION_EVIDENCE.md)
+for the required corrective boundary.
 
-The next change adds a clearly labelled historical Delhi replay and audit-only
+## Phase 4 implementation
+
+PR #35 added a clearly labelled historical Delhi replay and audit-only
 operational metrics to the operations view. It does not convert the deployed
 cached-weather demo into live weather monitoring and must not be described as
-such until a separately reviewed live-weather deployment exists.
+such unless a separately reviewed live-weather deployment is made.
 
-Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
+Fresh Cognito sessions manually observed operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, and JWT role enforcement. One stale-reset path completed without corrupting the new generation, but stale-reset isolation is not fully verified: a later stale execution failed when its intervention record was absent. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
 
 ## Final rehearsal
 
-After issue #8 passes, run the three-minute judge flow once from a clean reset:
+For a final demonstration, run the three-minute judge flow once from a clean reset:
 
 1. Explain the worker-safety problem and show the operator view.
 2. Trigger the simulated heat spike.
