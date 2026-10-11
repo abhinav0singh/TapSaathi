@@ -201,7 +201,7 @@ export default function OperationsPage() {
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Audit-derived impact · full current-generation history</p>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><p><strong>{impactValue(impact?.interventionCount)}</strong><br />interventions</p><p><strong>{impactValue(impact?.escalationCount)}</strong><br />escalations</p><p><strong>{impactDuration(impact?.triggerToReassignmentMs)}</strong><br />trigger to reassignment</p><p><strong>{impactDuration(impact?.triggerToResponseMs)}</strong><br />trigger to worker response</p></div>
-                <p className="mt-4 text-xs text-slate-500">Timings describe the first intervention in this generation. Operational timings only; rider wellbeing and medical outcomes are not inferred.</p>
+                <p className="mt-4 text-xs text-slate-500">{audit.status === "loaded" && audit.stale ? "Showing the last loaded audit history; refresh is temporarily unavailable. " : ""}Timings describe the first intervention in this generation. Operational timings only; rider wellbeing and medical outcomes are not inferred.</p>
               </div>
             </section>
 

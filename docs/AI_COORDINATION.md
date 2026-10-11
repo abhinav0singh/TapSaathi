@@ -195,3 +195,11 @@ not a mounted React-hook or deployed-browser verification.
 - Request Claude Review #3 only after both checks are green.
 
 No AWS deployment verification is claimed for this change.
+
+### PR #35 post-merge audit polling hardening
+
+The operations-only audit poller now skips refresh requests while its tab is
+hidden, keeps its overlap and unmount guards under direct regression tests, and
+retains the last successful audit history with a visible stale marker after a
+transient failure. This remains local UI behavior only; no deployed-browser or
+AWS verification is claimed.
