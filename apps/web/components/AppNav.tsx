@@ -65,16 +65,17 @@ export default function AppNav() {
 
       {identity && (
         <>
-          <span className="ml-2 shrink-0 text-[0.875rem] text-label-2" aria-label="Signed in as">
+          <span className="ml-2 hidden shrink-0 text-[0.875rem] text-label-2 sm:inline" aria-label="Signed in as">
             {identity.username}
           </span>
           <button
             type="button"
             onClick={handleSignOut}
+            aria-label="Sign out"
             className="ml-1 inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[0.9375rem] text-label-2 hover:text-label"
           >
             <LogOut aria-hidden="true" className="size-4" />
-            Sign out
+            <span className="sr-only sm:not-sr-only">Sign out</span>
           </button>
         </>
       )}

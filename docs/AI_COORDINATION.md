@@ -317,3 +317,42 @@ infrastructure tests; CDK synth; and state-machine definition validation.
 This branch has not been reviewed, merged, or deployed. The failed generation
 26 execution remains a production limitation until an AWS owner deploys this
 fix and a real stale-after-reset execution ARN is re-verified.
+
+### PR #41 Sahara frontend review verification — 11 October 2026
+
+Sahara is the approved public product name. Product-facing web copy and
+documentation use Sahara; internal package names, repository URL, CloudFormation
+stack name, and AWS resource identifiers deliberately remain TaapSaathi so the
+existing deployed backend is not changed.
+
+The PR contains frontend, documentation, and dependency-lockfile changes only;
+it does not modify backend services, CDK infrastructure, or contracts. The
+Sahara candidate was run locally against the deployed production API without
+resetting the shared demo or triggering a heat spike.
+
+- Clean install, root TypeScript typecheck, web typecheck, and production web
+  build passed.
+- Web Vitest suite passed: 7 files / 34 tests.
+- Public production `GET /health`, `GET /dashboard`, and
+  `GET /workers/ravi-001` each returned `200`; their responses contained no
+  public audio URL, expiry, or storage key.
+- Fresh Cognito sessions for the operator, Ravi, and Neha authenticated through
+  the Sahara candidate. Operator `/ops` rendered the live map, rider roster,
+  delivery assignment, and audit/context panels. Ravi's session rendered the
+  identity-bound `/worker/ravi-001` view in both English and Hindi; requesting
+  another worker path still displayed Ravi's identity-bound data. Neha's
+  `/supervisor` view refreshed successfully and correctly reported no pending
+  acknowledgement.
+- No live intervention was active. Protected-audio playback, rider resume, and
+  supervisor acknowledgement controls were therefore not exercised in this
+  pass, avoiding any mutation of the shared demonstration.
+- Responsive checks at 375 × 812 found and fixed two frontend-only header
+  issues: the signed-in username no longer clips on mobile, and the header
+  no longer widens the page when the supervisor navigation scrolls. The mobile
+  document width is 375px for both operator and supervisor views.
+
+**Evidence boundary:** these are local-candidate UI checks using real Cognito
+and the deployed API, not an Amplify deployment of PR #41. No credential,
+token, signed URL, or screenshot with account metadata is stored in the
+repository. Active-flow evidence remains the recorded Phase 3 verification
+described above.
