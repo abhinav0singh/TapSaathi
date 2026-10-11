@@ -1,170 +1,118 @@
 <div align="center">
 
-# Sahara
+# SAHARA · सहारा
 
-### When heat puts a delivery rider at risk, a warning isn't enough. **Someone has to act.**
+### A heat warning is a signal. **Protecting the rider is the response.**
 
-**Sahara turns heat risk into coordinated rider protection, delivery continuity, and accountable human follow-up.**
+**Sahara connects heat-risk detection to actionable rider guidance, safe delivery reassignment, and accountable supervisor follow-up.**
 
-> **Naming note:** Sahara (सहारा, "support") was previously called TaapSaathi. The product name changed in the web app and in these docs. Internal names are unchanged so the deployed system keeps working: the `@taapsaathi/*` packages, the `TaapSaathiStack` CloudFormation stack, AWS resource and profile names, and the repository URL.
+[**Live application ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) &nbsp;·&nbsp; [**Interactive walkthrough — no login ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) &nbsp;·&nbsp; [**AWS evidence ↗**](docs/AWS_VERIFICATION_EVIDENCE.md)
 
-[![Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml)
-[![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml)
-[![Live on Amplify](https://img.shields.io/badge/Live-AWS%20Amplify-FF9900?logo=amazonaws&logoColor=white)](https://main.d6hf0wv24qbik.amplifyapp.com)
-![AWS Region](https://img.shields.io/badge/Region-ap--south--1-0B6B52)
+[![Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml) [![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml) ![AWS Region](https://img.shields.io/badge/AWS-ap--south--1-232F3E?logo=amazonaws)
 
-**[Explore the interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough)** · **[Open the authenticated workspace](https://main.d6hf0wv24qbik.amplifyapp.com/login)** · **[See verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md)** · **[Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)**
+<img src="docs/assets/sahara-story.svg" width="960" alt="Sahara: heat risk becomes rider guidance, protected delivery, and supervisor follow-up" />
 
 </div>
 
-![Sahara overview: heat-risk detection connected to rider and dispatch action](docs/assets/sahara-value.svg)
+> **Sahara** means *support*. Previously named TaapSaathi; internal AWS resource names, the repository URL and `@taapsaathi/*` package identifiers remain unchanged intentionally.
 
-> **The idea in one sentence:** Don't just warn a rider about dangerous heat; help them act, protect the delivery they're carrying, and make sure someone is accountable for what happens next.
+## 01 / The problem: alerts do not finish the job
 
-## Why Sahara exists
+When a delivery rider faces dangerous heat, a temperature warning is only the beginning. Someone still has to answer: **Can the rider safely stop? Who takes the delivery? What if the rider feels unwell or never replies? Who follows up?**
 
-A weather forecast can tell an operations team that it is hot. It cannot, by itself, answer the operational questions that matter in the moment:
+Sahara is a **single-hub, simulated heat-safety coordination prototype** built to connect those decisions. It is not a medical diagnostic tool, emergency-response service, or a claim that injury was prevented.
 
-- **Who needs help?** Which rider's weather conditions and continuous workload cross a defined risk threshold?
-- **What should they do?** How can the rider find rest guidance and respond in a language they understand?
-- **What happens to the order?** Who owns the delivery when the rider takes a break?
-- **Who follows up?** What happens if the rider reports symptoms or never responds?
-- **Can we prove the response?** Is there an auditable record of the decisions and actions?
+## 02 / Built for the people in the loop
 
-**Sahara connects those answers in one event-driven workflow.** It is a prototype for delivery fleets and other organizations coordinating outdoor workers: rider safety is the primary goal, while delivery continuity and operational accountability make the response practical for dispatch teams.
+| Delivery rider | Operations team | Supervisor |
+|:---|:---|:---|
+| **Understand the risk.** English/Hindi instructions, route-to-rest context and protected audio guidance. | **See the situation.** Live rider states, map, delivery ownership, active interventions and audit trail. | **Own the follow-up.** Review escalations, record acknowledgments and understand overdue outcomes. |
+| **Respond simply.** Take a break or report feeling unwell. | **Keep work covered.** A delivery can be reassigned before escalation. | **Never confuse acknowledgment with clearance.** Returning to work follows separate backend rules. |
 
-| For riders | For operations | For supervisors |
-| :-- | :-- | :-- |
-| Clear bilingual guidance, rest-route context, optional protected audio, and explicit actions | One map for rider state, intervention progress, delivery ownership, and reassignment | Authenticated escalation, acknowledgment, and an audit trail without pretending acknowledgment is medical clearance |
+## 03 / How Sahara works
 
-## What it does — from signal to response
+<img src="docs/assets/sahara-flow.svg" width="960" alt="Six stages: detect, decide, guide, protect, follow up, and record" />
 
-![Sahara intervention sequence: sense, decide, guide, protect, confirm and recover](docs/assets/sahara-safety-loop.svg)
+1. **Detect:** scheduled observations or a *clearly labelled simulated* heat spike enter the shared risk policy.
+2. **Decide:** deterministic policy evaluates weather and continuous-exposure context; qualifying risk produces a versioned event.
+3. **Guide:** an intervention provides rider guidance, a rest-route context and optional protected Amazon Polly audio.
+4. **Protect:** a break or missed response triggers safe delivery handling and reassignment where possible.
+5. **Follow up:** symptoms or timeouts escalate to an authenticated supervisor. Acknowledgment is not medical clearance.
+6. **Record:** state changes and actions are auditable; idempotency and demo-generation checks guard against duplicates and stale work.
 
-```mermaid
-flowchart LR
-    A[Weather observation or<br/>labelled demo spike] --> B[Deterministic<br/>heat-risk policy]
-    B --> C{Intervention<br/>needed?}
-    C -->|No| D[Continue monitoring]
-    C -->|Yes| E[Create durable<br/>intervention]
-    E --> F[Guide rider<br/>toward rest]
-    F --> G{Rider response}
-    G -->|Take break| H[Protect and<br/>reassign delivery]
-    G -->|Feels unwell| I[Secure delivery<br/>and escalate]
-    G -->|No response| I
-    I --> J[Authenticated<br/>supervisor follow-up]
-    H --> K[Audited outcome]
-    J --> K
-    classDef emphasis fill:#0f513f,color:#fff,stroke:#0f513f
-    class B,E,K emphasis
-```
+**Try the story yourself:** [Open the no-login interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough). It is a local simulation on the page, **not** a live AWS execution.
 
-The public walkthrough does not manufacture an operational intervention: it is
-local to the page. Controlled engineering spikes, which are not exposed in the
-product workspace, enter the same risk-evaluation and EventBridge path used by
-scheduled observations; AWS Step Functions manages the durable intervention
-lifecycle.
+## 04 / The product
 
-## Explore the product
+| Surface | What it demonstrates |
+|:---|:---|
+| [**Operations command center**](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Rider roster, map, delivery assignments, intervention stages, audit feed, historical heat replay and operational metrics. |
+| **Ravi's worker experience** | Mobile-first English/Hindi guidance, rest routing, protected audio, take-break / feel-unwell actions and controlled resume. |
+| [**Supervisor desk**](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Escalation queue, acknowledgement and outstanding follow-up state. |
+| [**Interactive walkthrough**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) | Judge-friendly narrative without demo credentials; a local simulation that never reads or changes operational data. |
 
-| Experience | What you can see or do |
-| :-- | :-- |
-| **Interactive walkthrough** — [`/#walkthrough`](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) | A no-login, local simulation of heat risk, rider choices, delivery handling, and supervisor follow-up. It never reads or changes operational data. |
-| **Operations workspace** — [`/ops`](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Authenticated workspace with deployment-backed sandbox data: map, rider roster, delivery assignments, intervention state, audit timeline, historical replay, and operational impact metrics. |
-| **Rider experience** | English/Hindi instructions, route-to-rest context, protected voice guidance, explicit **Take break** / **I feel unwell** actions, and an audited return-to-work flow. |
-| **Supervisor desk** — [`/supervisor`](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Review an escalation and record authenticated acknowledgment. Acknowledgment is **not** medical clearance. |
+### Product screenshots — add final captures here
 
-**For judges:** Start with the [no-login interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough). It is explicitly simulated and local to the page. Then inspect the authenticated Operations workspace separately; its sandbox data and role-bound actions are not part of the walkthrough.
+<!-- SCREENSHOT SLOT 1: Add docs/screenshots/sahara-ops-dashboard.png after the final operator UI fix. -->
+**Operations · live dashboard** — _Screenshot pending final frontend verification._
 
-### Operational details that matter
+<!-- Once captured, replace the preceding italic sentence with:
+![Sahara operations dashboard](docs/screenshots/sahara-ops-dashboard.png)
+-->
 
-**Delivery protection.** A rider taking a break should not silently retain an active delivery. The workflow secures work before reassignment and records the new owner.
+<!-- SCREENSHOT SLOT 2: Add docs/screenshots/sahara-rider-mobile.png after Karan completes mobile QA. -->
+**Rider · mobile safety guidance** — _Screenshot pending final frontend verification._
 
-**Human-in-the-loop escalation.** A symptom report or missed response can route to a supervisor. Acknowledgment records responsibility for follow-up; it does not assert that a rider is medically fit.
+<!-- Once captured, replace the preceding italic sentence with:
+<img src="docs/screenshots/sahara-rider-mobile.png" width="350" alt="Ravi's Sahara worker safety screen" />
+-->
 
-**Safe recovery.** After a completed break, an authenticated rider can confirm readiness to resume. Continuous active minutes reset, but previously reassigned work stays with its new rider. The symptom path has additional acknowledgment and self-declaration conditions.
+## 05 / AWS architecture: real orchestration, not browser theatre
 
-**Generation isolation.** A reset starts a new demo generation so callbacks from an older intervention cannot overwrite the new simulated state.
+<img src="docs/assets/sahara-architecture.svg" width="960" alt="AWS architecture connecting risk inputs, EventBridge, Step Functions, Lambda, DynamoDB, Location, Polly, Cognito and Amplify" />
 
-## Historical heat replay and measurable operational impact
+| Layer | Technology | Why it matters |
+|:---|:---|:---|
+| Experience | **AWS Amplify**, Next.js, React, Leaflet | Hosted operator, rider and supervisor experiences |
+| Identity | **Amazon Cognito**, API Gateway JWT authorizer | Role-bound mutations and identity-specific protected audio |
+| Signals | **EventBridge Scheduler**, deterministic risk policy | Scheduled and simulated inputs use shared decision logic |
+| Orchestration | **Amazon EventBridge**, **AWS Step Functions Standard**, AWS Lambda | Durable intervention lifecycle, callbacks, timeouts and escalation |
+| State | **Amazon DynamoDB** | Rider and delivery state, intervention records, audit, idempotency and demo generations |
+| Guidance | **Amazon Location**, **Amazon Polly**, private **Amazon S3** | Rest routing and access-controlled audio |
+| Operations | **Amazon CloudWatch**, AWS CDK v2 | Observable and repeatable cloud infrastructure |
 
-The Operations page includes a **fixed historical reanalysis example**, not a live forecast or official warning:
+### Actual AWS Step Functions execution
 
-| Delhi replay input | Value |
-| :-- | --: |
-| Historical time | 29 May 2024, 13:00 IST |
-| Air temperature | 45.6 °C |
-| Apparent temperature | 44.6 °C |
-| Relative humidity | 12% |
-| Weather-only policy result | **CAUTION** |
-| Result with a **simulated 60-minute continuous-exposure condition** | **HIGH** |
+The image below is an **actual AWS Console graph capture** from a successful intervention execution. Green states show the path taken; unhighlighted branches are part of the definition, not evidence that every branch ran.
 
-The example uses an [Open-Meteo historical archive](https://open-meteo.com/en/docs/historical-weather-api) reanalysis grid point and runs through the same shared deterministic heat-policy implementation as the backend. It is **not** a live reading, a medical assessment, or an official alert.
+![Actual Sahara AWS Step Functions execution graph](docs/screenshots/aws-stepfunctions-success.png)
 
-**Audit-derived impact cards** report current-demo-generation counts of interventions and escalations, plus recorded trigger-to-reassignment and trigger-to-worker-response durations for the first intervention where timestamps exist. Full audit history refreshes every 15 seconds while `/ops` remains open. The cards distinguish **Loading**, **Unavailable**, and successfully retrieved **zero** values; they do not claim health outcomes or prevented injuries.
+*AWS Console graph — successful worker-response / delivery-reassignment path. This does not independently verify the separate PR #40 stale-generation regression.*
 
-## Architecture — event-driven, identity-aware, and auditable
+**Optional evidence slot 3:** replace the graph above with a tighter, redacted execution-detail screenshot showing `SUCCEEDED` and readable state names if Karan captures one. Keep the existing real screenshot until then.
 
-```mermaid
-flowchart TB
-    subgraph INPUT[Risk signals]
-      S[EventBridge Scheduler] --> P[Shared deterministic<br/>heat policy]
-      X[Labelled demo heat spike] --> P
-    end
-    P --> EB[Amazon EventBridge<br/>versioned HeatRiskRaised]
-    EB --> SF[AWS Step Functions<br/>durable intervention workflow]
-    SF --> DB[(Amazon DynamoDB<br/>state, audit, idempotency)]
-    SF --> LOC[Amazon Location<br/>rest routing]
-    SF --> POLLY[Amazon Polly<br/>voice guidance]
-    POLLY --> S3[(Private Amazon S3<br/>audio objects)]
-    subgraph APP[Role-aware application]
-      WEB[AWS Amplify<br/>Next.js web app] --> API[API Gateway HTTP API]
-      API --> AUTH[Amazon Cognito<br/>JWT authorization]
-    end
-    API --> DB
-    API --> SF
-    API --> S3
-    classDef core fill:#0e503e,color:#fff,stroke:#0e503e
-    class P,EB,SF core
-```
+## 06 / Engineering quality and safety boundaries
 
-| Layer | AWS technology | Responsibility |
-| :-- | :-- | :-- |
-| Experience | Amplify Hosting, Next.js, Leaflet | Public story, live operations map, rider and supervisor views |
-| Authentication | Cognito, API Gateway JWT authorizer | Role-aware access; state changes and rider-specific audio are protected |
-| Detection | EventBridge Scheduler, shared policy | Scheduled observations and deterministic, versioned risk decisions |
-| Orchestration | EventBridge, **Standard** Step Functions | Durable waits, callbacks, escalation, and completion |
-| State | DynamoDB | Worker and delivery state, interventions, audit events, idempotency, demo generations |
-| Guidance | Amazon Location, Polly, private S3 | Rest routing and protected voice guidance |
-| Operations | CloudWatch, X-Ray | Logs, traces, and workflow evidence |
-| Infrastructure | AWS CDK v2, TypeScript | Repeatable infrastructure definitions and verification |
+**Designed for failures, not only the happy path.**
 
-### Design choices
+- **Deterministic, versioned risk decisions** — not an opaque medical-risk score.
+- **Durable workflows** — Step Functions callback waits, timeout branches, escalation and terminal states.
+- **Idempotency and generation isolation** — reduce duplicate processing and stale-demo side effects.
+- **Role-based security** — Cognito/JWT authorization for operator, rider and supervisor actions; rider-specific audio protection.
+- **Audit trail** — records actions, transitions, reasons and operational timing without inventing health outcomes.
+- **Honest fallback states** — missing map tiles, unavailable audit history and incomplete supervisor follow-up are not displayed as successes.
 
-- **One policy, two entry points.** Scheduled weather and explicitly simulated spikes share the deterministic risk evaluator. The historical replay imports that same policy from `packages/contracts/src/heat-policy.ts`.
-- **Durable orchestration.** Step Functions handles waits and callbacks; the UI reflects backend state rather than pretending to complete the workflow locally.
-- **Identity-bound actions.** Current backend mutations require the appropriate Cognito identity and server-side mapping. Protected audio is restricted to the matching rider. A planned two-role authorization migration is not part of the public walkthrough change.
-- **Auditable and retry-aware.** Interventions use correlation IDs, audit records, idempotent request handling, and generation isolation.
-- **Responsible fallbacks.** Route-provider availability and other limitations are recorded honestly in [known limitations](docs/KNOWN_LIMITATIONS.md); a fallback is not presented as proof of the primary provider.
+**Release evidence:** PR #40's backend fix was merged and deployed to `TaapSaathiStack` in `ap-south-1`; CloudFormation completed successfully, and Complete, Escalate and Respond Lambda updates reported `Successful`. The exact reset-after-missing-intervention AWS regression was **not independently re-verified**. PR #41's Sahara frontend merge (`cb159275`) deployed successfully through AWS Amplify job #27. Local tests and build checks were reported for these releases; see the linked evidence for scope and limits.
 
-## Verification — what is proven and what is pending
+[Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml) · [Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml) · [AWS verification](docs/AWS_VERIFICATION_EVIDENCE.md) · [Verification status](docs/VERIFICATION_STATUS.md) · [Known limitations](docs/KNOWN_LIMITATIONS.md)
 
-**Code and CI:** PR [#35](https://github.com/abhinav0singh/TapSaathi/pull/35) was approved and merged into `main` at `a87a17b`. Independent review reported **31 Vitest files / 189 tests passing**, including **5 web files / 18 tests**, plus **3/3 deterministic-policy tests**. Root and web typechecks, contracts build, CDK synthesis, state-machine validation, and production web build passed. [Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/runs/38106331394) and [Web CI](https://github.com/abhinav0singh/TapSaathi/actions/runs/38106331451) passed on the PR head.
+### Historical heat context, not a live forecast
 
-**Deployed:** The Amplify `main` branch deployed the merge. On **11 October 2026**, CloudFormation reached `UPDATE_COMPLETE` after updating the `WeatherPollFunction` and `HeatSpikeFunction` Lambda code. The live `/ops` page was visually checked in its clean state, including historical replay, map, roster, delivery ownership, and audit impact cards.
+The operator experience includes a fixed **Delhi historical reanalysis** example (29 May 2024, 13:00 IST), plus a separately labelled simulated continuous-exposure condition. Audit-derived intervention counts and timings are **operational metrics**, not evidence of prevented illness.
 
-**Still to verify on the latest deployment:** A new authenticated golden-path smoke test, active-flow browser evidence across the currently configured roles, and a redacted Step Functions execution-graph capture. Prior recorded AWS evidence is available, but should not be confused with a fresh end-to-end run after this deployment.
+## 07 / Run locally
 
-| Evidence | Link |
-| :-- | :-- |
-| Recorded golden-path runs | [Golden-path evidence](docs/GOLDEN_PATH_EVIDENCE.md) |
-| AWS execution and deployment evidence | [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md) |
-| Current verification boundaries | [Verification status](docs/VERIFICATION_STATUS.md) |
-| Judge recording and rehearsal | [Judge demo runbook](docs/JUDGE_DEMO_RUNBOOK.md) |
-
-## Run locally
-
-**Prerequisites:** Node.js 22–24, npm, and a supported browser. AWS deployment and authenticated actions additionally require the documented cloud configuration and permitted credentials.
+Requires Node.js 22–24, npm and a modern browser.
 
 ```bash
 git clone https://github.com/abhinav0singh/TapSaathi.git
@@ -176,47 +124,39 @@ npm test
 npm run dev --workspace=@taapsaathi/web
 ```
 
-Open `http://localhost:3000`. For infrastructure-only checks:
+Open `http://localhost:3000`. Configure local variables using the repository's examples and [deployment runbook](docs/DEPLOYMENT_RUNBOOK.md); never commit Cognito tokens, passwords, AWS credentials, signed URLs or callback tokens. Deploying CDK requires a separate authorized AWS identity and a reviewed `cdk diff`.
 
-```bash
-npm run test:infra
-npm run test:risk:policy
-npm run synth
-npm run verify:definition
-```
-
-Use [`.env.example`](.env.example) and the [deployment runbook](docs/DEPLOYMENT_RUNBOOK.md) to configure the frontend and AWS environment. **Do not deploy with only `http://localhost:3000` in `FRONTEND_ORIGINS` if the live Amplify frontend must remain authorized.** Inspect `cdk diff` before deployment, and monitor AWS usage and costs. Never commit credentials, JWTs, or signed audio URLs.
-
-## Repository guide
+<details>
+<summary><strong>Repository map</strong></summary>
 
 ```text
-apps/web/               Next.js product, local landing walkthrough, operations, rider, supervisor
-infra/                  AWS CDK stack and infrastructure tests
-packages/contracts/     Shared schemas, contracts, deterministic heat policy
-services/api/           Dashboard, worker, events, response and audio APIs
-services/demo/          Authenticated heat spike, reset, seed
-services/intervention/  Step Functions task handlers
-services/risk-engine/   Risk evaluation and event publishing
-services/shared/        Authorization, state access, logging, HTTP utilities
-services/weather/       Scheduled weather adapter
-scripts/                State-machine checks and deployed smoke testing
-docs/                   Specifications, runbooks, evidence, limitations
+apps/web/              Next.js app: public walkthrough, operations, rider, supervisor
+packages/contracts/    Shared Zod schemas and heat-risk policy
+services/api/          Dashboard, rider, response, audio and events endpoints
+services/demo/         Simulated heat spike, reset and seed
+services/intervention/ Step Functions task handlers
+services/shared/       Authorization, repositories, audit and HTTP utilities
+services/weather/      Weather adapter
+infra/                 AWS CDK stack and infrastructure tests
+docs/                  Evidence, design, specs, runbooks and limitations
 ```
 
-## Scope, safety, and limitations
+</details>
 
-Sahara is a **single-hub hackathon demonstration**, not a production-certified worker-safety or medical system. Demo weather, workers, locations, and deliveries are simulated unless explicitly identified as historical reanalysis. It does not diagnose conditions, guarantee safety, contact emergency services, or claim that a supervisor's acknowledgment is medical clearance. Operational response metrics are not health-outcome metrics. Public read-only views are intentional; sensitive actions and audio are identity-bound.
+## 08 / Watch, verify, judge
 
-See [known limitations](docs/KNOWN_LIMITATIONS.md) and [project status](docs/PROJECT_STATUS.md) for scope and outstanding verification. For the latest merge/deployment context, refer to the PR and the verification section above if a status document has not yet been updated.
+**Recommended judge path:** [Interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) → [Operations](https://main.d6hf0wv24qbik.amplifyapp.com/ops) → [AWS workflow evidence](docs/AWS_VERIFICATION_EVIDENCE.md) → [Architecture](#05--aws-architecture-real-orchestration-not-browser-theatre).
+
+**Demo video:** _Add final public video link here before submission._
+
+**Scope:** Sahara is a simulated single-hub hackathon prototype. It does not contact emergency services, make medical diagnoses, or declare a worker safe merely because a supervisor acknowledged an alert.
 
 ---
 
 <div align="center">
 
-### **From a heat warning to a coordinated response.**
+### Detect the risk. Protect the rider. Keep the team accountable.
 
-**Protect the rider. Keep delivery ownership clear. Make every action accountable.**
-
-[Interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) · [Sign in](https://main.d6hf0wv24qbik.amplifyapp.com/login) · [Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)
+[**Open Sahara ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) · [**Try the walkthrough ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) · [**Judge runbook ↗**](docs/JUDGE_DEMO_RUNBOOK.md)
 
 </div>
