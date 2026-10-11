@@ -52,12 +52,22 @@ describe("repository correctness", () => {
     await expect(repository.claimRiskEvent(event(first.generation), "int-old", 999)).rejects.toMatchObject({ code: "STALE_DEMO_GENERATION" });
   });
 
+  it("treats a reset-removed callback as stale but preserves not-found for a future generation", async () => {
+    const repository = new MemoryRepository();
+    const { generation } = await repository.resetDemo(now);
+    await repository.resetDemo(now);
+    const input = { interventionId: "int-removed", actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
+
+    await expect(repository.consumeCallback({ ...input, generation })).rejects.toMatchObject({ code: "STALE_DEMO_GENERATION" });
+    await expect(repository.consumeCallback({ ...input, generation: generation + 2 })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
   it("WF-009 consumes a callback once and preserves same-request idempotency", async () => {
     const repository = new MemoryRepository();
     const { generation } = await repository.resetDemo(now);
     await repository.createIntervention(intervention(generation), audit(generation));
     await repository.registerCallback({ interventionId: "int-001", actorType: "WORKER", expectedActorId: "ravi-001", taskToken: "secret-token", demoGeneration: generation, expiresAt: 9999999999 }, now, { ...audit(generation), auditEventId: "audit-callback", eventType: "WORKER_RESPONSE_REQUESTED" });
-    const input = { interventionId: "int-001", actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
+    const input = { interventionId: "int-001", generation, actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
     expect(await repository.consumeCallback(input)).toMatchObject({ duplicate: false, taskToken: "secret-token" });
     expect(await repository.consumeCallback(input)).toMatchObject({ duplicate: true });
     await expect(repository.consumeCallback({ ...input, clientRequestId: "5bb3d3d5-ea0e-4348-a63d-f8770a14a179" })).rejects.toMatchObject({ code: "ALREADY_RESPONDED" });
@@ -68,7 +78,7 @@ describe("repository correctness", () => {
     const { generation } = await repository.resetDemo(now);
     await repository.createIntervention(intervention(generation), audit(generation));
     await repository.registerCallback({ interventionId: "int-001", actorType: "WORKER", expectedActorId: "ravi-001", taskToken: "secret-token", demoGeneration: generation, expiresAt: 9999999999 }, now, { ...audit(generation), auditEventId: "audit-callback", eventType: "WORKER_RESPONSE_REQUESTED" });
-    const input = { interventionId: "int-001", actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
+    const input = { interventionId: "int-001", generation, actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
     await repository.consumeCallback(input);
     await repository.releaseCallback({ interventionId: input.interventionId, actorType: input.actorType, clientRequestId: input.clientRequestId });
     expect(await repository.consumeCallback({ ...input, consumedAt: "2026-10-08T10:00:01.000Z" })).toMatchObject({ duplicate: false, taskToken: "secret-token" });

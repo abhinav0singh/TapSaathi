@@ -177,8 +177,12 @@ export class MemoryRepository implements Repository {
 
   public async consumeCallback(input: ConsumeCallbackInput): Promise<ConsumeCallbackResult> {
     const intervention = this.interventions.get(input.interventionId);
-    if (!intervention) throw new NotFoundError("Intervention not found.");
-    this.ensureGeneration(intervention.demoGeneration);
+    if (!intervention) {
+      if (this.generation > input.generation) throw new StaleGenerationError();
+      throw new NotFoundError("Intervention not found.");
+    }
+    if (intervention.demoGeneration !== input.generation) throw new StaleGenerationError();
+    this.ensureGeneration(input.generation);
     const key = this.callbackKey(input.interventionId, input.actorType);
     const callback = this.callbacks.get(key);
     if (!callback) throw new ConflictError("WRONG_WORKFLOW_STATE", "Intervention is not awaiting this response.");

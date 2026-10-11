@@ -21,7 +21,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const intervention = await repository.getIntervention(interventionId);
     if (!intervention) throw new NotFoundError("Intervention not found.");
     const acceptedAt = new Date().toISOString();
-    const result = await repository.consumeCallback({ interventionId, actorType: body.actorType, actorId: body.actorId, clientRequestId: body.clientRequestId, action: body.action, consumedAt: acceptedAt });
+    const result = await repository.consumeCallback({ interventionId, generation: intervention.demoGeneration, actorType: body.actorType, actorId: body.actorId, clientRequestId: body.clientRequestId, action: body.action, consumedAt: acceptedAt });
     if (!result.duplicate) {
       if (!result.taskToken) throw new AppError("CALLBACK_TOKEN_MISSING", "The workflow callback could not be completed.", 500);
       try {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { AppError } from "@taapsaathi/shared";
+import { AppError, StaleGenerationError } from "@taapsaathi/shared";
 import { SendTaskSuccessCommand } from "@aws-sdk/client-sfn";
 
 const mocks = vi.hoisted(() => ({
@@ -119,6 +119,7 @@ describe("Respond API authorization", () => {
 
     mocks.getIntervention.mockResolvedValue({
       interventionId: "int-test-001",
+      demoGeneration: 4,
     });
 
     mocks.consumeCallback.mockResolvedValue({
@@ -178,6 +179,9 @@ describe("Respond API authorization", () => {
 
     expect(result.statusCode).toBe(202);
     expect(mocks.consumeCallback).toHaveBeenCalledTimes(1);
+    expect(mocks.consumeCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ generation: 4 })
+    );
     expect(mocks.sendTask).toHaveBeenCalledTimes(1);
 
     const command = mocks.sendTask.mock.calls[0]?.[0];
@@ -214,6 +218,35 @@ describe("Respond API authorization", () => {
     expect(result.statusCode).toBe(202);
     expect(mocks.consumeCallback).toHaveBeenCalledTimes(1);
     expect(mocks.sendTask).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the stale-generation response without signaling Step Functions", async () => {
+    mocks.consumeCallback.mockRejectedValue(new StaleGenerationError());
+
+    const result = await invoke(
+      event(raviSub, ["WORKER"], "ravi-001", "WORKER", "TAKE_BREAK")
+    );
+
+    expect(result.statusCode).toBe(409);
+    expect(JSON.parse(String(result.body))).toMatchObject({
+      error: { code: "STALE_DEMO_GENERATION" },
+    });
+    expect(mocks.sendTask).not.toHaveBeenCalled();
+  });
+
+  it("returns not found after reset removed the intervention without signaling Step Functions", async () => {
+    mocks.getIntervention.mockResolvedValue(undefined);
+
+    const result = await invoke(
+      event(raviSub, ["WORKER"], "ravi-001", "WORKER", "TAKE_BREAK")
+    );
+
+    expect(result.statusCode).toBe(404);
+    expect(JSON.parse(String(result.body))).toMatchObject({
+      error: { code: "NOT_FOUND" },
+    });
+    expect(mocks.consumeCallback).not.toHaveBeenCalled();
+    expect(mocks.sendTask).not.toHaveBeenCalled();
   });
 
   it("rejects unmapped identities", async () => {
