@@ -522,3 +522,27 @@ the supervisor" section is deployed; until then the card is shown to the
 supervisor and the API answers 403, which the card explains. Neither action is
 attributed to a person in the audit trail yet.
 
+### Rider route map (Leaflet)
+
+The rider screen drew the walk to shade as an abstract SVG sketch (a grid, a
+line and two dots, with no streets), which read as odd, and its edge markers
+could be cropped on wide screens. It now uses the same Leaflet and
+OpenStreetMap setup as the Operations map (`apps/web/components/worker/RouteMap.tsx`):
+real streets, the route drawn on top (dotted when it is only the straight-line
+fallback), a blue "You" dot and a black "Shade" marker, with the labels in the
+rider's language (English and Hindi). It is a still picture with no dragging or
+zooming, so it never captures the page scroll. The OpenStreetMap credit sits at
+the top right because the white sheet slides over the bottom of the map. If
+Leaflet cannot start, or the route has no drawable points, the old sketch is
+shown instead; if tiles do not load, the route line still draws and a short
+note says so. The coordinate conversion lives in `apps/web/lib/routeGeometry.ts`
+(4 tests).
+
+How it was checked: the real `RiderView` rendered locally from a road-like route
+fixture (not real backend data, because no intervention is active on the shared
+demo) in Hindi and English at 375px and at desktop width, plus five edge routes
+(dense road-like path, two-point fallback, a 60 m walk, a perfectly east-west
+and a perfectly north-south route). No horizontal overflow; tiles loaded. A real
+route from an active intervention on the deployed backend was not viewed, and
+the tile-failure message and the SVG fallback were reviewed in code only.
+
