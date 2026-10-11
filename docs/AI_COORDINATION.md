@@ -234,6 +234,6 @@ document-like helper and has direct regression coverage for subscription,
 visible-tab refresh, and cleanup. Local verification after this correction
 passed root typecheck, 5 web test files / 22 tests, and the production web
 build. The Web GitHub Actions workflow also passed on the reviewed PR head
-`defd5cd` (run `38113984303`).
+`297a7b9` (run `38114232259`).
 
 No deployed-browser or AWS verification is claimed.
