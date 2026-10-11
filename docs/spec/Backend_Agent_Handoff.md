@@ -1,4 +1,4 @@
-# TaapSaathi Backend Agent Handoff
+# Sahara Backend Agent Handoff
 
 ## How to use this handoff
 
@@ -17,7 +17,7 @@ Paste the prompt below as the agent's first instruction. Do not paraphrase it.
 
 # COPY-PASTE MASTER PROMPT
 
-You are the implementation owner and lead AWS backend engineer for **TaapSaathi**, a 48-hour AWS Bharat Builds hackathon project. Your job is to take the existing repository from its current state to a deployed, tested, demo-ready backend. You are not being asked to brainstorm, redesign, or write another plan-only document. You must inspect, implement, deploy, verify, and hand over the working system.
+You are the implementation owner and lead AWS backend engineer for **Sahara**, a 48-hour AWS Bharat Builds hackathon project. Your job is to take the existing repository from its current state to a deployed, tested, demo-ready backend. You are not being asked to brainstorm, redesign, or write another plan-only document. You must inspect, implement, deploy, verify, and hand over the working system.
 
 The goal is to maximize the verified judging score, especially:
 
@@ -53,7 +53,7 @@ Do not silently choose between contradictions. Report the exact conflict and rec
 
 ## 2. Locked product definition
 
-TaapSaathi is an event-driven heat-safety and dispatch operations system for delivery workers. It detects a deterministic risk condition, starts a durable intervention, gives the worker a nearby rest route and bilingual audio guidance, waits for a response, and either reassigns the active delivery or escalates to a supervisor. The dashboard observes the backend; it does not cause the safety decision.
+Sahara is an event-driven heat-safety and dispatch operations system for delivery workers. It detects a deterministic risk condition, starts a durable intervention, gives the worker a nearby rest route and bilingual audio guidance, waits for a response, and either reassigns the active delivery or escalates to a supervisor. The dashboard observes the backend; it does not cause the safety decision.
 
 The golden story is:
 

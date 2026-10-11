@@ -1,4 +1,4 @@
-# TaapSaathi Test Plan
+# Sahara Test Plan
 
 **Status:** Final release gate  
 **Audience:** Every developer  
@@ -7,7 +7,7 @@
 
 ## 1. Release rule
 
-TaapSaathi is demo-ready only when the golden scenario passes twice consecutively on the deployed URL after two independent resets.
+Sahara is demo-ready only when the golden scenario passes twice consecutively on the deployed URL after two independent resets.
 
 No developer may declare a feature complete because it works locally, appears in the UI, or exists in the repository. It is complete only when its acceptance test passes in the integrated environment.
 

@@ -1,10 +1,12 @@
 <div align="center">
 
-# TaapSaathi
+# Sahara
 
 ### When heat puts a delivery rider at risk, a warning isn't enough. **Someone has to act.**
 
-**TaapSaathi turns heat risk into coordinated rider protection, delivery continuity, and accountable human follow-up.**
+**Sahara turns heat risk into coordinated rider protection, delivery continuity, and accountable human follow-up.**
+
+> **Naming note:** Sahara (सहारा, "support") was previously called TaapSaathi. The product name changed in the web app and in these docs. Internal names are unchanged so the deployed system keeps working: the `@taapsaathi/*` packages, the `TaapSaathiStack` CloudFormation stack, AWS resource and profile names, and the repository URL.
 
 [![Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml)
 [![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml)
@@ -15,11 +17,11 @@
 
 </div>
 
-![Animated overview of TaapSaathi's value: heat-risk detection connected to rider and dispatch action](docs/assets/taapsaathi-value.gif)
+![Animated overview of Sahara's value: heat-risk detection connected to rider and dispatch action](docs/assets/taapsaathi-value.gif)
 
 > **The idea in one sentence:** Don't just warn a rider about dangerous heat; help them act, protect the delivery they're carrying, and make sure someone is accountable for what happens next.
 
-## Why TaapSaathi exists
+## Why Sahara exists
 
 A weather forecast can tell an operations team that it is hot. It cannot, by itself, answer the operational questions that matter in the moment:
 
@@ -29,7 +31,7 @@ A weather forecast can tell an operations team that it is hot. It cannot, by its
 - **Who follows up?** What happens if the rider reports symptoms or never responds?
 - **Can we prove the response?** Is there an auditable record of the decisions and actions?
 
-**TaapSaathi connects those answers in one event-driven workflow.** It is a prototype for delivery fleets and other organizations coordinating outdoor workers: rider safety is the primary goal, while delivery continuity and operational accountability make the response practical for dispatch teams.
+**Sahara connects those answers in one event-driven workflow.** It is a prototype for delivery fleets and other organizations coordinating outdoor workers: rider safety is the primary goal, while delivery continuity and operational accountability make the response practical for dispatch teams.
 
 | For riders | For operations | For supervisors |
 | :-- | :-- | :-- |
@@ -199,7 +201,7 @@ docs/                   Specifications, runbooks, evidence, limitations
 
 ## Scope, safety, and limitations
 
-TaapSaathi is a **single-hub hackathon demonstration**, not a production-certified worker-safety or medical system. Demo weather, workers, locations, and deliveries are simulated unless explicitly identified as historical reanalysis. It does not diagnose conditions, guarantee safety, contact emergency services, or claim that a supervisor's acknowledgment is medical clearance. Operational response metrics are not health-outcome metrics. Public read-only views are intentional; sensitive actions and audio are identity-bound.
+Sahara is a **single-hub hackathon demonstration**, not a production-certified worker-safety or medical system. Demo weather, workers, locations, and deliveries are simulated unless explicitly identified as historical reanalysis. It does not diagnose conditions, guarantee safety, contact emergency services, or claim that a supervisor's acknowledgment is medical clearance. Operational response metrics are not health-outcome metrics. Public read-only views are intentional; sensitive actions and audio are identity-bound.
 
 See [known limitations](docs/KNOWN_LIMITATIONS.md) and [project status](docs/PROJECT_STATUS.md) for scope and outstanding verification. For the latest merge/deployment context, refer to the PR and the verification section above if a status document has not yet been updated.
 

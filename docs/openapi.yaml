@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: TaapSaathi Backend API
+  title: Sahara Backend API
   version: 1.0.0
-  description: Demonstration API for the TaapSaathi heat-safety workflow. All demo data is simulated.
+  description: Demonstration API for the Sahara heat-safety workflow. All demo data is simulated.
 paths:
   /health:
     get:

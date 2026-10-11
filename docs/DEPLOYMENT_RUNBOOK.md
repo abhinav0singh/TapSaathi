@@ -1,4 +1,4 @@
-# TaapSaathi deployment and evidence runbook
+# Sahara deployment and evidence runbook
 
 This runbook produces real AWS evidence in `ap-south-1`. Replace shell variables only with values returned by CloudFormation. Never invent an ARN or endpoint.
 

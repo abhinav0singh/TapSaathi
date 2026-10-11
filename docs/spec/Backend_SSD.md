@@ -1,4 +1,4 @@
-# TaapSaathi Backend Software Design Specification
+# Sahara Backend Software Design Specification
 
 **Audience:** Backend and cloud developer  
 **Status:** Final implementation specification  

@@ -1,4 +1,4 @@
-# TaapSaathi project status
+# Sahara project status
 
 **Updated:** 10 October 2026  
 **Current source and deployment:** `main` at `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
