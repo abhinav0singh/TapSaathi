@@ -583,3 +583,41 @@ is the real test. `apps/web/lib/leafletIsolation.test.ts` now fails if any map
 component stops isolating its container. The deployed site shows the fix after the
 Amplify rebuild; no backend change.
 
+### One-click heat spike, and dialogs above Leaflet
+
+Requested by the operator: *Start heat spike* should simply work, without the
+"reset first" explanation and error. The Sandbox controls card
+(`apps/web/components/ops/DemoControls.tsx`, planning in
+`apps/web/lib/demoControls.ts`) now decides before it calls the API:
+
+- Demo in its opening state (no active alert, Ravi `SAFE` with at least 60 active
+  minutes, `delivery-001` with Ravi): start the spike.
+- Anything else (Ravi resumed, resting, waiting for a supervisor, or the delivery
+  moved): reset the demo, then start the spike, and say so in the success message.
+- An alert is running right now: do nothing destructive and say so; the card never
+  resets underneath a live alert.
+- If the page's picture is a few seconds stale and the server still answers that
+  Ravi was not ready (the 409 from PR #53), the card resets once and retries.
+
+If the reset step fails (for example an unaccepted sign-in) the spike is not sent.
+The backend is unchanged, and the policy is unchanged: the spike still needs Ravi
+at or above the exposure limit, the card just restores that for you. The long
+explanation paragraph on the card was replaced by one sentence.
+
+Also, the dialog and sheet components now use `z-[1100]` instead of `z-50`, above
+Leaflet's highest z-index (1000), as a second guard on top of the `isolate` fix in
+PR #54, after the reset confirmation was reported still hidden behind the map. At
+2000x1150, the reporter's window size, the confirmation is drawn in front of the
+blurred map with this build. If the deployed site still hides it, the browser is
+probably serving a cached copy of the old script and needs a hard refresh.
+
+Checked in a local browser with a fake, unsigned session (the real API refuses it):
+the card text, the dialog in front of the map, and the order of requests when
+*Start heat spike* is pressed on the live demo's current state (Ravi at 0 minutes,
+delivery with Asha): one `POST /demo/reset` with the bearer header, and no spike
+request after the refusal. The shared demo was unchanged afterwards. A real
+reset-then-spike with real credentials was not run. The "already waiting for the
+server's wording" retry relies on the phrase "Reset the demo to restore" in
+`services/demo/src/heat-spike.ts`; changing that wording requires changing
+`isDemoNotReady`.
+
