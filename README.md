@@ -6,7 +6,7 @@
 
 **Sahara connects heat-risk detection to actionable rider guidance, safe delivery reassignment, and accountable supervisor follow-up.**
 
-[**Live application ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) &nbsp;·&nbsp; [**Recorded demo — no login ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/demo) &nbsp;·&nbsp; [**AWS evidence ↗**](docs/AWS_VERIFICATION_EVIDENCE.md)
+[**Live application ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) &nbsp;·&nbsp; [**Interactive walkthrough — no login ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) &nbsp;·&nbsp; [**AWS evidence ↗**](docs/AWS_VERIFICATION_EVIDENCE.md)
 
 [![Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml) [![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml) ![AWS Region](https://img.shields.io/badge/AWS-ap--south--1-232F3E?logo=amazonaws)
 
@@ -40,7 +40,7 @@ Sahara is a **single-hub, simulated heat-safety coordination prototype** built t
 5. **Follow up:** symptoms or timeouts escalate to an authenticated supervisor. Acknowledgment is not medical clearance.
 6. **Record:** state changes and actions are auditable; idempotency and demo-generation checks guard against duplicates and stale work.
 
-**Try the story yourself:** [Open the no-login recorded walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/demo). Recorded runs are labelled replays, **not** live AWS executions.
+**Try the story yourself:** [Open the no-login interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough). It is a local simulation on the page, **not** a live AWS execution.
 
 ## 04 / The product
 
@@ -49,7 +49,7 @@ Sahara is a **single-hub, simulated heat-safety coordination prototype** built t
 | [**Operations command center**](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Rider roster, map, delivery assignments, intervention stages, audit feed, historical heat replay and operational metrics. |
 | **Ravi's worker experience** | Mobile-first English/Hindi guidance, rest routing, protected audio, take-break / feel-unwell actions and controlled resume. |
 | [**Supervisor desk**](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Escalation queue, acknowledgement and outstanding follow-up state. |
-| [**Recorded walkthrough**](https://main.d6hf0wv24qbik.amplifyapp.com/demo) | Judge-friendly narrative without demo credentials. |
+| [**Interactive walkthrough**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) | Judge-friendly narrative without demo credentials; a local simulation that never reads or changes operational data. |
 
 ### Product screenshots — add final captures here
 
@@ -130,7 +130,7 @@ Open `http://localhost:3000`. Configure local variables using the repository's e
 <summary><strong>Repository map</strong></summary>
 
 ```text
-apps/web/              Next.js app: public, operations, rider, supervisor, recorded demo
+apps/web/              Next.js app: public walkthrough, operations, rider, supervisor
 packages/contracts/    Shared Zod schemas and heat-risk policy
 services/api/          Dashboard, rider, response, audio and events endpoints
 services/demo/         Simulated heat spike, reset and seed
@@ -145,7 +145,7 @@ docs/                  Evidence, design, specs, runbooks and limitations
 
 ## 08 / Watch, verify, judge
 
-**Recommended judge path:** [Recorded demo](https://main.d6hf0wv24qbik.amplifyapp.com/demo) → [Operations](https://main.d6hf0wv24qbik.amplifyapp.com/ops) → [AWS workflow evidence](docs/AWS_VERIFICATION_EVIDENCE.md) → [Architecture](#05--aws-architecture-real-orchestration-not-browser-theatre).
+**Recommended judge path:** [Interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) → [Operations](https://main.d6hf0wv24qbik.amplifyapp.com/ops) → [AWS workflow evidence](docs/AWS_VERIFICATION_EVIDENCE.md) → [Architecture](#05--aws-architecture-real-orchestration-not-browser-theatre).
 
 **Demo video:** _Add final public video link here before submission._
 
@@ -157,6 +157,6 @@ docs/                  Evidence, design, specs, runbooks and limitations
 
 ### Detect the risk. Protect the rider. Keep the team accountable.
 
-[**Open Sahara ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) · [**Watch recorded run ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/demo) · [**Judge runbook ↗**](docs/JUDGE_DEMO_RUNBOOK.md)
+[**Open Sahara ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) · [**Try the walkthrough ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) · [**Judge runbook ↗**](docs/JUDGE_DEMO_RUNBOOK.md)
 
 </div>

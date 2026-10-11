@@ -135,8 +135,8 @@ const copy = {
     hi: "यह पहले के अलर्ट की स्थिति है, अभी की गर्मी की चेतावनी नहीं। सुपरवाइज़र ने अभी पुष्टि नहीं की है, इसलिए Sahara के ज़रिए काम पर वापस नहीं जा सकते। सुरक्षित जगह पर रहें और पास के किसी व्यक्ति से मदद माँगें।",
   },
   demo: {
-    en: "Simulated demonstration. No real rider is at risk.",
-    hi: "यह केवल डेमो है। कोई असली राइडर ख़तरे में नहीं है।",
+    en: "Sandbox environment. No real rider is at risk.",
+    hi: "यह सैंडबॉक्स वातावरण है। कोई असली राइडर ख़तरे में नहीं है।",
   },
 } satisfies Record<string, Pair>;
 

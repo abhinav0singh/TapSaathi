@@ -91,7 +91,7 @@ export default function StageList({ intervention, riderName, followUp, more, now
       ? "No heat alert is running. An earlier alert ended without a supervisor acknowledgement, so this rider cannot resume through Sahara."
       : followUp
         ? "No heat alert is running. The earlier alert is acknowledged; the rider can self-declare readiness from their own signed-in phone."
-        : "Press Start heat spike to run the whole workflow, from detection to supervisor follow-up.";
+        : "No active heat alert. The workspace will show rider safety follow-up when the policy opens an intervention.";
 
   return (
     <section aria-label="Current alert or outstanding follow-up" className="rounded-3xl bg-surface p-6">
