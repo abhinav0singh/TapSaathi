@@ -203,3 +203,24 @@ hidden, keeps its overlap and unmount guards under direct regression tests, and
 retains the last successful audit history with a visible stale marker after a
 transient failure. This remains local UI behavior only; no deployed-browser or
 AWS verification is claimed.
+
+### PR #37 follow-up hardening
+
+The Web workflow now executes the web Vitest suite, including the operations
+audit regression tests. The operations audit poller skips hidden-tab interval
+work and refreshes immediately when the tab becomes visible again. Its
+visibility subscription is cleaned up on unmount.
+
+The obsolete circular retry test was removed. Recovery is covered through the
+real refresher and fetch paths instead. The operations timeline now repeats
+the stale-history notice and also identifies unavailable audit history, so the
+state is not confined to the impact card.
+
+These are source and local-test changes only. No deployed-browser or AWS
+verification is claimed.
+
+Local verification for this follow-up passed: root typecheck; 155 backend unit
+tests; 16 infrastructure tests; state-machine definition validation; 3
+deterministic risk-policy tests; 5 web test files / 21 tests; and the
+production web build. The Web GitHub Actions workflow also passed on commit
+`220e733` (run `38113629977`), including the web test step added here.

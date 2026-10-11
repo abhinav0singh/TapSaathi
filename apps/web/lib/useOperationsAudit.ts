@@ -26,6 +26,20 @@ export function startOperationsAuditPolling(
   return () => cancel(timer);
 }
 
+export function startOperationsAuditVisibilityRefresh(
+  refresh: () => void,
+  getVisibilityState: () => DocumentVisibilityState,
+  subscribe: (listener: () => void) => void,
+  unsubscribe: (listener: () => void) => void
+): () => void {
+  const onVisibilityChange = () => {
+    if (shouldRefreshOperationsAudit(getVisibilityState())) refresh();
+  };
+
+  subscribe(onVisibilityChange);
+  return () => unsubscribe(onVisibilityChange);
+}
+
 export async function refreshOperationsAudit(
   demoGeneration: number,
   fetchEvents: () => Promise<AuditEvent[]>,
@@ -108,10 +122,17 @@ export function useOperationsAudit(
       (callback, interval) => window.setInterval(callback, interval),
       (timer) => window.clearInterval(timer)
     );
+    const stopVisibilityRefresh = startOperationsAuditVisibilityRefresh(
+      () => void refresh(),
+      () => document.visibilityState,
+      (listener) => document.addEventListener("visibilitychange", listener),
+      (listener) => document.removeEventListener("visibilitychange", listener)
+    );
 
     return () => {
       refresher.dispose();
       stopPolling();
+      stopVisibilityRefresh();
     };
   }, [demoGeneration, enabled]);
 

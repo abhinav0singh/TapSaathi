@@ -333,6 +333,16 @@ export default function OperationsPage() {
 
               <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold">Audit timeline</h2>
+                {audit.status === "loaded" && audit.stale && (
+                  <p role="status" className="mt-1 text-xs text-amber-700">
+                    Showing the last loaded audit history; refresh is temporarily unavailable.
+                  </p>
+                )}
+                {audit.status === "unavailable" && (
+                  <p role="status" className="mt-1 text-xs text-amber-700">
+                    Audit history is temporarily unavailable.
+                  </p>
+                )}
 
                 <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
                   {displayedEvents.length === 0 ? (

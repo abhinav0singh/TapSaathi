@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   verify-web:
-    name: Typecheck and production build
+    name: Typecheck, test, and production build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -29,4 +29,5 @@ jobs:
       - run: npm ci
       - run: npm run build --workspace=@taapsaathi/contracts
       - run: npm run typecheck --workspace=@taapsaathi/web
+      - run: npx vitest run apps/web
       - run: npm run build --workspace=@taapsaathi/web
