@@ -2,149 +2,163 @@
 
 # TaapSaathi
 
-### When heat puts a rider at risk, TaapSaathi turns the warning into coordinated action.
+### When heat puts a delivery rider at risk, a warning isn't enough. **Someone has to act.**
 
-[![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml)
+**TaapSaathi turns heat risk into coordinated rider protection, delivery continuity, and accountable human follow-up.**
+
 [![Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/backend.yml)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-AWS_Amplify-f97316?style=flat-square)](https://main.d6hf0wv24qbik.amplifyapp.com)
-[![AWS Region](https://img.shields.io/badge/AWS-ap--south--1-07110f?style=flat-square)](https://aws.amazon.com/)
+[![Web CI](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml/badge.svg)](https://github.com/abhinav0singh/TapSaathi/actions/workflows/web.yml)
+[![Live on Amplify](https://img.shields.io/badge/Live-AWS%20Amplify-FF9900?logo=amazonaws&logoColor=white)](https://main.d6hf0wv24qbik.amplifyapp.com)
+![AWS Region](https://img.shields.io/badge/Region-ap--south--1-0B6B52)
 
-[**Open the live product**](https://main.d6hf0wv24qbik.amplifyapp.com) · [Judge demo](docs/JUDGE_DEMO_RUNBOOK.md) · [Verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md) · [Deployment guide](docs/DEPLOYMENT_RUNBOOK.md)
+**[Open the live app](https://main.d6hf0wv24qbik.amplifyapp.com)** · **[Try a no-login recorded run](https://main.d6hf0wv24qbik.amplifyapp.com/demo)** · **[See verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md)** · **[Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)**
 
 </div>
 
-![TaapSaathi turns rider heat risk into coordinated safety and delivery action](docs/assets/taapsaathi-value.gif)
+![Animated overview of TaapSaathi's value: heat-risk detection connected to rider and dispatch action](docs/assets/taapsaathi-value.gif)
 
-## What TaapSaathi does
+> **The idea in one sentence:** Don't just warn a rider about dangerous heat; help them act, protect the delivery they're carrying, and make sure someone is accountable for what happens next.
 
-**TaapSaathi is a heat-safety intervention and dispatch coordination system for delivery operations.** When heat and workload put a rider at risk, it creates a durable intervention, guides the rider toward safety, protects the active delivery, and brings in an authenticated supervisor when a human response is needed.
+## Why TaapSaathi exists
 
-> **Heat risk → rider guidance → delivery continuity → supervisor accountability**
+A weather forecast can tell an operations team that it is hot. It cannot, by itself, answer the operational questions that matter in the moment:
 
-It closes the gap between detecting danger and acting on it. One intervention coordinates the rider, the delivery, and the operations team while recording every decision in an auditable timeline.
+- **Who needs help?** Which rider's weather conditions and continuous workload cross a defined risk threshold?
+- **What should they do?** How can the rider find rest guidance and respond in a language they understand?
+- **What happens to the order?** Who owns the delivery when the rider takes a break?
+- **Who follows up?** What happens if the rider reports symptoms or never responds?
+- **Can we prove the response?** Is there an auditable record of the decisions and actions?
 
-## The value it creates
+**TaapSaathi connects those answers in one event-driven workflow.** It is a prototype for delivery fleets and other organizations coordinating outdoor workers: rider safety is the primary goal, while delivery continuity and operational accountability make the response practical for dispatch teams.
 
-| For | TaapSaathi provides | Why it matters |
-| --- | --- | --- |
-| **Riders** | Timely route-to-rest, bilingual text and voice guidance, and a clear way to report symptoms or take a break | Less uncertainty when every minute in the heat matters |
-| **Operations teams** | A live map, rider state, delivery ownership, and safe reassignment in one command center | Safety action and delivery continuity stay connected |
-| **Supervisors** | Authenticated escalation with the context needed to follow up | Human attention goes to interventions that need it most |
-| **Organizations** | A durable, role-aware record of risk, responses, timeouts, and decisions | The response is explainable, testable, and accountable |
+| For riders | For operations | For supervisors |
+| :-- | :-- | :-- |
+| Clear bilingual guidance, rest-route context, optional protected audio, and explicit actions | One map for rider state, intervention progress, delivery ownership, and reassignment | Authenticated escalation, acknowledgment, and an audit trail without pretending acknowledgment is medical clearance |
 
-## The problem it solves
+## What it does — from signal to response
 
-Delivery riders work through changing heat, traffic, and time pressure. A weather alert can identify a hot day, but it does not complete the response:
-
-- Which rider is at risk **right now**?
-- Where is the nearest safe rest point?
-- What happens to an active delivery while the rider rests?
-- Who follows up if the rider does not respond?
-- Can the delivery continue safely?
-- Can every decision be explained afterward?
-
-TaapSaathi connects those decisions in one workflow. Safety becomes an operational action instead of a notification that someone still has to interpret and coordinate manually.
-
-## Product features
-
-| Feature | What it does |
-| --- | --- |
-| **Live operations map** | Shows rider positions, current safety state, rest routes, active interventions, and delivery ownership |
-| **Shared heat-risk engine** | Processes scheduled weather observations and labelled demo heat spikes through the same deterministic policy |
-| **Rider safety guidance** | Delivers bilingual instructions, route context, rider-authorized short-lived audio, explicit break or symptom responses, and an auditable return-to-work action after a completed break |
-| **Delivery protection** | Secures active work before reassignment so a safety intervention does not create ambiguous ownership |
-| **Human escalation** | Uses durable waits and authenticated supervisor acknowledgment when a rider does not respond |
-| **Auditable recovery** | Records the intervention timeline and isolates demo generations so stale callbacks cannot corrupt a reset |
-
-## What the live demo proves
-
-| Experience | What it proves |
-| --- | --- |
-| **Operations command center** | Live rider states, map positions, intervention routes, delivery ownership, and an audit timeline |
-| **Rider safety screen** | Bilingual guidance, route-to-rest context, audio guidance, and explicit break or symptom responses |
-| **Supervisor response desk** | Authenticated escalation review and acknowledgment without automatically clearing the rider |
-| **Demo controls** | A labelled heat spike enters the same risk pipeline as scheduled observations |
-
-> [!TIP]
-> Start at the [public landing page](https://main.d6hf0wv24qbik.amplifyapp.com), then open the live command center. State-changing demo controls require the configured Cognito role.
-
-## How an intervention works
-
-![Animated TaapSaathi safety intervention loop](docs/assets/taapsaathi-safety-loop.gif)
-
-1. **Sense** — scheduled weather and demo observations call the same deterministic risk processor.
-2. **Decide** — the risk engine publishes a versioned `HeatRiskRaised` event to EventBridge.
-3. **Guide** — Standard Step Functions creates a durable intervention while Amazon Location and Polly prepare route and voice guidance.
-4. **Protect** — DynamoDB transactions secure active work before reassignment or escalation.
-5. **Confirm** — Cognito-backed rider and supervisor responses advance the workflow with an audit trail.
-6. **Return safely** — after a normal break, the rider can resume as `SAFE` with continuous active minutes reset while the reassigned delivery stays with its new rider.
-7. **Recover safely** — generation isolation prevents an old workflow or callback from corrupting a reset demo.
-
-## Architecture
+![Animated intervention sequence: sense, decide, guide, protect, confirm and recover](docs/assets/taapsaathi-safety-loop.gif)
 
 ```mermaid
 flowchart LR
-    subgraph Signals
-      A[EventBridge Scheduler]
-      B[Labelled demo heat spike]
-    end
-
-    A --> C[Shared risk processor]
-    B --> C
-    C --> D[Custom EventBridge bus]
-    D --> E[Standard Step Functions]
-
-    subgraph Safety workflow
-      E --> F[(DynamoDB)]
-      E --> G[Amazon Location]
-      E --> H[Amazon Polly]
-      H --> I[(Private S3 audio)]
-    end
-
-    subgraph Role-aware product
-      J[Amplify + Next.js] --> K[API Gateway]
-      K --> L[Cognito JWT authorizer]
-      K --> F
-      K --> E
-    end
+    A[Weather observation or<br/>labelled demo spike] --> B[Deterministic<br/>heat-risk policy]
+    B --> C{Intervention<br/>needed?}
+    C -->|No| D[Continue monitoring]
+    C -->|Yes| E[Create durable<br/>intervention]
+    E --> F[Guide rider<br/>toward rest]
+    F --> G{Rider response}
+    G -->|Take break| H[Protect and<br/>reassign delivery]
+    G -->|Feels unwell| I[Secure delivery<br/>and escalate]
+    G -->|No response| I
+    I --> J[Authenticated<br/>supervisor follow-up]
+    H --> K[Audited outcome]
+    J --> K
+    classDef emphasis fill:#0f513f,color:#fff,stroke:#0f513f
+    class B,E,K emphasis
 ```
 
-The heat-spike endpoint does **not** start Step Functions directly. Scheduled and demo observations both call the shared risk processor and publish the same event contract.
+The operator does not manually manufacture the intervention result in the browser. The demo spike enters the same risk-evaluation and EventBridge path used by scheduled observations; AWS Step Functions manages the durable intervention lifecycle.
 
-## AWS services and responsibilities
+## Explore the product
 
-| Service | Responsibility |
-| --- | --- |
-| AWS Amplify + Next.js | Public story, operations dashboard, rider experience, supervisor desk |
-| Amazon Cognito | Operator, worker, and supervisor identity |
-| API Gateway HTTP API | Public operational reads; JWT-protected state changes and rider-specific audio |
-| EventBridge | Scheduled observations and the versioned heat-risk event bus |
-| Standard Step Functions | Durable waits, callbacks, escalation, and completion |
-| DynamoDB | Workers, deliveries, interventions, audit events, idempotency, and demo generation |
-| Amazon Location | Route geometry and rest-point guidance |
-| Amazon Polly + private S3 | Bilingual voice guidance and protected audio |
-| CloudWatch + X-Ray | Metrics, structured logs, traces, and operational evidence |
+| Experience | What you can see or do |
+| :-- | :-- |
+| **Operations Command Center** — [`/ops`](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Live map, rider roster, delivery assignments, active intervention state, audit timeline, historical replay, and operational impact metrics. |
+| **Rider experience** | English/Hindi instructions, route-to-rest context, protected voice guidance, explicit **Take break** / **I feel unwell** actions, and an audited return-to-work flow. |
+| **Supervisor response desk** — [`/supervisor`](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Review an escalation and record authenticated acknowledgment. Acknowledgment is **not** medical clearance. |
+| **Recorded runs** — [`/demo`](https://main.d6hf0wv24qbik.amplifyapp.com/demo) | Walk through recorded rider-break and symptom scenarios **without signing in**. These are labelled replays, not live interventions. |
 
-## Verification snapshot
+**For judges:** Start with the [no-login recorded run](https://main.d6hf0wv24qbik.amplifyapp.com/demo). Then inspect the [read-only Operations dashboard](https://main.d6hf0wv24qbik.amplifyapp.com/ops). State-changing actions require the correct Cognito role; demo credentials are not published in this repository.
 
-| Check | Status |
-| --- | --- |
-| TypeScript across the monorepo | ✅ Pass |
-| Unit tests | ✅ 180 tests |
-| CDK synthesis and state-machine validation | ✅ Pass |
-| Next.js production build | ✅ Pass |
-| Deployed v2 take-break and symptom workflows | ✅ Recorded in [golden-path evidence](docs/GOLDEN_PATH_EVIDENCE.md) |
-| v2 timeout, duplicate replay, stale callback after reset | ⏳ Not yet re-verified; do not treat earlier-policy evidence as v2 proof |
-| Wrong-role and missing-token rejection | ⏳ Needs fresh browser/API evidence on this release |
-| Protected rider audio | ✅ Deployed: matching rider `200`; operator, supervisor, and cross-rider requests `403` |
-| Reset during an in-flight workflow | ⏳ Needs fresh v2 evidence |
-| Three-role Cognito browser evidence | ⏳ In progress — [issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) |
+### Operational details that matter
 
-Detailed execution identifiers and verification boundaries live in [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md).
+**Delivery protection.** A rider taking a break should not silently retain an active delivery. The workflow secures work before reassignment and records the new owner.
+
+**Human-in-the-loop escalation.** A symptom report or missed response can route to a supervisor. Acknowledgment records responsibility for follow-up; it does not assert that a rider is medically fit.
+
+**Safe recovery.** After a completed break, an authenticated rider can confirm readiness to resume. Continuous active minutes reset, but previously reassigned work stays with its new rider. The symptom path has additional acknowledgment and self-declaration conditions.
+
+**Generation isolation.** A reset starts a new demo generation so callbacks from an older intervention cannot overwrite the new simulated state.
+
+## Historical heat replay and measurable operational impact
+
+The Operations page includes a **fixed historical reanalysis example**, not a live forecast or official warning:
+
+| Delhi replay input | Value |
+| :-- | --: |
+| Historical time | 29 May 2024, 13:00 IST |
+| Air temperature | 45.6 °C |
+| Apparent temperature | 44.6 °C |
+| Relative humidity | 12% |
+| Weather-only policy result | **CAUTION** |
+| Result with a **simulated 60-minute continuous-exposure condition** | **HIGH** |
+
+The example uses an [Open-Meteo historical archive](https://open-meteo.com/en/docs/historical-weather-api) reanalysis grid point and runs through the same shared deterministic heat-policy implementation as the backend. It is **not** a live reading, a medical assessment, or an official alert.
+
+**Audit-derived impact cards** report current-demo-generation counts of interventions and escalations, plus recorded trigger-to-reassignment and trigger-to-worker-response durations for the first intervention where timestamps exist. Full audit history refreshes every 15 seconds while `/ops` remains open. The cards distinguish **Loading**, **Unavailable**, and successfully retrieved **zero** values; they do not claim health outcomes or prevented injuries.
+
+## Architecture — event-driven, identity-aware, and auditable
+
+```mermaid
+flowchart TB
+    subgraph INPUT[Risk signals]
+      S[EventBridge Scheduler] --> P[Shared deterministic<br/>heat policy]
+      X[Labelled demo heat spike] --> P
+    end
+    P --> EB[Amazon EventBridge<br/>versioned HeatRiskRaised]
+    EB --> SF[AWS Step Functions<br/>durable intervention workflow]
+    SF --> DB[(Amazon DynamoDB<br/>state, audit, idempotency)]
+    SF --> LOC[Amazon Location<br/>rest routing]
+    SF --> POLLY[Amazon Polly<br/>voice guidance]
+    POLLY --> S3[(Private Amazon S3<br/>audio objects)]
+    subgraph APP[Role-aware application]
+      WEB[AWS Amplify<br/>Next.js web app] --> API[API Gateway HTTP API]
+      API --> AUTH[Amazon Cognito<br/>JWT authorization]
+    end
+    API --> DB
+    API --> SF
+    API --> S3
+    classDef core fill:#0e503e,color:#fff,stroke:#0e503e
+    class P,EB,SF core
+```
+
+| Layer | AWS technology | Responsibility |
+| :-- | :-- | :-- |
+| Experience | Amplify Hosting, Next.js, Leaflet | Public story, live operations map, rider and supervisor views |
+| Authentication | Cognito, API Gateway JWT authorizer | Role-aware access; state changes and rider-specific audio are protected |
+| Detection | EventBridge Scheduler, shared policy | Scheduled observations and deterministic, versioned risk decisions |
+| Orchestration | EventBridge, **Standard** Step Functions | Durable waits, callbacks, escalation, and completion |
+| State | DynamoDB | Worker and delivery state, interventions, audit events, idempotency, demo generations |
+| Guidance | Amazon Location, Polly, private S3 | Rest routing and protected voice guidance |
+| Operations | CloudWatch, X-Ray | Logs, traces, and workflow evidence |
+| Infrastructure | AWS CDK v2, TypeScript | Repeatable infrastructure definitions and verification |
+
+### Design choices
+
+- **One policy, two entry points.** Scheduled weather and explicitly simulated spikes share the deterministic risk evaluator. The historical replay imports that same policy from `packages/contracts/src/heat-policy.ts`.
+- **Durable orchestration.** Step Functions handles waits and callbacks; the UI reflects backend state rather than pretending to complete the workflow locally.
+- **Identity-bound actions.** Operator, worker, and supervisor mutations require appropriate Cognito identity and server-side mapping. Protected audio is restricted to the matching rider.
+- **Auditable and retry-aware.** Interventions use correlation IDs, audit records, idempotent request handling, and generation isolation.
+- **Responsible fallbacks.** Route-provider availability and other limitations are recorded honestly in [known limitations](docs/KNOWN_LIMITATIONS.md); a fallback is not presented as proof of the primary provider.
+
+## Verification — what is proven and what is pending
+
+**Code and CI:** PR [#35](https://github.com/abhinav0singh/TapSaathi/pull/35) was approved and merged into `main` at `a87a17b`. Independent review reported **31 Vitest files / 189 tests passing**, including **5 web files / 18 tests**, plus **3/3 deterministic-policy tests**. Root and web typechecks, contracts build, CDK synthesis, state-machine validation, and production web build passed. [Backend CI](https://github.com/abhinav0singh/TapSaathi/actions/runs/38106331394) and [Web CI](https://github.com/abhinav0singh/TapSaathi/actions/runs/38106331451) passed on the PR head.
+
+**Deployed:** The Amplify `main` branch deployed the merge. On **11 October 2026**, CloudFormation reached `UPDATE_COMPLETE` after updating the `WeatherPollFunction` and `HeatSpikeFunction` Lambda code. The live `/ops` page was visually checked in its clean state, including historical replay, map, roster, delivery ownership, and audit impact cards.
+
+**Still to verify on the latest deployment:** A new authenticated golden-path smoke test, active-flow browser evidence across operator/rider/supervisor roles, and a redacted Step Functions execution-graph capture. Prior recorded AWS evidence is available, but should not be confused with a fresh end-to-end run after this deployment.
+
+| Evidence | Link |
+| :-- | :-- |
+| Recorded golden-path runs | [Golden-path evidence](docs/GOLDEN_PATH_EVIDENCE.md) |
+| AWS execution and deployment evidence | [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md) |
+| Current verification boundaries | [Verification status](docs/VERIFICATION_STATUS.md) |
+| Judge recording and rehearsal | [Judge demo runbook](docs/JUDGE_DEMO_RUNBOOK.md) |
 
 ## Run locally
 
-Node.js 22 or newer is required.
+**Prerequisites:** Node.js 22–24, npm, and a supported browser. AWS deployment and authenticated actions additionally require the documented cloud configuration and permitted credentials.
 
 ```bash
 git clone https://github.com/abhinav0singh/TapSaathi.git
@@ -152,53 +166,51 @@ cd TapSaathi
 npm ci
 npm run build --workspace=@taapsaathi/contracts
 npm run typecheck
-npm run test
-npm --workspace apps/web run dev
+npm test
+npm run dev --workspace=@taapsaathi/web
 ```
 
-For infrastructure and deployed verification:
+Open `http://localhost:3000`. For infrastructure-only checks:
 
 ```bash
+npm run test:infra
+npm run test:risk:policy
 npm run synth
 npm run verify:definition
-npm --workspace apps/web run build
 ```
 
-See the [deployment runbook](docs/DEPLOYMENT_RUNBOOK.md) for AWS profiles, frontend origins, environment values, smoke tests, and rollback guidance.
+Use [`.env.example`](.env.example) and the [deployment runbook](docs/DEPLOYMENT_RUNBOOK.md) to configure the frontend and AWS environment. **Do not deploy with only `http://localhost:3000` in `FRONTEND_ORIGINS` if the live Amplify frontend must remain authorized.** Inspect `cdk diff` before deployment, and monitor AWS usage and costs. Never commit credentials, JWTs, or signed audio URLs.
 
-## Repository map
+## Repository guide
 
 ```text
-apps/web/              Next.js landing, operator, rider, supervisor, and login experiences
-infra/                 AWS CDK stack and infrastructure assertions
-packages/contracts/    shared Zod contracts
-services/api/          dashboard, worker, event, and callback APIs
-services/demo/         authenticated heat-spike, reset, and seed handlers
-services/intervention/ Step Functions task handlers
-services/risk-engine/  deterministic heat-risk policy and publisher
-services/shared/       authorization, DynamoDB, logging, and HTTP helpers
-services/weather/      scheduled weather adapter
-scripts/               deployed smoke and state-machine validation
-docs/                  specifications, runbooks, evidence, and limitations
+apps/web/               Next.js product, recorded demo, operations, rider, supervisor
+infra/                  AWS CDK stack and infrastructure tests
+packages/contracts/     Shared schemas, contracts, deterministic heat policy
+services/api/           Dashboard, worker, events, response and audio APIs
+services/demo/          Authenticated heat spike, reset, seed
+services/intervention/  Step Functions task handlers
+services/risk-engine/   Risk evaluation and event publishing
+services/shared/        Authorization, state access, logging, HTTP utilities
+services/weather/       Scheduled weather adapter
+scripts/                State-machine checks and deployed smoke testing
+docs/                   Specifications, runbooks, evidence, limitations
 ```
 
-## Demo scope
+## Scope, safety, and limitations
 
-TaapSaathi is a single-hub hackathon demonstration using simulated weather, locations, workers, and deliveries. It does not make medical claims or contact emergency services. Read-only demo views are public; state-changing routes require Cognito authorization and server-side identity mapping.
+TaapSaathi is a **single-hub hackathon demonstration**, not a production-certified worker-safety or medical system. Demo weather, workers, locations, and deliveries are simulated unless explicitly identified as historical reanalysis. It does not diagnose conditions, guarantee safety, contact emergency services, or claim that a supervisor's acknowledgment is medical clearance. Operational response metrics are not health-outcome metrics. Public read-only views are intentional; sensitive actions and audio are identity-bound.
 
-Read [known limitations](docs/KNOWN_LIMITATIONS.md) before treating the design as a production deployment.
-
-## Project documentation
-
-- [Current project status](docs/PROJECT_STATUS.md)
-- [Verification status](docs/VERIFICATION_STATUS.md)
-- [AWS verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md)
-- [Timeout escalation evidence](docs/AWS_TIMEOUT_ESCALATION_VERIFICATION.md)
-- [Judge demo runbook](docs/JUDGE_DEMO_RUNBOOK.md)
-- [Known limitations](docs/KNOWN_LIMITATIONS.md)
+See [known limitations](docs/KNOWN_LIMITATIONS.md) and [project status](docs/PROJECT_STATUS.md) for scope and outstanding verification. For the latest merge/deployment context, refer to the PR and the verification section above if a status document has not yet been updated.
 
 ---
 
 <div align="center">
-Built to make worker safety an operational decision, not a notification.
+
+### **From a heat warning to a coordinated response.**
+
+**Protect the rider. Keep delivery ownership clear. Make every action accountable.**
+
+[Live app](https://main.d6hf0wv24qbik.amplifyapp.com) · [Recorded demo](https://main.d6hf0wv24qbik.amplifyapp.com/demo) · [Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)
+
 </div>
