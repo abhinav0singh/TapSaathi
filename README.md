@@ -113,8 +113,6 @@ The image below is an **actual AWS Console graph capture** from a successful int
 
 *AWS Console graph — successful worker-response / delivery-reassignment path. This does not independently verify the separate PR #40 stale-generation regression.*
 
-**Optional evidence slot 3:** replace the graph above with a tighter, redacted execution-detail screenshot showing `SUCCEEDED` and readable state names if Karan captures one. Keep the existing real screenshot until then.
-
 ## 06 / Engineering quality and safety boundaries
 
 **Designed for failures, not only the happy path.**
@@ -171,7 +169,7 @@ docs/                  Evidence, design, specs, runbooks and limitations
 
 **Recommended judge path:** [Interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) → [Operations](https://main.d6hf0wv24qbik.amplifyapp.com/ops) → [AWS workflow evidence](docs/AWS_VERIFICATION_EVIDENCE.md) → [Architecture](#05--aws-architecture-real-orchestration-not-browser-theatre).
 
-**Demo video:** https://www.youtube.com/watch?v=aFP7b4rJ5xQ&t=27s
+**Demo video:** https://www.youtube.com/watch?v=aFP7b4rJ5xQ
 
 **Scope:** Sahara is a simulated single-hub hackathon prototype. It does not contact emergency services, make medical diagnoses, or declare a worker safe merely because a supervisor acknowledged an alert.
 
@@ -192,6 +190,8 @@ Suggested 2-minute path: sign in as Operator, trigger the simulated heat spike, 
 
 ### Detect the risk. Protect the rider. Keep the team accountable.
 
+<div align="center">
+  
 [**Open Sahara ↗**](https://main.d6hf0wv24qbik.amplifyapp.com) · [**Try the walkthrough ↗**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) · [**Judge runbook ↗**](docs/JUDGE_DEMO_RUNBOOK.md)
 
 </div>
