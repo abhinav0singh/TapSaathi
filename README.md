@@ -51,21 +51,45 @@ Sahara is a **single-hub, simulated heat-safety coordination prototype** built t
 | [**Supervisor desk**](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Escalation queue, acknowledgement and outstanding follow-up state. |
 | [**Interactive walkthrough**](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) | Judge-friendly narrative without demo credentials; a local simulation that never reads or changes operational data. |
 
-### Product screenshots — add final captures here
+### Sahara in action — a complete rider-safety intervention
 
-<!-- SCREENSHOT SLOT 1: Add docs/screenshots/sahara-ops-dashboard.png after the final operator UI fix. -->
-**Operations · live dashboard** — _Screenshot pending final frontend verification._
+The screenshots below show the **authenticated, AWS-backed demo sandbox** using simulated riders and deliveries. Unlike the [public interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough), these screens reflect the shared operational workflow. Screenshots are from different points in a demo sequence, not a single simultaneous state.
 
-<!-- Once captured, replace the preceding italic sentence with:
-![Sahara operations dashboard](docs/screenshots/sahara-ops-dashboard.png)
--->
+#### 1. Detect the heat risk and start the intervention
 
-<!-- SCREENSHOT SLOT 2: Add docs/screenshots/sahara-rider-mobile.png after Karan completes mobile QA. -->
-**Rider · mobile safety guidance** — _Screenshot pending final frontend verification._
+![Sahara operations dashboard showing a successfully triggered heat spike, Ravi's active alert, intervention stages and map](docs/screenshots/sahara-operations-heat-alert.png)
 
-<!-- Once captured, replace the preceding italic sentence with:
-<img src="docs/screenshots/sahara-rider-mobile.png" width="350" alt="Ravi's Sahara worker safety screen" />
--->
+*Operations command center — an authorized operator starts a simulated heat spike. The AWS-backed workflow guides Ravi while the map, roster and intervention stages show the response in progress.*
+
+#### 2. Guide the rider in the moment
+
+<p align="center">
+  <img src="docs/screenshots/sahara-rider-heat-guidance.jpg" width="360" alt="Ravi's mobile safety guidance with English and Hindi instructions, demonstration rest location and audio option" />
+</p>
+
+*Rider experience — bilingual heat guidance, a demonstration rest location and a spoken-guidance option. This is a sandbox: no real rider is at risk.*
+
+#### 3. Escalate symptoms to a supervisor
+
+![Sahara supervisor desk showing Ravi's symptom escalation, reassigned delivery and record acknowledgment action](docs/screenshots/sahara-supervisor-escalation.jpg)
+
+*Supervisor desk — Ravi's symptom report is visible for follow-up. The delivery is shown as handed to Asha, and the supervisor can record acknowledgment.*
+
+#### 4. Record acknowledgment — without declaring medical clearance
+
+![Sahara supervisor desk showing Ravi's acknowledgment confirmation and empty pending queue](docs/screenshots/sahara-supervisor-acknowledged.jpg)
+
+*Acknowledgment recorded — the supervisor queue is cleared after the action. Acknowledgment confirms follow-up, **not** that Ravi is medically cleared to work.*
+
+#### 5. Show the rider's controlled recovery state
+
+<p align="center">
+  <img src="docs/screenshots/sahara-rider-recovery.jpg" width="360" alt="Ravi's mobile recovery screen showing supervisor acknowledgment and a self-declaration checkbox before return to work" />
+</p>
+
+*Rider recovery — Ravi sees that the supervisor acknowledged the alert. The return-to-work action requires a separate self-declaration; it is not automatically enabled by supervisor acknowledgment.*
+
+> **Demo boundary:** The public homepage walkthrough is a deterministic browser-local simulation. The authenticated operations, rider and supervisor screenshots above depict the deployment-backed sandbox with simulated data. Neither is evidence of prevented injury, a medical diagnosis or an emergency call.
 
 ## 05 / AWS architecture: real orchestration, not browser theatre
 
