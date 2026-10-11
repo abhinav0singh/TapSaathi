@@ -178,7 +178,7 @@ export class MemoryRepository implements Repository {
   public async consumeCallback(input: ConsumeCallbackInput): Promise<ConsumeCallbackResult> {
     const intervention = this.interventions.get(input.interventionId);
     if (!intervention) {
-      this.ensureGeneration(input.generation);
+      if (this.generation > input.generation) throw new StaleGenerationError();
       throw new NotFoundError("Intervention not found.");
     }
     if (intervention.demoGeneration !== input.generation) throw new StaleGenerationError();

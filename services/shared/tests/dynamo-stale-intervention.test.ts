@@ -22,8 +22,16 @@ function repositoryAfterReset() {
   return { repository, send };
 }
 
+function repositoryWithOlderIntervention() {
+  const send = vi.fn().mockResolvedValue({
+    Item: { interventionId: "int-old", demoGeneration: 4 },
+  });
+  const repository = new DynamoRepository("TaapSaathiTest", { send } as never);
+  return { repository, send };
+}
+
 describe("DynamoDB missing intervention after reset", () => {
-  it("classifies a stale callback consumption before reading the removed intervention", async () => {
+  it("classifies stale callback consumption when the intervention has been removed", async () => {
     const { repository, send } = repositoryAfterReset();
 
     await expect(repository.consumeCallback({
@@ -39,7 +47,7 @@ describe("DynamoDB missing intervention after reset", () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
-  it("classifies a stale escalation before reading the removed intervention", async () => {
+  it("classifies stale escalation when the intervention has been removed", async () => {
     const { repository, send } = repositoryAfterReset();
 
     await expect(repository.escalate({
@@ -53,7 +61,7 @@ describe("DynamoDB missing intervention after reset", () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
-  it("classifies stale completion before reading the removed intervention", async () => {
+  it("classifies stale completion when the intervention has been removed", async () => {
     const { repository, send } = repositoryAfterReset();
 
     await expect(repository.complete({
@@ -79,6 +87,36 @@ describe("DynamoDB missing intervention after reset", () => {
       now,
       audit,
     })).rejects.toBeInstanceOf(NotFoundError);
+
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("classifies an older existing intervention as stale before escalation writes", async () => {
+    const { repository, send } = repositoryWithOlderIntervention();
+
+    await expect(repository.escalate({
+      interventionId: "int-old",
+      generation: 5,
+      reason: "WORKER_TIMEOUT",
+      now,
+      audit: { ...audit, interventionId: "int-old", eventType: "SUPERVISOR_ESCALATED", demoGeneration: 5 },
+    })).rejects.toBeInstanceOf(StaleGenerationError);
+
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("classifies an older existing intervention as stale before callback consumption", async () => {
+    const { repository, send } = repositoryWithOlderIntervention();
+
+    await expect(repository.consumeCallback({
+      interventionId: "int-old",
+      generation: 5,
+      actorType: "WORKER",
+      actorId: "ravi-001",
+      clientRequestId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      action: "TAKE_BREAK",
+      consumedAt: now,
+    })).rejects.toBeInstanceOf(StaleGenerationError);
 
     expect(send).toHaveBeenCalledTimes(1);
   });

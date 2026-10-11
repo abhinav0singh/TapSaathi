@@ -52,6 +52,16 @@ describe("repository correctness", () => {
     await expect(repository.claimRiskEvent(event(first.generation), "int-old", 999)).rejects.toMatchObject({ code: "STALE_DEMO_GENERATION" });
   });
 
+  it("treats a reset-removed callback as stale but preserves not-found for a future generation", async () => {
+    const repository = new MemoryRepository();
+    const { generation } = await repository.resetDemo(now);
+    await repository.resetDemo(now);
+    const input = { interventionId: "int-removed", actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
+
+    await expect(repository.consumeCallback({ ...input, generation })).rejects.toMatchObject({ code: "STALE_DEMO_GENERATION" });
+    await expect(repository.consumeCallback({ ...input, generation: generation + 2 })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
   it("WF-009 consumes a callback once and preserves same-request idempotency", async () => {
     const repository = new MemoryRepository();
     const { generation } = await repository.resetDemo(now);
