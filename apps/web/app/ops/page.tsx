@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import AppNav from "@/components/AppNav";
 import OperationsMap from "@/components/ops/OperationsMap";
 import { api } from "@/lib/api";
 import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
-import { useAuditEvents } from "@/lib/useAuditEvents";
+import { useOperationsAudit } from "@/lib/useOperationsAudit";
 import { auditImpact } from "@/lib/auditImpact";
 import { delhiArchiveWeatherDecision, delhiHistoricalDecision, delhiHistoricalReplay } from "@/lib/historicalHeatReplay";
 
@@ -40,17 +40,32 @@ export default function OperationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const auditEvents = useAuditEvents(
+  const audit = useOperationsAudit(
     data?.demoGeneration,
     Boolean(data)
   );
-  const displayedEvents = auditEvents.length > 0 && data
+  const auditEvents = audit.events ?? [];
+  const displayedEvents = audit.status === "loaded" && data && auditEvents.length > 0
     ? auditEvents
         .filter((event) => event.demoGeneration === data.demoGeneration)
         .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
         .slice(0, 50)
     : data?.recentEvents ?? [];
-  const impact = data ? auditImpact(auditEvents, data.demoGeneration) : null;
+  const impact = data && audit.status === "loaded"
+    ? auditImpact(auditEvents, data.demoGeneration)
+    : null;
+  const impactValue = (value: number | undefined) =>
+    audit.status === "loading"
+      ? "Loading"
+      : audit.status === "unavailable"
+        ? "Unavailable"
+        : String(value ?? 0);
+  const impactDuration = (value: number | null | undefined) =>
+    audit.status === "loading"
+      ? "Loading"
+      : audit.status === "unavailable"
+        ? "Unavailable"
+        : formatDuration(value ?? null);
   const formatDuration = (milliseconds: number | null) => milliseconds === null ? "Not yet recorded" : `${Math.round(milliseconds / 1000)} s`;
 
   const refresh = useCallback(async () => {
@@ -185,7 +200,7 @@ export default function OperationsPage() {
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Audit-derived impact · full current-generation history</p>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><p><strong>{impact?.interventionCount ?? 0}</strong><br />interventions</p><p><strong>{impact?.escalationCount ?? 0}</strong><br />escalations</p><p><strong>{formatDuration(impact?.triggerToReassignmentMs ?? null)}</strong><br />trigger to reassignment</p><p><strong>{formatDuration(impact?.triggerToResponseMs ?? null)}</strong><br />trigger to worker response</p></div>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><p><strong>{impactValue(impact?.interventionCount)}</strong><br />interventions</p><p><strong>{impactValue(impact?.escalationCount)}</strong><br />escalations</p><p><strong>{impactDuration(impact?.triggerToReassignmentMs)}</strong><br />trigger to reassignment</p><p><strong>{impactDuration(impact?.triggerToResponseMs)}</strong><br />trigger to worker response</p></div>
                 <p className="mt-4 text-xs text-slate-500">Timings describe the first intervention in this generation. Operational timings only; rider wellbeing and medical outcomes are not inferred.</p>
               </div>
             </section>

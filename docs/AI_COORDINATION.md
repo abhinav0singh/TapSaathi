@@ -139,3 +139,59 @@ the deterministic-policy test; and the production web build.
   500 configuration error because it needs operator remediation, while a
   missing intervention or audio key remains a rider-visible 404.
 - Update this file when either agent changes the above state.
+## PR #35 Review #2 corrections
+
+Base reviewed commit: `6a3495e`.
+
+### F1 — Backend CI script mismatch
+
+Updated `.github/workflows/backend.yml` to invoke
+`npm run test:risk:policy` instead of the removed
+`test:risk:zero-dependency` script.
+
+### F2 — Operations audit freshness and availability
+
+Added a dedicated operations audit hook that refreshes full audit history
+every 15 seconds while the operations page remains mounted.
+
+The operations impact cards now distinguish loading, unavailable,
+and successfully loaded audit history. Zero counts are displayed only
+after successful retrieval. Audit results remain isolated by demo
+generation.
+
+The existing shared `useAuditEvents` hook remains unchanged, preserving
+Supervisor and RiderExperience acknowledgement polling.
+
+### Local verification — 11 October 2026
+
+All commands completed successfully:
+
+- Contracts build: PASS
+- Root typecheck: PASS
+- Web typecheck: PASS
+- Backend unit tests: PASS
+- Infrastructure tests: PASS
+- Full Vitest suite: PASS
+- CDK synthesis: PASS
+- State-machine definition verification: PASS
+- Deterministic risk-policy tests: PASS, 3 tests
+- Production web build: PASS
+- Web tests: PASS, 5 files / 18 tests
+- New operations audit regression tests: PASS, 6 tests
+- Git diff whitespace check: PASS
+
+The new tests cover polling beyond 12 attempts, cleanup, retry
+scheduling, loading versus empty history, generation isolation,
+unavailable history, and asynchronous fetch failure followed by recovery.
+
+The polling and state-transition tests are unit-level evidence,
+not a mounted React-hook or deployed-browser verification.
+
+### Remaining verification
+
+- Commit and push the corrections to PR #35.
+- Confirm Backend and Web GitHub Actions checks pass on the new head.
+- Record the new commit SHA and CI run IDs.
+- Request Claude Review #3 only after both checks are green.
+
+No AWS deployment verification is claimed for this change.
