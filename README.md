@@ -171,12 +171,23 @@ docs/                  Evidence, design, specs, runbooks and limitations
 
 **Recommended judge path:** [Interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) → [Operations](https://main.d6hf0wv24qbik.amplifyapp.com/ops) → [AWS workflow evidence](docs/AWS_VERIFICATION_EVIDENCE.md) → [Architecture](#05--aws-architecture-real-orchestration-not-browser-theatre).
 
-**Demo video:** _Add final public video link here before submission._
+**Demo video:** https://www.youtube.com/watch?v=aFP7b4rJ5xQ&t=27s
 
 **Scope:** Sahara is a simulated single-hub hackathon prototype. It does not contact emergency services, make medical diagnoses, or declare a worker safe merely because a supervisor acknowledged an alert.
 
 ---
 
+## Judge access (demo sandbox only)
+
+These accounts exist only for judging a **simulated** demo. They use fake data, no real people, and will be disabled after judging. The sandbox is shared, so another judge's reset or heat spike may change what you see; use **Reset** in the operations workspace to return to a clean state.
+
+| Role | Username | Password | Where to sign in |
+|:---|:---|:---|:---|
+| Operator | `demo-operator` | `TaapSaathi@Demo2026` | [Sign in](https://main.d6hf0wv24qbik.amplifyapp.com/login) |
+| Rider (Ravi) | `demo-ravi` | `TaapSaathi@Demo2026` | same page |
+| Supervisor | `demo-neha` | `TaapSaathi@Demo2026` | same page |
+
+Suggested 2-minute path: sign in as Operator, trigger the simulated heat spike, open the rider screen, report feeling unwell, then acknowledge as Supervisor.
 <div align="center">
 
 ### Detect the risk. Protect the rider. Keep the team accountable.
