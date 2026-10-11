@@ -14,7 +14,7 @@ const base = {
   evaluatedAt: "2026-10-08T10:00:00.000Z",
 };
 
-describe("zero-dependency deterministic risk policy", () => {
+describe("deterministic risk policy", () => {
   it("covers safe, caution, high, critical, and boundary precedence", () => {
     assert.deepEqual([59, 60, 61].map((activeMinutes) => evaluatePolicy({ ...base, officialHeatAlert: true, activeMinutes }).state), ["CAUTION", "HIGH", "HIGH"]);
     assert.equal(evaluatePolicy(base).matchedRule, "NO_POLICY_MATCH");

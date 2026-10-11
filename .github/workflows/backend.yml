@@ -33,7 +33,7 @@ jobs:
       - run: npm ci
       - run: npm run build --workspace=@taapsaathi/contracts
       - run: npm run typecheck
-      - run: npm run test:risk:zero-dependency
+      - run: npm run test:risk:policy
       - run: npm test
       - run: npm run synth
       - run: npm run verify:definition
