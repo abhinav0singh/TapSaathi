@@ -396,3 +396,14 @@ product name. They were removed from the submission materials. The README now us
 repository-native Sahara SVG diagrams for the product overview and intervention loop. This is a
 documentation-only branding correction: it does not change any application, backend,
 infrastructure, contract, deployment, or verification evidence.
+
+### Rider terminal-state clarity — 11 October 2026
+
+The deployed demo was observed with Ravi in `AWAITING_SUPERVISOR`, no active
+intervention, and a completed `SUPERVISOR_UNACKNOWLEDGED` audit result. This
+is an earlier worker/supervisor timeout, not a currently active heat alert;
+the product intentionally does not allow a rider to self-resume without a
+supervisor acknowledgement. The rider UI now explains that distinction and,
+when viewed anonymously, offers the rider-specific sign-in route instead of
+appearing to be an actionable current heat alert. This wording change does not
+reset the shared demo or change backend safety policy.

@@ -129,10 +129,10 @@ const copy = {
     en: "Rest in a safe place. Go back to work only when you feel well enough.",
     hi: "सुरक्षित जगह पर आराम करें। ठीक महसूस होने पर ही काम पर लौटें।",
   },
-  overdueHeadline: { en: "No reply from your supervisor yet", hi: "सुपरवाइज़र का जवाब अभी नहीं आया" },
+  overdueHeadline: { en: "Supervisor follow-up is still open", hi: "सुपरवाइज़र का फ़ॉलो-अप बाकी है" },
   overdueInstruction: {
-    en: "Stay somewhere safe and ask someone nearby for help.",
-    hi: "सुरक्षित जगह पर रहें और पास के किसी व्यक्ति से मदद माँगें।",
+    en: "This is from an earlier alert, not a current heat warning. A supervisor has not acknowledged it, so you cannot resume through Sahara yet. Stay somewhere safe and ask someone nearby for help.",
+    hi: "यह पहले के अलर्ट की स्थिति है, अभी की गर्मी की चेतावनी नहीं। सुपरवाइज़र ने अभी पुष्टि नहीं की है, इसलिए Sahara के ज़रिए काम पर वापस नहीं जा सकते। सुरक्षित जगह पर रहें और पास के किसी व्यक्ति से मदद माँगें।",
   },
   demo: {
     en: "Simulated demonstration. No real rider is at risk.",
@@ -381,6 +381,17 @@ export default function RiderView(props: RiderViewProps) {
           <p role="status" lang={language} className="mt-6 text-[0.9375rem] text-label-2">
             {copy.accepted[language]}
           </p>
+        )}
+
+        {mode === "info" && signedOut && props.outcome === "UNACKNOWLEDGED" && (
+          <div className="mt-6 rounded-2xl bg-fill p-4">
+            <p lang={language} className="text-[0.9375rem] leading-relaxed text-label-2">
+              {fill(copy.readonly[language], { name })}
+            </p>
+            <Link href="/login" className={cn(buttonVariants({ size: "lg" }), "mt-3")}>
+              <span lang={language}>{copy.signIn[language]}</span>
+            </Link>
+          </div>
         )}
 
         <p lang={language} className="mt-auto pt-8 text-[0.8125rem] text-label-2">{copy.demo[language]}</p>
