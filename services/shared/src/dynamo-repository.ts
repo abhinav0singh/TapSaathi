@@ -546,7 +546,8 @@ export class DynamoRepository implements Repository {
 
   public async consumeCallback(input: ConsumeCallbackInput): Promise<ConsumeCallbackResult> {
     const intervention = await this.getIntervention(input.interventionId);
-    if (!intervention) throw new NotFoundError("Intervention not found.");
+    if (!intervention) return await this.throwMissingIntervention(input.generation);
+    if (intervention.demoGeneration !== input.generation) throw new StaleGenerationError();
     await this.assertGeneration(intervention.demoGeneration);
     const key = { PK: `INTERVENTION#${input.interventionId}`, SK: `CALLBACK#${input.actorType}` };
     const result = await this.client.send(new GetCommand({ TableName: this.tableName, Key: key, ConsistentRead: true }));
@@ -622,7 +623,8 @@ export class DynamoRepository implements Repository {
 
   public async escalate(input: Parameters<Repository["escalate"]>[0]): Promise<void> {
     const intervention = await this.getIntervention(input.interventionId);
-    if (!intervention) throw new NotFoundError("Intervention not found.");
+    if (!intervention) return await this.throwMissingIntervention(input.generation);
+    if (intervention.demoGeneration !== input.generation) throw new StaleGenerationError();
     await this.client.send(new TransactWriteCommand({ TransactItems: [
       this.generationCheck(input.generation),
       { Update: { TableName: this.tableName, Key: { PK: `INTERVENTION#${input.interventionId}`, SK: "META" }, UpdateExpression: "SET #status = :status, escalationReason = :reason, updatedAt = :now", ConditionExpression: "demoGeneration = :generation", ExpressionAttributeNames: { "#status": "status" }, ExpressionAttributeValues: { ":status": "AWAITING_SUPERVISOR", ":reason": input.reason, ":now": input.now, ":generation": input.generation } } },
@@ -633,7 +635,7 @@ export class DynamoRepository implements Repository {
 
   public async complete(input: Parameters<Repository["complete"]>[0]): Promise<void> {
     const intervention = await this.getIntervention(input.interventionId);
-    if (!intervention) throw new NotFoundError("Intervention not found.");
+    if (!intervention) return await this.throwMissingIntervention(input.generation);
     if (intervention.demoGeneration !== input.generation) throw new StaleGenerationError();
 
     const worker = await this.getWorker(intervention.workerId);
@@ -797,6 +799,11 @@ export class DynamoRepository implements Repository {
 
   private async assertGeneration(generation: number): Promise<void> {
     if (await this.getDemoGeneration() !== generation) throw new StaleGenerationError();
+  }
+
+  private async throwMissingIntervention(generation: number): Promise<never> {
+    if (await this.getDemoGeneration() > generation) throw new StaleGenerationError();
+    throw new NotFoundError("Intervention not found.");
   }
 
   private async batchWrite(requests: Array<{ PutRequest?: { Item: DbItem }; DeleteRequest?: { Key: DbItem } }>): Promise<void> {

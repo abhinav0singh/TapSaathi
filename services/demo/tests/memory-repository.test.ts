@@ -57,7 +57,7 @@ describe("repository correctness", () => {
     const { generation } = await repository.resetDemo(now);
     await repository.createIntervention(intervention(generation), audit(generation));
     await repository.registerCallback({ interventionId: "int-001", actorType: "WORKER", expectedActorId: "ravi-001", taskToken: "secret-token", demoGeneration: generation, expiresAt: 9999999999 }, now, { ...audit(generation), auditEventId: "audit-callback", eventType: "WORKER_RESPONSE_REQUESTED" });
-    const input = { interventionId: "int-001", actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
+    const input = { interventionId: "int-001", generation, actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
     expect(await repository.consumeCallback(input)).toMatchObject({ duplicate: false, taskToken: "secret-token" });
     expect(await repository.consumeCallback(input)).toMatchObject({ duplicate: true });
     await expect(repository.consumeCallback({ ...input, clientRequestId: "5bb3d3d5-ea0e-4348-a63d-f8770a14a179" })).rejects.toMatchObject({ code: "ALREADY_RESPONDED" });
@@ -68,7 +68,7 @@ describe("repository correctness", () => {
     const { generation } = await repository.resetDemo(now);
     await repository.createIntervention(intervention(generation), audit(generation));
     await repository.registerCallback({ interventionId: "int-001", actorType: "WORKER", expectedActorId: "ravi-001", taskToken: "secret-token", demoGeneration: generation, expiresAt: 9999999999 }, now, { ...audit(generation), auditEventId: "audit-callback", eventType: "WORKER_RESPONSE_REQUESTED" });
-    const input = { interventionId: "int-001", actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
+    const input = { interventionId: "int-001", generation, actorType: "WORKER" as const, actorId: "ravi-001", clientRequestId: "86cd2d77-4502-4e9b-92c1-d625cc9a7084", action: "TAKE_BREAK" as const, consumedAt: now };
     await repository.consumeCallback(input);
     await repository.releaseCallback({ interventionId: input.interventionId, actorType: input.actorType, clientRequestId: input.clientRequestId });
     expect(await repository.consumeCallback({ ...input, consumedAt: "2026-10-08T10:00:01.000Z" })).toMatchObject({ duplicate: false, taskToken: "secret-token" });

@@ -292,3 +292,25 @@ production evidence for the protected-audio work, not the current release
 baseline. The independently reviewed PR #35 suite was 31 Vitest files / 189
 tests plus 3 standalone deterministic risk-policy tests; do not repeat the
 superseded 180-test count as the current figure.
+
+### Pending backend correction: stale missing intervention
+
+The `codex/stale-missing-intervention` branch contains the separate source fix
+for the known post-reset failure. `complete`, `escalate`, and `consumeCallback`
+now compare their known execution generation with the current demo generation
+when the intervention lookup is missing. An older execution raises
+`StaleGenerationError` for the existing Step Functions stale catch; a missing
+intervention in the current generation remains a `NotFoundError`.
+
+`consumeCallback` now receives the persisted intervention generation from the
+authenticated respond handler, rather than trusting client input. Adapter
+regression tests cover all three repository operations; terminal Lambda tests
+verify that stale errors propagate to the state-machine catch path; and the
+respond-handler test verifies generation propagation and the `409`
+stale-generation response without signaling Step Functions.
+
+Local verification passed: root typecheck; 27 unit-test files / 161 tests; 16
+infrastructure tests; CDK synth; and state-machine definition validation.
+This branch has not been reviewed, merged, or deployed. The failed generation
+26 execution remains a production limitation until an AWS owner deploys this
+fix and a real stale-after-reset execution ARN is re-verified.
