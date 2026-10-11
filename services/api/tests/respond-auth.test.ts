@@ -234,6 +234,21 @@ describe("Respond API authorization", () => {
     expect(mocks.sendTask).not.toHaveBeenCalled();
   });
 
+  it("returns not found after reset removed the intervention without signaling Step Functions", async () => {
+    mocks.getIntervention.mockResolvedValue(undefined);
+
+    const result = await invoke(
+      event(raviSub, ["WORKER"], "ravi-001", "WORKER", "TAKE_BREAK")
+    );
+
+    expect(result.statusCode).toBe(404);
+    expect(JSON.parse(String(result.body))).toMatchObject({
+      error: { code: "NOT_FOUND" },
+    });
+    expect(mocks.consumeCallback).not.toHaveBeenCalled();
+    expect(mocks.sendTask).not.toHaveBeenCalled();
+  });
+
   it("rejects unmapped identities", async () => {
     const result = await invoke(
       event(

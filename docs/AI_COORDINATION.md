@@ -306,13 +306,13 @@ intervention in the current generation remains a `NotFoundError`.
 authenticated respond handler, rather than trusting client input. Adapter
 regression tests cover all three repository operations; terminal Lambda tests
 verify that stale errors propagate to the state-machine catch path; and the
-respond-handler test verifies generation propagation and the `409`
+respond-handler tests verify generation propagation and the `409`
 stale-generation response without signaling Step Functions when the
 intervention still exists. A callback for an intervention already removed by a
-reset returns `404` from the respond handler's initial lookup and likewise does
-not signal Step Functions.
+reset returns `404` from the respond handler's initial lookup, does not call
+`consumeCallback`, and likewise does not signal Step Functions.
 
-Local verification passed: root typecheck; 27 unit-test files / 165 tests; 16
+Local verification passed: root typecheck; 27 unit-test files / 166 tests; 16
 infrastructure tests; CDK synth; and state-machine definition validation.
 This branch has not been reviewed, merged, or deployed. The failed generation
 26 execution remains a production limitation until an AWS owner deploys this
