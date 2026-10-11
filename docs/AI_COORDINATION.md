@@ -470,6 +470,30 @@ for the unwell action), buttons are 48px tall, and there is no horizontal
 overflow. Local frontend verification only; no deployment, AWS action or shared
 sandbox mutation was performed.
 
+### Demo controls for the operator and the supervisor
+
+`POST /demo/reset` and `POST /demo/heat-spike` now accept the mapped `OPERATOR`
+(`demo-operator`) and the mapped `SUPERVISOR` (`demo-neha`, actor
+`supervisor-neha-001`) instead of the operator alone. The new
+`requireOperatorOrSupervisor` guard in `services/shared/src/auth.ts` reuses the
+existing identity checks: the token's subject must be in the server-side
+identity mapping and its Cognito groups must include the mapped role. Riders are
+still refused (403), unmapped subjects are refused (403), a supervisor token
+without the `SUPERVISOR` group is refused (403), and a missing token is refused
+(401). The operator-only guard is unchanged, and no other route is widened
+(respond, resume and protected audio keep their actor-bound checks).
+
+Tests: handler-level cases for the supervisor in both handlers, plus unit cases
+for the guard. Five deliberate breakages (every role allowed, supervisor locked
+out, reset handler back to operator-only, no authorization in the spike handler,
+group check skipped) each failed at least one test.
+
+Limits to keep in mind: neither handler records *who* triggered a reset or a
+spike in the audit trail, so a supervisor-initiated reset is not attributable
+yet. This change is Lambda code only and is **not deployed**; the AWS owner has
+to redeploy `main` (with `FRONTEND_ORIGINS` set) before `demo-neha` can use it.
+The Operations-page controls for these two roles are the separate frontend change (PR #49, already merged); the supervisor can only use them once this backend change is deployed.
+
 ### Sandbox controls on the Operations page (operator and supervisor)
 
 This supersedes the earlier statement that the web client has no reset or

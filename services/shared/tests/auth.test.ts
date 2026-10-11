@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { requireActor, requireOperator } from "../src/auth.js";
+import { requireActor, requireOperator, requireOperatorOrSupervisor } from "../src/auth.js";
 
 const identities = {
   "sub-operator": { role: "OPERATOR" as const },
@@ -236,5 +236,42 @@ describe("Cognito demo authorization", () => {
     expect(() =>
       requireActor(request, identities, "WORKER", "ravi-001")
     ).not.toThrow();
+  });
+});
+
+describe("operator-or-supervisor authorization (demo controls)", () => {
+  it("allows the operator and the mapped supervisor", () => {
+    expect(() => requireOperatorOrSupervisor(event("sub-operator", ["OPERATOR"]), identities)).not.toThrow();
+    expect(() => requireOperatorOrSupervisor(event("sub-neha", ["SUPERVISOR"]), identities)).not.toThrow();
+  });
+
+  it("still rejects riders, even with a matching group", () => {
+    expect(() => requireOperatorOrSupervisor(event("sub-ravi", ["WORKER"]), identities)).toThrowError(
+      expect.objectContaining({ statusCode: 403, message: "Operator or supervisor access required." })
+    );
+  });
+
+  it("rejects a supervisor whose token does not carry the SUPERVISOR group", () => {
+    expect(() => requireOperatorOrSupervisor(event("sub-neha", ["WORKER"]), identities)).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
+    expect(() => requireOperatorOrSupervisor(event("sub-neha", []), identities)).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
+  });
+
+  it("rejects unmapped subjects and missing authentication", () => {
+    expect(() => requireOperatorOrSupervisor(event("unknown-sub", ["SUPERVISOR"]), identities)).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
+    expect(() => requireOperatorOrSupervisor(event(), identities)).toThrowError(
+      expect.objectContaining({ statusCode: 401 })
+    );
+  });
+
+  it("does not widen the other guards: the operator-only guard still refuses the supervisor", () => {
+    expect(() => requireOperator(event("sub-neha", ["SUPERVISOR"]), identities)).toThrowError(
+      expect.objectContaining({ statusCode: 403 })
+    );
   });
 });

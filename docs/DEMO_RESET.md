@@ -26,7 +26,7 @@ Nothing is stored or printed. The script uses the first of these it finds:
 2. `OPERATOR_PASSWORD` (and optionally `OPERATOR_USERNAME`, default `demo-operator`) in the environment.
 3. A hidden password prompt, in an interactive terminal.
 
-The prompt is the safest choice: environment variables set inline can end up in shell history. The account must be in the `OPERATOR` Cognito group. `API_URL`, `COGNITO_USER_POOL_ID` and `COGNITO_CLIENT_ID` default to the deployed values and can be overridden.
+The prompt is the safest choice: environment variables set inline can end up in shell history. The account must be in the `OPERATOR` or `SUPERVISOR` Cognito group, that is `demo-operator` or `demo-neha` (`--user demo-neha`). Supervisor access only works once the backend change that allows it has been deployed; until then the API answers `403` for `demo-neha` and only `demo-operator` can reset or start a spike. `API_URL`, `COGNITO_USER_POOL_ID` and `COGNITO_CLIENT_ID` default to the deployed values and can be overridden.
 
 ## What "clean" means
 
@@ -37,7 +37,7 @@ No active interventions, Ravi `SAFE`, Asha `SAFE`, and `delivery-001` assigned t
 - The reset affects **everyone** using the shared demo and starts a new generation. Do not run it while someone is mid-test or while a judge may be using the sandbox.
 - It refuses to run without `--yes` in a non-interactive shell, and refuses before any request if no credentials are available.
 - A `409` means a reset may already be running; wait about 90 seconds and run `npm run demo:status`.
-- `401` means the sign-in was not accepted; `403` means the account is not an operator.
+- `401` means the sign-in was not accepted; `403` means the account is not an operator or supervisor (or, before the backend change is deployed, that it is the supervisor).
 
 ## Verification status
 

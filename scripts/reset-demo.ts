@@ -9,7 +9,8 @@
  *   - the hidden prompt (default, interactive terminals);
  *   - OPERATOR_PASSWORD (and optionally OPERATOR_USERNAME) in the environment;
  *   - OPERATOR_ACCESS_TOKEN, a current Cognito access token, to skip sign-in.
- * The account must be in the OPERATOR group (the demo-operator account).
+ * The account must be in the OPERATOR or SUPERVISOR group (demo-operator or demo-neha).
+ * Supervisor access needs the backend that allows it to be deployed; before that, only demo-operator works.
  */
 import readline from "node:readline";
 import { AuthenticationDetails, CognitoUser, CognitoUserPool } from "amazon-cognito-identity-js";
@@ -125,7 +126,7 @@ async function main(): Promise<void> {
   });
   if (status !== 200 && status !== 202) {
     const error = (body as { error?: { code?: string; message?: string } }).error;
-    const hint = status === 401 ? " (sign-in not accepted)" : status === 403 ? " (this account is not an operator)" : status === 409 ? " (a reset may already be running; wait about 90 seconds)" : "";
+    const hint = status === 401 ? " (sign-in not accepted)" : status === 403 ? " (this account is not an operator or supervisor)" : status === 409 ? " (a reset may already be running; wait about 90 seconds)" : "";
     fail(`Reset failed: HTTP ${status}${hint}${error?.code ? ` ${error.code}: ${error.message ?? ""}` : ""}`);
   }
   const result = body as { status?: string; demoGeneration?: number };
