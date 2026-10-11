@@ -7,13 +7,14 @@ import { api } from "./api";
 export type OperationsAuditState =
   | { status: "loading"; events: null }
   | { status: "unavailable"; events: null }
-  | { status: "loaded"; events: AuditEvent[] };
+  | { status: "loaded"; events: AuditEvent[]; stale: boolean };
 
 type Snapshot = OperationsAuditState & {
   demoGeneration: number;
 };
 
 export const OPERATIONS_AUDIT_INTERVAL_MS = 15000;
+export const shouldRefreshOperationsAudit = (visibilityState: DocumentVisibilityState) => visibilityState !== "hidden";
 
 export function startOperationsAuditPolling(
   refresh: () => void,
@@ -28,13 +29,16 @@ export function startOperationsAuditPolling(
 export async function refreshOperationsAudit(
   demoGeneration: number,
   fetchEvents: () => Promise<AuditEvent[]>,
-  publish: (snapshot: Snapshot) => void
+  publish: (snapshot: Snapshot) => void,
+  previousEvents: AuditEvent[] | null = null
 ): Promise<void> {
   try {
     const events = await fetchEvents();
-    publish({ demoGeneration, status: "loaded", events });
+    publish({ demoGeneration, status: "loaded", events, stale: false });
   } catch {
-    publish({ demoGeneration, status: "unavailable", events: null });
+    publish(previousEvents
+      ? { demoGeneration, status: "loaded", events: previousEvents, stale: true }
+      : { demoGeneration, status: "unavailable", events: null });
   }
 }
 export function operationsAuditView(
@@ -52,12 +56,36 @@ export function operationsAuditView(
     return {
       status: "loaded",
       events: snapshot.events,
+      stale: snapshot.stale,
     };
   }
 
   return {
     status: snapshot.status,
     events: null,
+  };
+}
+
+export function createOperationsAuditRefresher(
+  demoGeneration: number,
+  fetchEvents: () => Promise<AuditEvent[]>,
+  publish: (snapshot: Snapshot) => void
+) {
+  let loading = false;
+  let mounted = true;
+  let previousEvents: AuditEvent[] | null = null;
+  return {
+    async refresh() {
+      if (loading || !mounted) return;
+      loading = true;
+      try {
+        await refreshOperationsAudit(demoGeneration, fetchEvents, (snapshot) => {
+          if (snapshot.status === "loaded") previousEvents = snapshot.events;
+          if (mounted) publish(snapshot);
+        }, previousEvents);
+      } finally { loading = false; }
+    },
+    dispose() { mounted = false; },
   };
 }
 
@@ -70,25 +98,10 @@ export function useOperationsAudit(
   useEffect(() => {
     if (demoGeneration === undefined || !enabled) return;
 
-    let mounted = true;
-    let loading = false;
-
-    async function refresh() {
-      if (loading) return;
-      loading = true;
-
-      try {
-        await refreshOperationsAudit(
-          demoGeneration!,
-          () => api.allEvents(),
-          (nextSnapshot) => {
-            if (mounted) setSnapshot(nextSnapshot);
-          }
-        );
-      } finally {
-        loading = false;
-      }
-    }
+    const refresher = createOperationsAuditRefresher(demoGeneration, () => api.allEvents(), setSnapshot);
+    const refresh = () => {
+      if (shouldRefreshOperationsAudit(document.visibilityState)) void refresher.refresh();
+    };
 
     const stopPolling = startOperationsAuditPolling(
       () => void refresh(),
@@ -97,7 +110,7 @@ export function useOperationsAudit(
     );
 
     return () => {
-      mounted = false;
+      refresher.dispose();
       stopPolling();
     };
   }, [demoGeneration, enabled]);

@@ -9,6 +9,8 @@ vi.mock("./api", () => ({
 import {
   OPERATIONS_AUDIT_INTERVAL_MS,
   operationsAuditView,
+  createOperationsAuditRefresher,
+  shouldRefreshOperationsAudit,
   refreshOperationsAudit,
   startOperationsAuditPolling,
 } from "./useOperationsAudit";
@@ -18,6 +20,10 @@ afterEach(() => {
 });
 
 describe("operations audit polling", () => {
+  it("skips background-tab refreshes", () => {
+    expect(shouldRefreshOperationsAudit("hidden")).toBe(false);
+    expect(shouldRefreshOperationsAudit("visible")).toBe(true);
+  });
   it("continues beyond 12 attempts and stops on cleanup", () => {
     vi.useFakeTimers();
 
@@ -111,7 +117,7 @@ describe("operations audit view", () => {
     expect(publish).toHaveBeenLastCalledWith({
       demoGeneration: 7,
       status: "loaded",
-      events: [event],
+      events: [event], stale: false,
     });
 
     expect(failedFetch).toHaveBeenCalledTimes(1);
@@ -125,25 +131,50 @@ describe("operations audit view", () => {
 
     expect(
       operationsAuditView(
-        { demoGeneration: 7, status: "loaded", events: [] },
+        { demoGeneration: 7, status: "loaded", events: [], stale: false },
         7
       )
     ).toEqual({
       status: "loaded",
-      events: [],
+      events: [], stale: false,
     });
   });
 
   it("does not expose events from an earlier generation", () => {
     expect(
       operationsAuditView(
-        { demoGeneration: 7, status: "loaded", events: [event] },
+        { demoGeneration: 7, status: "loaded", events: [event], stale: false },
         8
       )
     ).toEqual({
       status: "loading",
       events: null,
     });
+  });
+
+  it("prevents overlapping fetches and suppresses publication after disposal", async () => {
+    let resolve!: (events: AuditEvent[]) => void;
+    const pending = new Promise<AuditEvent[]>((done) => { resolve = done; });
+    const fetchEvents = vi.fn(() => pending);
+    const publish = vi.fn();
+    const refresher = createOperationsAuditRefresher(7, fetchEvents, publish);
+    const first = refresher.refresh();
+    await refresher.refresh();
+    expect(fetchEvents).toHaveBeenCalledTimes(1);
+    refresher.dispose();
+    resolve([event]);
+    await first;
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it("retains the last loaded history as stale after a failed refresh", async () => {
+    const publish = vi.fn();
+    const refresher = createOperationsAuditRefresher(7, vi.fn()
+      .mockResolvedValueOnce([event])
+      .mockRejectedValueOnce(new Error("offline")), publish);
+    await refresher.refresh();
+    await refresher.refresh();
+    expect(publish).toHaveBeenLastCalledWith({ demoGeneration: 7, status: "loaded", events: [event], stale: true });
   });
 
   it("distinguishes failed retrieval from zero events", () => {
