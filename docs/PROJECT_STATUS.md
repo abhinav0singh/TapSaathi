@@ -1,8 +1,9 @@
 # TaapSaathi project status
 
 **Updated:** 11 October 2026  
-**Current source and deployment:** `main` at `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
-**Backend deployment:** confirmed; CloudFormation `UPDATE_COMPLETE`, Amplify build `SUCCEED`
+**Current source baseline:** `a87a17b3bf4061582a0e14403782942d62301763` (PR #35 merge)  
+**Backend deployment:** confirmed 11 October 2026; CloudFormation `UPDATE_COMPLETE`, Amplify `main` build `SUCCEED`  
+**Historical production evidence:** PR #30 (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`) remains the protected-audio deployment baseline
 
 ## Release assessment
 
@@ -20,7 +21,7 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 - Safe delivery handling implemented before supervisor escalation.
 - `TAKE_BREAK` and `FEEL_UNWELL` with supervisor acknowledgment and audited self-resume recorded against heat-policy-v2.
 - Backend and Web GitHub Actions checks passing on `main`.
-- Deployed release checks passing: typecheck, 180 unit tests, 16 infrastructure tests, CDK synthesis, and Next.js production build.
+- PR #35 release baseline checks passing: root and web typecheck, 31 Vitest files / 189 tests, 3 deterministic risk-policy tests, 16 infrastructure tests, CDK synthesis, state-machine definition validation, and Next.js production build.
 - Ravi can retrieve only Ravi's protected audio; operator, supervisor, and cross-rider audio requests are rejected in production.
 - Public worker and dashboard APIs expose no audio URL, expiry, or storage key; signed Polly audio downloads successfully only through the protected route.
 
@@ -54,7 +55,7 @@ operational metrics to the operations view. It does not convert the deployed
 cached-weather demo into live weather monitoring and must not be described as
 such unless a separately reviewed live-weather deployment is made.
 
-Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
+Fresh Cognito sessions manually observed operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, and JWT role enforcement. One stale-reset path completed without corrupting the new generation, but stale-reset isolation is not fully verified: a later stale execution failed when its intervention record was absent. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
 
 ## Final rehearsal
 

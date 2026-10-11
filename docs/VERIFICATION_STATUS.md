@@ -1,8 +1,9 @@
 # Verification status
 
 **Verified:** 11 October 2026  
-**Source baseline and deployed commit:** `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
-**Backend deployment:** confirmed on the deployed PR #30 release  
+**Current source baseline:** `a87a17b3bf4061582a0e14403782942d62301763` (PR #35 merge)  
+**Current backend deployment:** confirmed 11 October 2026 after the PR #35 merge  
+**Historical production evidence:** PR #30 (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`)  
 **AWS region:** `ap-south-1`
 
 ## Current release state
@@ -14,14 +15,15 @@ PR #30 is deployed and the protected-audio authorization checks passed in produc
 | Check | Result |
 | --- | --- |
 | Backend TypeScript | PASS |
-| Unit tests | PASS — 180 tests |
+| Vitest suite | PASS — 31 files / 189 tests |
+| Standalone deterministic risk-policy tests | PASS — 3 tests |
 | CDK synthesis | PASS |
 | Step Functions definition validator | PASS |
 | Next.js production build | PASS |
 | GitHub Backend workflow on `main` | PASS |
 | GitHub Web workflow on `main` | PASS |
 
-The deployed release passed typecheck, 180 unit tests, 16 infrastructure tests, CDK synthesis, and the production web build. Backend and Web CI are green for the merged release.
+The 11 October release baseline passed root and web typecheck, 31 Vitest files / 189 tests, 3 standalone deterministic risk-policy tests, 16 infrastructure tests, CDK synthesis, state-machine definition validation, and the production web build. Backend and Web CI were green for the reviewed PR #35 head. PR #30 remains the historical deployment baseline for the protected-audio production evidence.
 
 ## Deployed AWS verification
 
@@ -36,7 +38,7 @@ The deployed release passed typecheck, 180 unit tests, 16 infrastructure tests, 
 | Duplicate callback | PASS | Same `clientRequestId` replay returned the accepted result; a new request after consumption returned `409` |
 | Duplicate EventBridge delivery | PASS | Generation 30 produced two successful executions but exactly one intervention creation and one delivery reassignment |
 | Wrong-role and missing-token requests | PASS | Missing-token reset returned `401`; worker-token reset and rider impersonation returned `403` |
-| Reset during an in-flight intervention | PASS | Generation 32 was reset to 33 while waiting; the stale execution succeeded without altering the clean generation |
+| Reset during an in-flight intervention | PARTIAL | Generation 32 was reset to 33 while waiting; that stale execution succeeded without altering the clean generation. A separate post-reset stale execution later failed when its intervention record was absent; see the known limitation in AWS verification evidence |
 
 Detailed identifiers and the verification boundary are recorded in [AWS verification evidence](AWS_VERIFICATION_EVIDENCE.md).
 

@@ -282,3 +282,13 @@ The manually observed browser flows correlate to successful execution
 (generation 37, `FEEL_UNWELL`/supervisor acknowledgement). The Hindi,
 audio-element, and mobile-viewport details remain manual observations, not
 facts independently established by the Step Functions records.
+
+### Release-baseline correction — 11 October 2026
+
+The current reviewed source baseline is PR #35 merge
+`a87a17b3bf4061582a0e14403782942d62301763`, which was deployed on 11 October
+2026. PR #30 (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`) remains historical
+production evidence for the protected-audio work, not the current release
+baseline. The independently reviewed PR #35 suite was 31 Vitest files / 189
+tests plus 3 standalone deterministic risk-policy tests; do not repeat the
+superseded 180-test count as the current figure.
