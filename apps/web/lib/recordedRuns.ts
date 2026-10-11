@@ -108,7 +108,7 @@ export const recordedRuns: RecordedRun[] = [
       },
       {
         at: "16:40:47", event: "SUPERVISOR_ESCALATED", actor: "SYSTEM", service: "Step Functions",
-        plain: "A supervisor is asked to respond. TaapSaathi does not contact emergency services.",
+        plain: "A supervisor is asked to respond. Sahara does not contact emergency services.",
         rider: ADVICE.notified, workers: { ravi: "AWAITING_SUPERVISOR", asha: "SAFE", imran: "CAUTION" }, deliveryOwner: "Asha",
       },
       {

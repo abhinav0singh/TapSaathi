@@ -46,15 +46,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2.5 text-[1.0625rem] font-semibold tracking-tight">
           <span aria-hidden="true" lang="hi" className="grid size-8 place-items-center rounded-[0.6rem] bg-primary text-[1.0625rem] font-medium leading-none text-primary-foreground">
-            त
+            स
           </span>
-          TaapSaathi
+          Sahara
         </Link>
 
         <div className="rounded-3xl bg-surface p-7 sm:p-8">
           <h1 className="text-[1.5rem] font-semibold tracking-tight">Sign in</h1>
           <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-label-2">
-            Use your TaapSaathi account. You will land in the workspace for your role.
+            Use your Sahara account. You will land in the workspace for your role.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-5">

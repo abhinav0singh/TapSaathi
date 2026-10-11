@@ -15,8 +15,8 @@ const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--
 
 export const metadata: Metadata = {
   title: {
-    default: "TaapSaathi | Heat safety that keeps moving",
-    template: "%s | TaapSaathi",
+    default: "Sahara | Heat safety that keeps moving",
+    template: "%s | Sahara",
   },
   description: "AWS-native heat-risk detection, rider guidance, safe reassignment, and supervisor escalation for delivery operations.",
 };

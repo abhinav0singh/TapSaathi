@@ -179,7 +179,7 @@ export default function RecordedRunPage() {
         </div>
 
         <p className="mt-10 text-center text-[0.8125rem] text-label-2">
-          TaapSaathi makes no medical claims and does not contact emergency services. Recorded events are summarised from the audit trail in docs/GOLDEN_PATH_EVIDENCE.md.
+          Sahara makes no medical claims and does not contact emergency services. Recorded events are summarised from the audit trail in docs/GOLDEN_PATH_EVIDENCE.md.
         </p>
       </main>
     </div>

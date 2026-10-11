@@ -22,7 +22,7 @@ separate things. Components come from shadcn/ui (built on Base UI) and live in `
 - **Fonts:** Inter for Latin and Noto Sans Devanagari for Hindi. Give Hindi headings extra line height.
 - **Time:** format with `lib/time.ts` (fixed locale and the Asia/Kolkata zone) so server and browser
   output match. Use `useNow` for anything that ticks.
-- **Honesty copy stays:** the simulated-demo notices, "TaapSaathi has not placed an emergency call",
+- **Honesty copy stays:** the simulated-demo notices, "Sahara has not placed an emergency call",
   and "acknowledgment is not medical clearance".
 
 ## Tokens

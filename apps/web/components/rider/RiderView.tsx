@@ -92,8 +92,8 @@ const copy = {
   sending: { en: "Sending…", hi: "भेज रहे हैं…" },
   call: { en: "Call 112", hi: "112 कॉल करें" },
   noCall: {
-    en: "TaapSaathi has not placed an emergency call.",
-    hi: "TaapSaathi ने आपातकालीन कॉल नहीं की है।",
+    en: "Sahara has not placed an emergency call.",
+    hi: "Sahara ने आपातकालीन कॉल नहीं की है।",
   },
   retry: { en: "Try again", hi: "फिर कोशिश करें" },
   signIn: { en: "Sign in as this rider", hi: "इस राइडर के रूप में साइन इन करें" },

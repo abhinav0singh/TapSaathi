@@ -19,9 +19,9 @@ function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5 text-[1.0625rem] font-semibold tracking-tight">
       <span aria-hidden="true" lang="hi" className="grid size-8 place-items-center rounded-[0.6rem] bg-primary text-[1.0625rem] font-medium leading-none text-primary-foreground">
-        त
+        स
       </span>
-      TaapSaathi
+      Sahara
     </Link>
   );
 }
@@ -45,7 +45,7 @@ export default function HomePage() {
             When heat puts a rider at risk, someone has to act.
           </h1>
           <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-label-2">
-            TaapSaathi turns a heat warning into a rider reaching shade, a delivery that keeps moving, and a person who is accountable for what happens next.
+            Sahara turns a heat warning into a rider reaching shade, a delivery that keeps moving, and a person who is accountable for what happens next.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/ops" className={buttonVariants({ size: "xl" })}>Open the live demo</Link>
@@ -91,7 +91,7 @@ export default function HomePage() {
       <footer className="px-5 pb-12 sm:px-8">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 text-[0.875rem] text-label-2">
           <Brand />
-          <p>A hackathon demonstration on AWS. Riders, weather and rest points are simulated. TaapSaathi gives no medical advice and does not call emergency services.</p>
+          <p>A hackathon demonstration on AWS. Riders, weather and rest points are simulated. Sahara gives no medical advice and does not call emergency services.</p>
         </div>
       </footer>
     </main>

@@ -13,9 +13,9 @@ export default function DeskHeader({ children }: { children?: ReactNode }) {
             lang="hi"
             className="grid size-8 place-items-center rounded-[0.6rem] bg-primary text-[1.0625rem] font-medium leading-none text-primary-foreground"
           >
-            त
+            स
           </span>
-          TaapSaathi
+          Sahara
         </Link>
         <div className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
           <AppNav />
