@@ -67,7 +67,7 @@ export default function LoginPage() {
                 required
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                placeholder="demo-operator"
+                placeholder="Your Sahara username"
               />
             </div>
 
@@ -98,14 +98,11 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <aside aria-label="Judge access" className="mt-5 rounded-2xl px-2 text-[0.9375rem] leading-relaxed text-label-2">
+        <aside aria-label="Walkthrough access" className="mt-5 rounded-2xl px-2 text-[0.9375rem] leading-relaxed text-label-2">
           <p>
-            Reviewing this project? You can see everything without signing in:{" "}
-            <Link href="/demo" className="text-rest underline-offset-4 hover:underline">watch a recorded run</Link> or open the read-only{" "}
-            <Link href="/ops" className="text-rest underline-offset-4 hover:underline">operations board</Link>. To try the actions yourself, sign in with{" "}
-            <code className="whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-operator</code>,{" "}
-            <code className="whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-ravi</code> or{" "}
-            <code className="whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[0.875rem]">demo-neha</code>. The demo password is in the submission writeup.
+            Exploring Sahara? Start with the local, no-login{" "}
+            <Link href="/#walkthrough" className="text-rest underline-offset-4 hover:underline">interactive walkthrough</Link>. The authenticated{" "}
+            <Link href="/ops" className="text-rest underline-offset-4 hover:underline">operations workspace</Link> uses sandbox data and is separate from the walkthrough.
           </p>
         </aside>
       </div>

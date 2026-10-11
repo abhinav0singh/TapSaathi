@@ -79,6 +79,8 @@
   --color-fill: var(--fill);
   --color-fill-strong: var(--fill-strong);
   --color-label: var(--label);
+  /* Legacy name still used by the landing walkthrough and rider link: same near-black as label. */
+  --color-ink: var(--label);
   --color-label-2: var(--label-2);
   --color-label-3: var(--label-3);
   --color-separator: var(--separator);
