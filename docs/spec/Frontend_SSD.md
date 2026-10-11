@@ -118,17 +118,17 @@ Required regions:
 7. **I feel unwell** urgent action.
 8. Visible 112 emergency action with a disclaimer that Sahara has not placed the call.
 
-### 4.4 Demo controls
+### 4.4 Public interactive walkthrough
 
-Demo controls may live in `/ops` or `/demo`, but only one implementation should exist.
+The no-login landing page (`/#walkthrough`) is the only public walkthrough.
+It is a deterministic, page-local illustration of a heat-risk event, rider
+choices, delivery ownership, supervisor follow-up, rider phone, map, and audit
+trail. Its controls never call an API, authenticate a user, or read or change
+deployment-backed sandbox data.
 
-Controls:
-
-- `Reset demo`
-- `Start heat spike` (a simulated heat spike; the interface labels it as simulated)
-- optional `Trigger symptom branch` only if it invokes the same worker response API
-
-The interface must label the environmental trigger as **Simulated for demonstration**.
+The authenticated Operations workspace contains no public reset or heat-spike
+controls. Backend engineering/test endpoints are outside this public UI
+contract and remain subject to their own authorization and operational process.
 
 ## 5. Visual system
 

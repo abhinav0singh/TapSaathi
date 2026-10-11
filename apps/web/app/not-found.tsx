@@ -9,11 +9,11 @@ export default function NotFound() {
       <div className="max-w-sm text-center">
         <h1 className="text-[1.5rem] font-semibold tracking-tight">This page does not exist</h1>
         <p className="mt-2 text-[1rem] leading-relaxed text-label-2">
-          The link may be old or mistyped. You can head back to the start or open the live board.
+          The link may be old or mistyped. You can head back to the walkthrough or open the operations workspace.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link href="/" className={buttonVariants({ size: "lg" })}>Back to start</Link>
-          <Link href="/ops" className={buttonVariants({ variant: "secondary", size: "lg" })}>Open the live board</Link>
+          <Link href="/ops" className={buttonVariants({ variant: "secondary", size: "lg" })}>Open operations workspace</Link>
         </div>
       </div>
     </main>

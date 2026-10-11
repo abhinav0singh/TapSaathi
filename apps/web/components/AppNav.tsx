@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string };
 
-/** The pages this person can open. Everyone sees Home and the recorded run. */
+/** The landing page is the only public walkthrough; authenticated pages are product workspaces. */
 function useNavItems(): NavItem[] {
   const state = useIdentity();
   const identity = state.status === "signed-in" ? state.identity : null;
 
-  const items: NavItem[] = [{ href: "/", label: "Home" }, { href: "/demo", label: "Recorded run" }];
+  const items: NavItem[] = [{ href: "/", label: "Home" }];
   if (!identity) {
     items.push({ href: "/ops", label: "Operations" }, { href: "/login", label: "Sign in" });
     return items;

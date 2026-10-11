@@ -78,7 +78,7 @@ Ravi does not receive a complex dashboard and is not expected to monitor the web
 | PRD-011 | Audit timeline | DynamoDB records trigger, matched rule, guidance, rider response, reassignment, escalation, and completion. |
 | PRD-012 | Idempotency | Replaying the same event does not create a second intervention or reassignment. |
 | PRD-013 | Reliable reset | `POST /demo/reset` restores the exact opening state for all demo entities. |
-| PRD-014 | Deployment | A signed-out judge can open the deployed application and run the golden scenario. |
+| PRD-014 | Deployment | A signed-out judge can open the deployed application's local walkthrough. Authenticated golden-path testing remains controlled engineering work. |
 | PRD-015 | Observability | CloudWatch contains searchable logs for the demo execution and errors are visible in the UI. |
 
 ### 5.2 Priority one only after every P0 requirement works
@@ -233,13 +233,22 @@ Every service listed above must execute in the golden scenario or be removed fro
 
 Routes:
 
+- `/` — no-login, local interactive walkthrough
 - `/ops` — supervisor operations dashboard
 - `/worker/[workerId]` — rider intervention screen
-- `/demo` — compact reset and scenario controller, or a drawer inside `/ops`
 
-The dashboard must include a rider list, status summary, map, selected-worker panel, active intervention, reassignment result, and audit timeline. The rider screen must include current state, short instruction, route summary, audio replay, **Take break**, **I feel unwell**, and 112.
+The landing walkthrough presents a clearly labelled, deterministic local scenario
+with a rider phone, map, delivery handling, and supervisor follow-up. It must
+not authenticate, call APIs, or alter backend data. The dashboard must include
+a rider list, status summary, map, selected-worker panel, active intervention,
+reassignment result, and audit timeline, but no public reset or heat-spike
+control. The rider screen must include current state, short instruction, route
+summary, audio replay, **Take break**, **I feel unwell**, and 112.
 
-The UI uses two-second polling during the demo. WebSockets are out of scope. State is never inferred only in the browser; backend state is authoritative.
+The authenticated workspace uses polling. WebSockets are out of scope. Its
+state is never inferred only in the browser; backend state is authoritative.
+The landing walkthrough is intentionally the exception: its state is local and
+illustrative rather than operational.
 
 ## 11. Backend requirements
 

@@ -415,3 +415,37 @@ combination and generation isolation. Local QA against the read-only deployed
 API confirmed the operations and rider views at 1440px and 375px without
 horizontal overflow. No reset, heat spike, authentication action, deployment,
 or backend/infrastructure/contract change was performed.
+
+### Frontend-only product/walkthrough separation — 11 October 2026
+
+The public landing page is being changed from a collection of product links and
+a recorded-run route into Sahara's sole no-login interactive walkthrough. Its
+scenario state is local and deterministic: heat risk, rider choice, delivery
+ownership, supervisor follow-up, phone view, map, and audit list all derive
+from the same client-side state. It does not import the API client or auth
+code, and cannot reset, spike, read, or mutate the deployment-backed sandbox.
+
+The public `/demo` recorded-run route, navigation item, login-page link, and
+recorded-run fixtures are removed. The authenticated operations workspace no
+longer exposes reset or heat-spike buttons; it is labelled as deployment-backed
+sandbox data and is explicitly separate from the landing-page walkthrough.
+The README, judge guide, frontend specification, and product requirements now
+describe this boundary and no longer present `/demo` or an Operations reset as
+the public product walkthrough.
+Backend demo endpoints remain unchanged for controlled engineering and test
+work. The requested two-role authorization migration (remove `OPERATOR` and
+allow `SUPERVISOR` to operate protected demo controls) is deliberately not
+claimed here: it requires a separately reviewed backend, Cognito, CDK, test,
+and deployment change.
+
+Local verification on the final frontend branch passed `npm run typecheck`,
+`npx vitest run apps/web` (8 files / 36 tests), and
+`npm run build --workspace=@taapsaathi/web`. The production build route table
+contains `/`, `/login`, `/ops`, `/supervisor`, and `/worker/[workerId]`; it no
+longer contains `/demo`. A source audit found no web-client calls to
+`api.heatSpike` or `api.reset`, and no public reset/spike/recorded-run UI
+strings. Local browser QA checked the landing walkthrough at desktop width and
+375px: both legal decision paths update the illustrated map, Ravi phone,
+delivery owner, and audit list from the same scenario state, with no horizontal
+overflow. This is local frontend verification only—no deployment, AWS action,
+or shared sandbox mutation was performed.

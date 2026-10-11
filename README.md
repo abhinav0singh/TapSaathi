@@ -13,7 +13,7 @@
 [![Live on Amplify](https://img.shields.io/badge/Live-AWS%20Amplify-FF9900?logo=amazonaws&logoColor=white)](https://main.d6hf0wv24qbik.amplifyapp.com)
 ![AWS Region](https://img.shields.io/badge/Region-ap--south--1-0B6B52)
 
-**[Open the live app](https://main.d6hf0wv24qbik.amplifyapp.com)** · **[Try a no-login recorded run](https://main.d6hf0wv24qbik.amplifyapp.com/demo)** · **[See verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md)** · **[Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)**
+**[Explore the interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough)** · **[Open the authenticated workspace](https://main.d6hf0wv24qbik.amplifyapp.com/login)** · **[See verification evidence](docs/AWS_VERIFICATION_EVIDENCE.md)** · **[Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)**
 
 </div>
 
@@ -59,18 +59,22 @@ flowchart LR
     class B,E,K emphasis
 ```
 
-The operator does not manually manufacture the intervention result in the browser. The demo spike enters the same risk-evaluation and EventBridge path used by scheduled observations; AWS Step Functions manages the durable intervention lifecycle.
+The public walkthrough does not manufacture an operational intervention: it is
+local to the page. Controlled engineering spikes, which are not exposed in the
+product workspace, enter the same risk-evaluation and EventBridge path used by
+scheduled observations; AWS Step Functions manages the durable intervention
+lifecycle.
 
 ## Explore the product
 
 | Experience | What you can see or do |
 | :-- | :-- |
-| **Operations command center** — [`/ops`](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Live map, rider roster, delivery assignments, active intervention state, audit timeline, historical replay, and operational impact metrics. |
+| **Interactive walkthrough** — [`/#walkthrough`](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) | A no-login, local simulation of heat risk, rider choices, delivery handling, and supervisor follow-up. It never reads or changes operational data. |
+| **Operations workspace** — [`/ops`](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Authenticated workspace with deployment-backed sandbox data: map, rider roster, delivery assignments, intervention state, audit timeline, historical replay, and operational impact metrics. |
 | **Rider experience** | English/Hindi instructions, route-to-rest context, protected voice guidance, explicit **Take break** / **I feel unwell** actions, and an audited return-to-work flow. |
 | **Supervisor desk** — [`/supervisor`](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Review an escalation and record authenticated acknowledgment. Acknowledgment is **not** medical clearance. |
-| **Recorded runs** — [`/demo`](https://main.d6hf0wv24qbik.amplifyapp.com/demo) | Walk through recorded rider-break and symptom scenarios **without signing in**. These are labelled replays, not live interventions. |
 
-**For judges:** Start with the [no-login recorded run](https://main.d6hf0wv24qbik.amplifyapp.com/demo). Then inspect the [read-only Operations dashboard](https://main.d6hf0wv24qbik.amplifyapp.com/ops). State-changing actions require the correct Cognito role; demo credentials are not published in this repository.
+**For judges:** Start with the [no-login interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough). It is explicitly simulated and local to the page. Then inspect the authenticated Operations workspace separately; its sandbox data and role-bound actions are not part of the walkthrough.
 
 ### Operational details that matter
 
@@ -139,7 +143,7 @@ flowchart TB
 
 - **One policy, two entry points.** Scheduled weather and explicitly simulated spikes share the deterministic risk evaluator. The historical replay imports that same policy from `packages/contracts/src/heat-policy.ts`.
 - **Durable orchestration.** Step Functions handles waits and callbacks; the UI reflects backend state rather than pretending to complete the workflow locally.
-- **Identity-bound actions.** Operator, worker, and supervisor mutations require appropriate Cognito identity and server-side mapping. Protected audio is restricted to the matching rider.
+- **Identity-bound actions.** Current backend mutations require the appropriate Cognito identity and server-side mapping. Protected audio is restricted to the matching rider. A planned two-role authorization migration is not part of the public walkthrough change.
 - **Auditable and retry-aware.** Interventions use correlation IDs, audit records, idempotent request handling, and generation isolation.
 - **Responsible fallbacks.** Route-provider availability and other limitations are recorded honestly in [known limitations](docs/KNOWN_LIMITATIONS.md); a fallback is not presented as proof of the primary provider.
 
@@ -149,7 +153,7 @@ flowchart TB
 
 **Deployed:** The Amplify `main` branch deployed the merge. On **11 October 2026**, CloudFormation reached `UPDATE_COMPLETE` after updating the `WeatherPollFunction` and `HeatSpikeFunction` Lambda code. The live `/ops` page was visually checked in its clean state, including historical replay, map, roster, delivery ownership, and audit impact cards.
 
-**Still to verify on the latest deployment:** A new authenticated golden-path smoke test, active-flow browser evidence across operator/rider/supervisor roles, and a redacted Step Functions execution-graph capture. Prior recorded AWS evidence is available, but should not be confused with a fresh end-to-end run after this deployment.
+**Still to verify on the latest deployment:** A new authenticated golden-path smoke test, active-flow browser evidence across the currently configured roles, and a redacted Step Functions execution-graph capture. Prior recorded AWS evidence is available, but should not be confused with a fresh end-to-end run after this deployment.
 
 | Evidence | Link |
 | :-- | :-- |
@@ -186,7 +190,7 @@ Use [`.env.example`](.env.example) and the [deployment runbook](docs/DEPLOYMENT_
 ## Repository guide
 
 ```text
-apps/web/               Next.js product, recorded demo, operations, rider, supervisor
+apps/web/               Next.js product, local landing walkthrough, operations, rider, supervisor
 infra/                  AWS CDK stack and infrastructure tests
 packages/contracts/     Shared schemas, contracts, deterministic heat policy
 services/api/           Dashboard, worker, events, response and audio APIs
@@ -213,6 +217,6 @@ See [known limitations](docs/KNOWN_LIMITATIONS.md) and [project status](docs/PRO
 
 **Protect the rider. Keep delivery ownership clear. Make every action accountable.**
 
-[Live app](https://main.d6hf0wv24qbik.amplifyapp.com) · [Recorded demo](https://main.d6hf0wv24qbik.amplifyapp.com/demo) · [Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)
+[Interactive walkthrough](https://main.d6hf0wv24qbik.amplifyapp.com/#walkthrough) · [Sign in](https://main.d6hf0wv24qbik.amplifyapp.com/login) · [Judge guide](docs/JUDGE_DEMO_RUNBOOK.md)
 
 </div>

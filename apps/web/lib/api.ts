@@ -1,8 +1,6 @@
 import {
   DashboardResponseSchema,
   HealthResponseSchema,
-  DemoHeatSpikeResponseSchema,
-  DemoResetResponseSchema,
   EventsResponseSchema,
   WorkerViewResponseSchema,
   WorkerAudioResponseSchema,
@@ -69,18 +67,6 @@ export const api = {
 
   health: () =>
     apiRequest("/health", HealthResponseSchema),
-
-  heatSpike: () =>
-    apiRequest("/demo/heat-spike", DemoHeatSpikeResponseSchema, {
-      method: "POST",
-      body: "{}",
-    }),
-
-  reset: () =>
-    apiRequest("/demo/reset", DemoResetResponseSchema, {
-      method: "POST",
-      body: "{}",
-    }),
 
   worker: (workerId: string) =>
     apiRequest(

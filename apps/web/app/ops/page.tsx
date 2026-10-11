@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CircleCheck, ExternalLink, OctagonAlert, RotateCcw, TriangleAlert } from "lucide-react";
+import { CircleCheck, ExternalLink, OctagonAlert, TriangleAlert } from "lucide-react";
 import type { DashboardResponse } from "@taapsaathi/contracts";
 import DeskHeader from "@/components/shell/DeskHeader";
 import OperationsMap from "@/components/ops/OperationsMap";
 import StageList from "@/components/ops/StageList";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STATE_META, TONE_CIRCLE, TONE_PILL, urgencyRank, type StateTone } from "@/components/status/stateMeta";
 import { api } from "@/lib/api";
@@ -52,8 +50,6 @@ function Fact({ value, label }: { value: string; label: string }) {
 export default function OperationsPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const now = useNow(1000);
@@ -95,35 +91,6 @@ export default function OperationsPage() {
     const interval = setInterval(() => void refresh(), data?.activeInterventions.length ? 2000 : 5000);
     return () => clearInterval(interval);
   }, [refresh, data?.activeInterventions.length]);
-
-  async function triggerHeatSpike() {
-    if (pending) return;
-    setPending(true);
-    setError(null);
-    try {
-      await api.heatSpike();
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "The heat spike could not start.");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function resetDemo() {
-    if (pending) return;
-    setConfirmReset(false);
-    setPending(true);
-    setError(null);
-    try {
-      await api.reset();
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "The reset failed.");
-    } finally {
-      setPending(false);
-    }
-  }
 
   const nameOf = useCallback(
     (workerId: string) => data?.workers.find((worker) => worker.workerId === workerId)?.name ?? workerId,
@@ -184,29 +151,18 @@ export default function OperationsPage() {
       <main className="mx-auto max-w-[88rem] px-4 pb-16 pt-8 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-[1.625rem] font-semibold tracking-tight">Command center</h1>
+            <h1 className="text-[1.625rem] font-semibold tracking-tight">Operations workspace</h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.9375rem] text-label-2">
               <span>{data?.hub.name ?? "Connecting to the hub…"}</span>
               <span className="rounded-full bg-wait-tint px-2.5 py-0.5 text-[0.8125rem] font-medium text-wait-ink">
-                Simulated demonstration
+                Sandbox data
               </span>
               <span className="text-[0.875rem]" suppressHydrationWarning>
                 {lastRefresh && now !== null ? `Updated ${ago(now - lastRefresh.getTime())}` : ""}
               </span>
             </p>
           </div>
-          <div className="flex flex-col items-start gap-1.5 sm:items-end">
-            <div className="flex items-center gap-2.5">
-              <Button variant="secondary" size="lg" disabled={pending} onClick={() => setConfirmReset(true)}>
-                <RotateCcw aria-hidden="true" />
-                Reset demo
-              </Button>
-              <Button size="lg" disabled={pending} onClick={() => void triggerHeatSpike()}>
-                {pending ? "Working…" : "Start heat spike"}
-              </Button>
-            </div>
-            <p className="text-[0.8125rem] text-label-2">Simulated for demonstration. It runs the real AWS workflow.</p>
-          </div>
+          <p className="max-w-xs text-[0.8125rem] leading-relaxed text-label-2 sm:text-right">This authenticated workspace displays deployment-backed sandbox data. The interactive walkthrough on Home is separate and cannot change it.</p>
         </div>
 
         {error && (
@@ -381,7 +337,7 @@ export default function OperationsPage() {
                       <a className="text-rest underline underline-offset-4" href={delhiHistoricalReplay.sourceUrl} target="_blank" rel="noreferrer">
                         {delhiHistoricalReplay.sourceName}
                       </a>
-                      , retrieved {delhiHistoricalReplay.retrievedAt}. It does not change the live demo or claim a current official alert. Requested point {delhiHistoricalReplay.requestedLocation}; returned grid point {delhiHistoricalReplay.gridPoint}.
+                      , retrieved {delhiHistoricalReplay.retrievedAt}. It does not change the sandbox workspace or claim a current official alert. Requested point {delhiHistoricalReplay.requestedLocation}; returned grid point {delhiHistoricalReplay.gridPoint}.
                     </p>
                   </div>
 
@@ -409,23 +365,6 @@ export default function OperationsPage() {
             </section>
           </>
         )}
-
-        <Dialog open={confirmReset} onOpenChange={setConfirmReset}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Reset the demo?</DialogTitle>
-              <DialogDescription>
-                This clears every alert and puts all riders back to safe, with the delivery back on its first rider.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="secondary" onClick={() => setConfirmReset(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => void resetDemo()}>Reset demo</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </main>
     </div>
   );
