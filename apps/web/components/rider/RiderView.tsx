@@ -16,7 +16,7 @@ import {
   type LucideProps,
 } from "lucide-react";
 import type { Language, InterventionStatus, RiskState, RouteView } from "@taapsaathi/contracts";
-import RoutePreview from "@/components/worker/RoutePreview";
+import RouteMap from "@/components/worker/RouteMap";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Segmented } from "@/components/ui/segmented";
@@ -83,6 +83,8 @@ const copy = {
     hi: "सिग्नल नहीं है। {time} तक की जानकारी दिख रही है।",
   },
   shade: { en: "Nearest shade", hi: "नज़दीकी छाँव" },
+  you: { en: "You", hi: "आप" },
+  shadeShort: { en: "Shade", hi: "छाँव" },
   walk: { en: "{m} m, about {t} min on foot", hi: "{m} मीटर, पैदल लगभग {t} मिनट" },
   walkShort: { en: "{m} m", hi: "{m} मीटर" },
   hear: { en: "Hear this", hi: "सुनें" },
@@ -249,7 +251,7 @@ export default function RiderView(props: RiderViewProps) {
         <LanguageToggle language={language} onChange={onLanguage} />
       </header>
 
-      {hasRoute && route && <RoutePreview route={route} className="h-44" />}
+      {hasRoute && route && <RouteMap route={route} className="h-52" youLabel={copy.you[language]} shadeLabel={copy.shadeShort[language]} />}
 
       <div className={cn("relative flex flex-1 flex-col rounded-t-[1.75rem] bg-surface px-5 pb-4 pt-6", hasRoute ? "-mt-5" : "mt-2")}>
         {band ? (
