@@ -388,3 +388,11 @@ production build using a read-only proxy of the deployed API, signed out. The si
 phone after `d6f8585` and every authenticated action (rider reply, resume, supervisor
 acknowledgment) still need a manual pass with the demo accounts. No Amplify deployment of PR #41
 has been checked. No credential or token is recorded here.
+
+### PR #41 follow-up: public documentation brand assets — 11 October 2026
+
+The previous README GIFs and unused login screenshots visibly displayed the former TaapSaathi
+product name. They were removed from the submission materials. The README now uses two
+repository-native Sahara SVG diagrams for the product overview and intervention loop. This is a
+documentation-only branding correction: it does not change any application, backend,
+infrastructure, contract, deployment, or verification evidence.

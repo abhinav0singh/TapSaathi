@@ -17,7 +17,7 @@
 
 </div>
 
-![Animated overview of Sahara's value: heat-risk detection connected to rider and dispatch action](docs/assets/taapsaathi-value.gif)
+![Sahara overview: heat-risk detection connected to rider and dispatch action](docs/assets/sahara-value.svg)
 
 > **The idea in one sentence:** Don't just warn a rider about dangerous heat; help them act, protect the delivery they're carrying, and make sure someone is accountable for what happens next.
 
@@ -39,7 +39,7 @@ A weather forecast can tell an operations team that it is hot. It cannot, by its
 
 ## What it does — from signal to response
 
-![Animated intervention sequence: sense, decide, guide, protect, confirm and recover](docs/assets/taapsaathi-safety-loop.gif)
+![Sahara intervention sequence: sense, decide, guide, protect, confirm and recover](docs/assets/sahara-safety-loop.svg)
 
 ```mermaid
 flowchart LR
