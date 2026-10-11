@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STATE_META, TONE_CIRCLE, TONE_PILL, urgencyRank, type StateTone } from "@/components/status/stateMeta";
 import { api } from "@/lib/api";
-import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
+import { supervisorFollowUpForWorker } from "@/lib/supervisorFollowUp";
 import { useOperationsAudit } from "@/lib/useOperationsAudit";
 import { auditImpact } from "@/lib/auditImpact";
 import { eventText } from "@/lib/auditText";
@@ -60,6 +60,7 @@ export default function OperationsPage() {
 
   const audit = useOperationsAudit(data?.demoGeneration, Boolean(data));
   const auditEvents = useMemo(() => audit.events ?? [], [audit.events]);
+  const followUpEvents = audit.status === "loaded" ? auditEvents : (data?.recentEvents ?? []);
   const displayedEvents =
     audit.status === "loaded" && data && auditEvents.length > 0
       ? auditEvents
@@ -130,17 +131,28 @@ export default function OperationsPage() {
   );
 
   const primary = data?.activeInterventions[0] ?? null;
-  const selected = data?.workers.find((worker) => worker.workerId === (selectedId ?? primary?.workerId)) ?? null;
+  const followUps = useMemo(
+    () =>
+      data
+        ? data.workers.flatMap((worker) => {
+            const followUp = supervisorFollowUpForWorker(worker, followUpEvents, data.demoGeneration);
+            return followUp ? [{ ...followUp, riderName: worker.name }] : [];
+          })
+        : [],
+    [data, followUpEvents],
+  );
+  const primaryFollowUp =
+    followUps.find((followUp) => followUp.status === "UNACKNOWLEDGED") ?? followUps[0] ?? null;
+  const selected = data?.workers.find(
+    (worker) => worker.workerId === (selectedId ?? primary?.workerId ?? primaryFollowUp?.workerId),
+  ) ?? null;
 
   const roster = useMemo(() => {
     if (!data) return [];
     return [...data.workers]
       .sort((a, b) => urgencyRank(a.state) - urgencyRank(b.state) || a.name.localeCompare(b.name))
       .map((worker) => {
-        const outcome =
-          worker.state === "AWAITING_SUPERVISOR" && !worker.activeInterventionId
-            ? latestSupervisorOutcome(auditEvents, worker.workerId, data.demoGeneration)
-            : null;
+        const outcome = supervisorFollowUpForWorker(worker, followUpEvents, data.demoGeneration);
         const meta = STATE_META[worker.state];
         let tone: StateTone = meta.tone;
         let Icon = meta.icon;
@@ -152,11 +164,16 @@ export default function OperationsPage() {
         } else if (outcome?.status === "UNACKNOWLEDGED") {
           tone = "critical";
           Icon = OctagonAlert;
-          label = "Reply overdue";
+          label = "Supervisor follow-up overdue";
         }
         return { worker, tone, Icon, label };
       });
-  }, [data, auditEvents]);
+  }, [data, followUpEvents]);
+
+  const overdueWorkerIds = useMemo(
+    () => followUps.filter((followUp) => followUp.status === "UNACKNOWLEDGED").map((followUp) => followUp.workerId),
+    [followUps],
+  );
 
   const taskOwner = (assigneeId: string | null) => (assigneeId ? nameOf(assigneeId) : "Nobody yet");
 
@@ -214,6 +231,7 @@ export default function OperationsPage() {
                 <StageList
                   intervention={primary}
                   riderName={primary ? nameOf(primary.workerId) : ""}
+                  followUp={primaryFollowUp}
                   more={Math.max(0, data.activeInterventions.length - 1)}
                   now={now}
                 />
@@ -250,6 +268,7 @@ export default function OperationsPage() {
                   hubName={data.hub.name}
                   workers={data.workers}
                   activeInterventions={data.activeInterventions}
+                  overdueWorkerIds={overdueWorkerIds}
                   selectedId={selected?.workerId ?? null}
                   onSelect={setSelectedId}
                   className="h-[28rem] lg:h-[34rem]"

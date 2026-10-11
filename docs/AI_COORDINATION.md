@@ -396,3 +396,22 @@ product name. They were removed from the submission materials. The README now us
 repository-native Sahara SVG diagrams for the product overview and intervention loop. This is a
 documentation-only branding correction: it does not change any application, backend,
 infrastructure, contract, deployment, or verification evidence.
+
+### Pending frontend-only follow-up: terminal supervisor state — 11 October 2026
+
+Read-only production inspection on the PR #41 baseline found demo generation
+38 with Ravi in `AWAITING_SUPERVISOR`, no `activeInterventionId`, no active
+interventions, and `delivery-001` assigned to Asha. The audit trail for the
+same generation ends the earlier Ravi intervention as
+`SUPERVISOR_UNACKNOWLEDGED`; it is not a currently running heat alert.
+
+The focused frontend follow-up derives that terminal outcome in one helper and
+uses it consistently in the operations stage panel, roster, map marker, and
+rider view. It labels the situation as an outstanding supervisor follow-up,
+not a live alert or success state. Ravi may not resume until the backend's
+existing supervisor-acknowledgement rule permits it. The test suite includes
+this exact no-active-intervention / unacknowledged-terminal-outcome
+combination and generation isolation. Local QA against the read-only deployed
+API confirmed the operations and rider views at 1440px and 375px without
+horizontal overflow. No reset, heat spike, authentication action, deployment,
+or backend/infrastructure/contract change was performed.

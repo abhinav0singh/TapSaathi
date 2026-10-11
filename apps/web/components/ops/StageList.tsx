@@ -15,6 +15,25 @@ const IDLE: Stage[] = ["Heat risk detected", "Rider guided", "Rider replies", "D
   (label) => ({ id: label, label, state: "todo" as const }),
 );
 
+type FollowUp = {
+  riderName: string;
+  status: "ACKNOWLEDGED" | "UNACKNOWLEDGED";
+};
+
+function followUpStages(status: FollowUp["status"]): Stage[] {
+  return status === "UNACKNOWLEDGED"
+    ? [
+        { id: "alert-ended", label: "Heat alert ended", state: "done" },
+        { id: "delivery-secured", label: "Delivery secured", state: "done" },
+        { id: "supervisor-follow-up", label: "Supervisor follow-up", state: "alert" },
+      ]
+    : [
+        { id: "alert-ended", label: "Heat alert ended", state: "done" },
+        { id: "supervisor-acknowledged", label: "Supervisor acknowledged", state: "done" },
+        { id: "rider-resume", label: "Rider confirms readiness", state: "current" },
+      ];
+}
+
 function Marker({ state }: { state: Stage["state"] }) {
   const base = "relative z-10 grid size-7 shrink-0 place-items-center rounded-full";
   if (state === "done") {
@@ -51,25 +70,38 @@ const STATE_WORD: Record<Stage["state"], string> = {
 type Props = {
   intervention: Intervention | null;
   riderName: string;
+  followUp: FollowUp | null;
   more: number;
   now: number | null;
 };
 
-export default function StageList({ intervention, riderName, more, now }: Props) {
+export default function StageList({ intervention, riderName, followUp, more, now }: Props) {
   const view = intervention ? stageView(intervention, riderName) : null;
-  const stages = view?.stages ?? IDLE;
+  const stages = view?.stages ?? (followUp ? followUpStages(followUp.status) : IDLE);
+  const headline = intervention
+    ? `${riderName}: heat alert`
+    : followUp?.status === "UNACKNOWLEDGED"
+      ? `${followUp.riderName} needs supervisor follow-up`
+      : followUp
+        ? `${followUp.riderName} may confirm readiness`
+        : "No heat alert right now";
+  const summary = view
+    ? view.summary
+    : followUp?.status === "UNACKNOWLEDGED"
+      ? "No heat alert is running. An earlier alert ended without a supervisor acknowledgement, so this rider cannot resume through Sahara."
+      : followUp
+        ? "No heat alert is running. The earlier alert is acknowledged; the rider can self-declare readiness from their own signed-in phone."
+        : "Press Start heat spike to run the whole workflow, from detection to supervisor follow-up.";
 
   return (
-    <section aria-label="Current alert" className="rounded-3xl bg-surface p-6">
+    <section aria-label="Current alert or outstanding follow-up" className="rounded-3xl bg-surface p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-[1.125rem] font-semibold leading-snug tracking-tight">
-            {intervention ? `${riderName}: heat alert` : "No heat alert right now"}
+            {headline}
           </h2>
           <p className="mt-1 text-[0.9375rem] leading-relaxed text-label-2" aria-live="polite">
-            {view
-              ? view.summary
-              : "Press Start heat spike to run the whole workflow, from detection to supervisor follow-up."}
+            {summary}
           </p>
           {more > 0 && (
             <p className="mt-1 text-[0.875rem] text-label-2">
