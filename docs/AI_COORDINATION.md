@@ -449,3 +449,23 @@ strings. Local browser QA checked the landing walkthrough at desktop width and
 delivery owner, and audit list from the same scenario state, with no horizontal
 overflow. This is local frontend verification only—no deployment, AWS action,
 or shared sandbox mutation was performed.
+
+### Landing walkthrough polish and contrast fix (PR #45)
+
+The walkthrough action buttons are now readable on the dark scenario panel, the
+Ravi map marker takes its colour from Ravi's state (and "breathes" only while a
+heat alert is active; reduced motion turns it off), a one-line prompt says what
+the viewer can do next, and a polite screen-reader line announces Ravi's state
+and who holds `delivery-001`.
+
+Browser checking found a defect in the first version of this polish: the
+walkthrough used a colour named `ink` (`text-ink`, `bg-ink`) that the Sahara
+theme never defined, so those classes produced no style. The new button text and
+the light phone panel (state heading, shade-point row, supervisor message)
+inherited white text from the dark panel and were unreadable. `ink` is now
+defined in `apps/web/app/globals.css` as an alias of the existing `label`
+colour. After the fix, both decision paths and the resume step were walked
+through at desktop and 375px: button text is black on white (and white on red
+for the unwell action), buttons are 48px tall, and there is no horizontal
+overflow. Local frontend verification only; no deployment, AWS action or shared
+sandbox mutation was performed.

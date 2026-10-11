@@ -22,6 +22,23 @@ const stateLabel: Record<WalkthroughWorkerState, string> = {
   AWAITING_SUPERVISOR: "Supervisor follow-up",
 };
 
+const markerStyle: Record<WalkthroughWorkerState, string> = {
+  SAFE: "bg-safe",
+  CAUTION: "bg-caution",
+  HIGH: "bg-high",
+  RESTING: "bg-rest",
+  AWAITING_SUPERVISOR: "bg-critical",
+};
+
+const actionPrompt: Record<WalkthroughStep, string> = {
+  ready: "Start with the simulated heat-risk signal.",
+  heat: "Ravi chooses how to respond to the heat-risk guidance.",
+  break: "The simulated break outcome is complete.",
+  unwell: "A supervisor needs to review Ravi’s follow-up.",
+  acknowledged: "Ravi can self-declare readiness when appropriate.",
+  resumed: "The simulated follow-up is complete.",
+};
+
 function StatePill({ state }: { state: WalkthroughWorkerState }) {
   return <span className={cn("rounded-full px-2.5 py-1 text-[0.75rem] font-semibold", stateStyle[state])}>{stateLabel[state]}</span>;
 }
@@ -41,7 +58,15 @@ function ScenarioButton({
 }) {
   if (!visible) return null;
   return (
-    <Button variant={variant} size="lg" onClick={onClick} className="w-full justify-start sm:w-auto">
+    <Button
+      variant={variant}
+      size="lg"
+      onClick={onClick}
+      className={cn(
+        "w-full justify-start sm:w-auto",
+        variant === "danger" ? "bg-critical text-white hover:bg-critical/85" : "bg-white text-ink hover:bg-white/90",
+      )}
+    >
       {icon}
       {children}
     </Button>
@@ -64,9 +89,11 @@ export default function InteractiveWalkthrough() {
           <h2 id="walkthrough-title" className="mt-4 text-[clamp(1.6rem,3vw,2.35rem)] font-semibold leading-tight tracking-tight">See a heat-risk response move together.</h2>
           <p className="mt-3 text-[1rem] leading-relaxed text-white/75">Every button changes this local illustration only. It never reads or changes live operations, rider data, or AWS workflows.</p>
         </div>
-        <button type="button" onClick={() => action("RESTART")} className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-[0.875rem] font-medium text-white/75 hover:bg-white/10 hover:text-white">
-          <RotateCcw aria-hidden="true" className="size-4" /> Restart
-        </button>
+        {step !== "ready" && (
+          <button type="button" onClick={() => action("RESTART")} className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-[0.875rem] font-medium text-white/75 hover:bg-white/10 hover:text-white">
+            <RotateCcw aria-hidden="true" className="size-4" /> Restart
+          </button>
+        )}
       </div>
 
       <div className="mt-7 grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(19rem,0.75fr)]">
@@ -83,7 +110,7 @@ export default function InteractiveWalkthrough() {
           {isHeatActive && <div aria-hidden="true" className="absolute left-[23%] top-[27%] size-52 rounded-full bg-high/20 blur-2xl" />}
           {(step === "break" || isEscalated) && <div aria-hidden="true" className="absolute left-[26%] top-[31%] h-1 w-[45%] origin-left rotate-[18deg] bg-rest/80" />}
 
-          <div className="absolute left-[14%] top-[28%] grid size-14 place-items-center rounded-full border-4 border-white bg-primary text-lg font-bold text-white shadow-lg">R</div>
+          <div className={cn("absolute left-[14%] top-[28%] grid size-14 place-items-center rounded-full border-4 border-white text-lg font-bold text-white shadow-lg", markerStyle[scenario.ravi], isHeatActive && "breathe")}>R</div>
           <div className="absolute left-[50%] top-[46%] grid size-14 place-items-center rounded-full border-4 border-white bg-safe text-lg font-bold text-white shadow-lg">A</div>
           <div className="absolute right-[16%] top-[19%] grid size-11 place-items-center rounded-2xl border-4 border-white bg-ink text-white shadow-lg"><MapPin aria-hidden="true" className="size-5" /></div>
 
@@ -114,6 +141,7 @@ export default function InteractiveWalkthrough() {
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.75fr)]">
         <section aria-label="Walkthrough controls" className="rounded-3xl bg-white/10 p-5">
           <p className="text-[0.8125rem] font-medium tracking-wide text-[#f8d99e]">TRY THE DECISIONS</p>
+          <p className="mt-2 text-[0.9375rem] leading-relaxed text-white/80">{actionPrompt[step]}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <ScenarioButton visible={step === "ready"} onClick={() => action("TRIGGER_HEAT")} icon={<Flame aria-hidden="true" />} variant="danger">Trigger heat risk</ScenarioButton>
             <ScenarioButton visible={step === "heat"} onClick={() => action("TAKE_BREAK")} icon={<Coffee aria-hidden="true" />}>Ravi takes a break</ScenarioButton>
@@ -122,6 +150,7 @@ export default function InteractiveWalkthrough() {
             <ScenarioButton visible={step === "acknowledged"} onClick={() => action("RESUME")} icon={<Check aria-hidden="true" />}>Ravi confirms readiness</ScenarioButton>
             {(step === "break" || step === "resumed") && <p className="self-center text-[0.9375rem] text-white/80">This simulated outcome is complete. Restart to explore another path.</p>}
           </div>
+          <p aria-live="polite" className="sr-only">Walkthrough status. Ravi: {stateLabel[scenario.ravi]}. delivery-001: with {scenario.deliveryOwner}.</p>
         </section>
         <section aria-label="Simulated audit trail" className="rounded-3xl bg-white/10 p-5">
           <p className="text-[0.8125rem] font-medium tracking-wide text-[#f8d99e]">SIMULATED AUDIT TRAIL</p>
