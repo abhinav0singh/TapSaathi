@@ -6,6 +6,7 @@ import { CircleCheck, ExternalLink, OctagonAlert, TriangleAlert } from "lucide-r
 import type { DashboardResponse } from "@taapsaathi/contracts";
 import DeskHeader from "@/components/shell/DeskHeader";
 import OperationsMap from "@/components/ops/OperationsMap";
+import DemoControls from "@/components/ops/DemoControls";
 import StageList from "@/components/ops/StageList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STATE_META, TONE_CIRCLE, TONE_PILL, urgencyRank, type StateTone } from "@/components/status/stateMeta";
@@ -164,6 +165,8 @@ export default function OperationsPage() {
           </div>
           <p className="max-w-xs text-[0.8125rem] leading-relaxed text-label-2 sm:text-right">This authenticated workspace displays deployment-backed sandbox data. The interactive walkthrough on Home is separate and cannot change it.</p>
         </div>
+
+        <DemoControls onChanged={() => void refresh()} />
 
         {error && (
           <p role="alert" className="mt-5 flex items-start gap-3 rounded-2xl bg-critical-tint px-4 py-3.5 text-[0.9375rem] text-critical-ink">

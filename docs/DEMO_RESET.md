@@ -1,6 +1,6 @@
 # Resetting the shared demo
 
-The Sahara web app no longer has a reset or heat-spike button (the public page is a local walkthrough). The shared AWS demo still needs a way back to its clean opening state, for example after an alert ends without a supervisor acknowledgement and leaves Ravi in `AWAITING_SUPERVISOR`. This script does that from a terminal.
+The Operations page shows **Sandbox controls** (Reset demo and Start heat spike) to a signed-in operator or supervisor only; the public landing page is a local walkthrough and has no such controls. This script does the same reset from a terminal, which is useful when the website is unavailable or you want a scripted check. A reset is needed, for example, after an alert ends without a supervisor acknowledgement and leaves Ravi in `AWAITING_SUPERVISOR`, because a spike is skipped while Ravi is in that state.
 
 ## Commands
 

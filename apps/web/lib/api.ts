@@ -1,5 +1,7 @@
 import {
   DashboardResponseSchema,
+  DemoHeatSpikeResponseSchema,
+  DemoResetResponseSchema,
   HealthResponseSchema,
   EventsResponseSchema,
   WorkerViewResponseSchema,
@@ -102,6 +104,18 @@ export const api = {
 
     throw new Error("Audit history is too long to verify safely.");
   },
+
+  heatSpike: () =>
+    apiRequest("/demo/heat-spike", DemoHeatSpikeResponseSchema, {
+      method: "POST",
+      body: "{}",
+    }),
+
+  reset: () =>
+    apiRequest("/demo/reset", DemoResetResponseSchema, {
+      method: "POST",
+      body: "{}",
+    }),
 
   respond: (interventionId: string, request: RespondRequest) => {
     const validated = RespondRequestSchema.parse(request);
