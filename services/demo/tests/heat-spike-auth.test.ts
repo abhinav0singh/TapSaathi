@@ -131,6 +131,28 @@ describe("Heat-spike API authorization", () => {
     expect(mocks.evaluateAndPublishObservation).not.toHaveBeenCalled();
   });
 
+  it("explains, with a 409, when the readings raise no alert for Ravi", async () => {
+    mocks.evaluateAndPublishObservation.mockResolvedValue({ events: [], failedEntries: 0 });
+
+    const result = await invoke(event(operatorSub, ["OPERATOR"]));
+
+    expect(result.statusCode).toBe(409);
+    const body = JSON.parse(String(result.body));
+    expect(body.error.code).toBe("DEMO_NOT_READY");
+    expect(body.error.message).toContain("Reset the demo");
+  });
+
+  it("does not report an alert for a different rider's event as Ravi's", async () => {
+    mocks.evaluateAndPublishObservation.mockResolvedValue({
+      events: [{ eventId: "evt-asha", correlationId: "corr", demoGeneration: 4, payload: { workerId: "asha-001" } }],
+      failedEntries: 0,
+    });
+
+    const result = await invoke(event(operatorSub, ["OPERATOR"]));
+
+    expect(result.statusCode).toBe(409);
+  });
+
   it("rejects unmapped operator identities", async () => {
     const result = await invoke(
       event("33333333-3333-4333-8333-333333333333", ["OPERATOR"])
