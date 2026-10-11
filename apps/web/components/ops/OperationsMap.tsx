@@ -237,7 +237,8 @@ export default function OperationsMap({ hubName, workers, activeInterventions, o
 
   return (
     <div>
-      <section className={cn("relative overflow-hidden rounded-3xl bg-fill-strong", className)}>
+      {/* `isolate` keeps Leaflet's own z-indexes (400 to 1000) inside the map. Without it the map paints above dialogs and sheets, which sit at z-50. */}
+      <section className={cn("relative isolate overflow-hidden rounded-3xl bg-fill-strong", className)}>
         <div ref={containerRef} className="map-quiet absolute inset-0" aria-label={`Rider map for ${hubName}`} />
 
         {!ready && <div className="absolute inset-0 grid place-items-center text-[0.9375rem] text-label-2">Loading map…</div>}
