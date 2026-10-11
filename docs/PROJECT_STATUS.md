@@ -1,12 +1,12 @@
 # TaapSaathi project status
 
-**Updated:** 10 October 2026  
+**Updated:** 11 October 2026  
 **Current source and deployment:** `main` at `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
 **Backend deployment:** confirmed; CloudFormation `UPDATE_COMPLETE`, Amplify build `SUCCEED`
 
 ## Release assessment
 
-PR #30 is deployed correctly and its rider-audio authorization/privacy checks passed in production. The core implementation is complete, but the broader Phase 3 workflow evidence remains incomplete.
+PR #30 is deployed correctly and its rider-audio authorization/privacy checks passed in production. The core implementation and Phase 3 behavioral evidence are complete; a submission-ready, redacted Step Functions graph image remains a documentation artifact if required by the final package.
 
 ## Completed
 
@@ -24,33 +24,32 @@ PR #30 is deployed correctly and its rider-audio authorization/privacy checks pa
 - Ravi can retrieve only Ravi's protected audio; operator, supervisor, and cross-rider audio requests are rejected in production.
 - Public worker and dashboard APIs expose no audio URL, expiry, or storage key; signed Polly audio downloads successfully only through the protected route.
 
-## Remaining Phase 3 evidence
+## Phase 3 evidence boundary
 
-[Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) and the remaining workflow scenarios require live evidence:
+[Issue #8](https://github.com/abhinav0singh/TapSaathi/issues/8) tracked the live browser evidence. On 11 October 2026, fresh Cognito sessions exercised the following hosted flows without recording passwords, tokens, callback secrets, or signed URLs:
 
-1. Worker and supervisor layouts are checked in real browsers at a mobile viewport.
-2. The tested commit, browser sizes, API URL, and screenshots are recorded without secrets.
-3. Step Functions graph screenshots and browser evidence are captured for the submission package.
+1. Operator heat spike and active intervention in the operations view.
+2. Ravi's Hindi active-intervention view, protected audio element, `TAKE_BREAK`, and delivery reassignment; Ravi's `RESTING` state was also viewed at 375 × 812.
+3. Ravi's `FEEL_UNWELL`, Neha's supervisor acknowledgement, and Ravi's self-declared return to work.
+4. Authenticated AWS Console access to the documented stale-callback execution detail and graph.
 
-On 11 October 2026, an authenticated Ravi worker view was manually checked at
-375 × 812 in English and Hindi while the demo was clean (`SAFE`). It establishes
-only a responsive baseline: it does not replace active-flow evidence for
-operator, worker, or supervisor actions, and its review-session capture is not
-yet a submission screenshot. The available Chrome profile had no AWS Console
-session, so Step Functions graph capture remains outstanding.
+The demonstration was reset cleanly to generation 38 afterwards: zero active
+interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. No repository
+asset currently stores a redacted Step Functions graph screenshot. Create one
+only if a submission package explicitly requires a persistent image artifact.
 
-## Phase 4 in progress
+## Phase 4 implementation
 
-The next change adds a clearly labelled historical Delhi replay and audit-only
+PR #35 added a clearly labelled historical Delhi replay and audit-only
 operational metrics to the operations view. It does not convert the deployed
 cached-weather demo into live weather monitoring and must not be described as
-such until a separately reviewed live-weather deployment exists.
+such unless a separately reviewed live-weather deployment is made.
 
 Fresh Cognito sessions have now proved operator reset/spike, Ravi break/resume, Ravi symptom report, Neha acknowledgement, protected audio, route generation, duplicate callback and EventBridge behavior, both timeout branches, stale-reset isolation, and JWT role enforcement. The recorded evidence sequence ended clean at generation 34. A later public review snapshot observed generation 36 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi; that snapshot is not additional scenario evidence.
 
 ## Final rehearsal
 
-After issue #8 passes, run the three-minute judge flow once from a clean reset:
+For a final demonstration, run the three-minute judge flow once from a clean reset:
 
 1. Explain the worker-safety problem and show the operator view.
 2. Trigger the simulated heat spike.

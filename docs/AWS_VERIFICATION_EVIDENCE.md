@@ -95,5 +95,32 @@ Step Functions executions:
   - `arn:aws:states:ap-south-1:202823104630:execution:InterventionStateMachine40EE73C6-QJwhWLOBwBvm:9eec45af-229c-d25c-a939-e5507bf601ba_963fa98a-d9be-458c-a78c-6482660be0c6`
 
 The final reset created generation 34 in the same clean state. Current-release
-backend Phase 3 scenarios are now verified. Step Functions graph screenshots
-and the real-browser/mobile acceptance gate remain to be captured.
+backend Phase 3 scenarios are now verified.
+
+## Authenticated browser and console evidence — 11 October 2026
+
+Fresh Cognito sessions exercised the hosted Amplify application through the
+operator, worker, and supervisor roles. The test credentials, access tokens,
+callback values, and any short-lived audio URL were not saved.
+
+- The operator triggered a heat spike and observed Ravi's active
+  `AWAITING_WORKER` intervention in the operations view.
+- Ravi used the Hindi worker view, which showed the active intervention,
+  location route, and an audio element loaded through the protected endpoint.
+  Ravi selected `TAKE_BREAK`; the UI then showed `RESTING` and the delivery
+  reassigned to Asha. That `RESTING` state was also checked at a 375 × 812
+  mobile viewport.
+- In a separate active run, Ravi selected `FEEL_UNWELL`. Neha acknowledged the
+  supervisor request, after which Ravi completed the required self-declaration
+  and returned to `SAFE`.
+- An authenticated AWS Console session opened the execution detail and graph
+  for the documented stale-callback execution (generations 32 to 33). This
+  confirms console access for the recorded execution; it is not a new workflow
+  result.
+- The final reset completed cleanly at generation 38: zero active
+  interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
+
+No redacted browser or Step Functions screenshot is committed to the
+repository. If a submission requires a persistent screenshot artifact, capture
+and redact it separately without account metadata, tokens, signed URLs, or
+callback secrets.

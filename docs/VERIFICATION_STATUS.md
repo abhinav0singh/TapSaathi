@@ -1,13 +1,13 @@
 # Verification status
 
-**Verified:** 10 October 2026  
+**Verified:** 11 October 2026  
 **Source baseline and deployed commit:** `61836f8eb57580ba20d8c5708d5ad68c7ed123f1` (PR #30 merge)  
 **Backend deployment:** confirmed on the deployed PR #30 release  
 **AWS region:** `ap-south-1`
 
 ## Current release state
 
-PR #30 is deployed and the protected-audio authorization checks passed in production. Current v2 evidence includes three repeatable take-break/resume runs, one symptom/escalation/acknowledgement/resume run, callback idempotency, duplicate EventBridge delivery, both callback timeouts, stale-reset isolation, and real Cognito/JWT negative checks. Only the broader Phase 3 browser/mobile evidence remains unverified.
+PR #30 is deployed and the protected-audio authorization checks passed in production. Current v2 evidence includes three repeatable take-break/resume runs, one symptom/escalation/acknowledgement/resume run, callback idempotency, duplicate EventBridge delivery, both callback timeouts, stale-reset isolation, real Cognito/JWT negative checks, and authenticated browser flows for the operator, worker, and supervisor roles.
 
 ## Local and CI verification
 
@@ -47,8 +47,8 @@ Detailed identifiers and the verification boundary are recorded in [AWS verifica
 - API: <https://fkysuwgzb8.execute-api.ap-south-1.amazonaws.com>
 - CloudFormation stack: `TaapSaathiStack` — `UPDATE_COMPLETE`
 
-The recorded evidence sequence ended with a reset to generation 34 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. A later public review snapshot observed generation 36 in the same clean state; it is a readiness baseline rather than additional scenario evidence. The deliberate generation 32 to 33 in-flight reset proved stale-callback isolation, and the final evidence reset succeeded on its first attempt.
+The recorded evidence sequence ended with a reset to generation 34 with zero active interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi. A later public review snapshot observed generation 36 in the same clean state; it is a readiness baseline rather than additional scenario evidence. On 11 October, authenticated browser actions were exercised against the hosted application and the demo was reset cleanly to generation 38. The deliberate generation 32 to 33 in-flight reset proved stale-callback isolation.
 
 ## Remaining acceptance gate
 
-Real browser sessions must still prove operator, worker, and supervisor navigation and authenticated actions through Cognito and API Gateway. An authenticated Ravi worker view was checked at a 375 × 812 viewport on 11 October 2026 in English and Hindi, while the demo was `SAFE`; that is a responsive clean-state baseline only, not active-flow proof or a submission screenshot. Chrome had no authenticated AWS Console session, so a redacted Step Functions execution-graph capture is also still required. Direct Lambda invocations used realistic JWT claim contexts for some backend workflow tests, so those runs prove the deployed business workflow but do not replace the browser/authorizer evidence.
+Authenticated Cognito sessions now prove the hosted operator spike flow, Ravi's Hindi active-intervention view and protected audio element, Ravi's `TAKE_BREAK` reassignment, the `FEEL_UNWELL` escalation, Neha's acknowledgement, and Ravi's self-declared return. Ravi's `RESTING` view was also checked at 375 × 812. The AWS Console execution detail and graph for the documented stale-callback run were opened under an authenticated AWS role. A permanently stored, redacted Step Functions graph screenshot is still needed if the submission package requires a file artifact; no browser or AWS screenshot containing account metadata, tokens, or signed URLs is stored in this repository. Direct Lambda invocations used realistic JWT claim contexts for some backend workflow tests, so those runs complement rather than replace the browser and authorizer evidence.

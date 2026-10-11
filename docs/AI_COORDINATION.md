@@ -237,3 +237,28 @@ build. The Web GitHub Actions workflow also passed on the reviewed PR head
 `297a7b9` (run `38114232259`).
 
 No deployed-browser or AWS verification is claimed.
+
+### Authenticated Phase 3 browser evidence — 11 October 2026
+
+Fresh Cognito sessions were used against the hosted Amplify application. No
+password, token, callback value, or signed audio URL was recorded in the
+repository or this coordination log.
+
+- An operator triggered a heat spike and observed Ravi's active intervention.
+- Ravi used the Hindi active-intervention screen, loaded the protected audio
+  element, selected `TAKE_BREAK`, and reached `RESTING` after the delivery was
+  reassigned to Asha. The `RESTING` view was checked at a 375 × 812 viewport.
+- In a separate run, Ravi selected `FEEL_UNWELL`; Neha acknowledged the
+  supervisor request; Ravi completed the required self-declaration and
+  returned to `SAFE`.
+- An authenticated AWS Console session opened the detail and graph for the
+  documented stale-callback execution (generations 32 to 33). This confirms
+  console access, not a new workflow result.
+- The final reset completed cleanly at generation 38 with zero active
+  interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
+
+**Evidence boundary:** all Phase 3 behavioral checks above were observed in
+the hosted system. A submission-ready, redacted Step Functions graph image is
+not stored in the repository. Capture it separately only if the submission
+package requires a persistent artifact; do not include account metadata,
+tokens, signed URLs, or callback secrets.
