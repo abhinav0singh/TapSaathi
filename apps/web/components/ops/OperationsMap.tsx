@@ -37,13 +37,31 @@ function fallbackPosition(workers: Worker[], worker: Worker): { left: string; to
   return { left: `${x}%`, top: `${y}%` };
 }
 
-function markerHtml(worker: Worker, selected: boolean): string {
+/** Marker as a DOM node: backend strings go in as text, never parsed as HTML. */
+function markerElement(worker: Worker, selected: boolean): HTMLElement {
   const color = TONE_HEX[STATE_META[worker.state].tone];
   const size = selected ? 40 : 34;
-  const dark = STATE_META[worker.state].tone === "caution" ? "#000" : "#fff";
-  const ring = selected ? "0 0 0 4px rgba(0,0,0,0.85)," : "";
-  const initial = worker.name.slice(0, 1).toUpperCase();
-  return `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};color:${dark};border:3px solid #fff;box-shadow:${ring}0 2px 8px rgba(0,0,0,.25);display:grid;place-items:center;font:600 14px Inter,system-ui,sans-serif">${initial}</div>`;
+  const element = document.createElement("div");
+  element.textContent = worker.name.slice(0, 1).toUpperCase();
+  Object.assign(element.style, {
+    width: `${size}px`,
+    height: `${size}px`,
+    borderRadius: "9999px",
+    background: color,
+    color: STATE_META[worker.state].tone === "caution" ? "#000" : "#fff",
+    border: "3px solid #fff",
+    boxShadow: `${selected ? "0 0 0 4px rgba(0,0,0,0.85)," : ""}0 2px 8px rgba(0,0,0,.25)`,
+    display: "grid",
+    placeItems: "center",
+    font: "600 14px Inter, system-ui, sans-serif",
+  });
+  return element;
+}
+
+function textElement(text: string): HTMLElement {
+  const element = document.createElement("span");
+  element.textContent = text;
+  return element;
 }
 
 const LEGEND: Array<[string, keyof typeof TONE_DOT]> = [
@@ -61,6 +79,16 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const [ready, setReady] = useState(false);
   const [tileUnavailable, setTileUnavailable] = useState(false);
+  const fittedKeyRef = useRef<string | null>(null);
+
+  // The dashboard is polled every few seconds and hands back new arrays each time. Redraw only when
+  // something visible changed, and re-fit only when the set of riders or routes changed, so a pan
+  // or zoom by the operator is not undone by the next poll.
+  const routeKey = activeInterventions
+    .map((item) => `${item.interventionId}:${item.route?.restPointId ?? ""}:${item.route?.generatedAt ?? ""}`)
+    .join("|");
+  const riderKey = workers.map((worker) => `${worker.workerId}:${worker.state}:${worker.position.join(",")}`).join("|");
+  const idsKey = workers.map((worker) => worker.workerId).join("|");
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -138,7 +166,7 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
             }),
             title: `Shade: ${route.restPointName}`,
           })
-          .bindTooltip(`Shade: ${route.restPointName}`, { direction: "top", offset: [0, -10] })
+          .bindTooltip(textElement(`Shade: ${route.restPointName}`), { direction: "top", offset: [0, -10] })
           .addTo(layers);
       }
       points.forEach((point) => bounds.extend(point));
@@ -151,7 +179,7 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
       const marker = leaflet.marker(position, {
         icon: leaflet.divIcon({
           className: "",
-          html: markerHtml(worker, selected),
+          html: markerElement(worker, selected),
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],
         }),
@@ -164,8 +192,15 @@ export default function OperationsMap({ hubName, workers, activeInterventions, s
       bounds.extend(position);
     }
 
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [70, 70], maxZoom: 15, animate: false });
-  }, [activeInterventions, onSelect, ready, selectedId, workers]);
+    const fitKey = `${idsKey}#${routeKey}`;
+    if (bounds.isValid() && fittedKeyRef.current !== fitKey) {
+      fittedKeyRef.current = fitKey;
+      map.fitBounds(bounds, { padding: [70, 70], maxZoom: 15, animate: false });
+    }
+    // activeInterventions and workers are read through their keys above so a poll that changes
+    // nothing does not rebuild the layers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeKey, riderKey, idsKey, onSelect, ready, selectedId]);
 
   const legend = (
     <ul className="flex flex-wrap gap-x-3.5 gap-y-1 text-[0.8125rem] text-label-2">

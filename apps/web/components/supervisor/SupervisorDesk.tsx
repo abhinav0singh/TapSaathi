@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { cn } from "@/lib/utils";
 import { ago, clock, elapsed } from "@/lib/time";
 import { useNow } from "@/lib/useNow";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { TONE_CIRCLE } from "@/components/status/stateMeta";
 import { humanize } from "@/lib/humanize";
 
@@ -172,7 +173,7 @@ function CaseDetail({
 
       <dl className="mt-8 grid gap-x-10 gap-y-5 sm:grid-cols-2">
         <Fact label="Risk level">{intervention.riskLevel === "CRITICAL" ? "Critical" : "High"}</Fact>
-        <Fact label="Active before alert">{worker ? `${worker.activeMinutes} min` : "Not recorded"}</Fact>
+        <Fact label="Active time now">{worker ? `${worker.activeMinutes} min` : "Not recorded"}</Fact>
         <Fact label="Delivery">
           {intervention.replacementWorkerId
             ? `Handed to ${data.workers.find((candidate) => candidate.workerId === intervention.replacementWorkerId)?.name ?? intervention.replacementWorkerId}`
@@ -235,6 +236,8 @@ export default function SupervisorDesk({
   const now = useNow(1000);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // From lg up the case sits beside the queue; the sheet is only for narrower screens.
+  const isWide = useMediaQuery("(min-width: 1024px)");
 
   const cases: Case[] = useMemo(() => {
     const waiting = (data?.activeInterventions ?? []).filter(isWaiting).map((intervention) => ({
@@ -253,8 +256,8 @@ export default function SupervisorDesk({
   const selected = cases.find((item) => item.intervention.interventionId === selectedId) ?? cases[0] ?? null;
 
   useEffect(() => {
-    if (cases.length === 0) setSheetOpen(false);
-  }, [cases.length]);
+    if (cases.length === 0 || isWide) setSheetOpen(false);
+  }, [cases.length, isWide]);
 
   const nameOf = (workerId: string) => data?.workers.find((worker) => worker.workerId === workerId)?.name ?? workerId;
   const staleSeconds = lastUpdated && now !== null ? now - lastUpdated.getTime() : null;
@@ -352,7 +355,7 @@ export default function SupervisorDesk({
           </div>
         )}
 
-        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <Sheet open={sheetOpen && !isWide} onOpenChange={setSheetOpen}>
           <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pb-8 lg:hidden">
             <SheetHeader className="px-0">
               <SheetTitle className="sr-only">Case details</SheetTitle>

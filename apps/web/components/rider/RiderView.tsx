@@ -19,7 +19,7 @@ import type { Language, InterventionStatus, RiskState, RouteView } from "@taapsa
 import RoutePreview from "@/components/worker/RoutePreview";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Segmented } from "@/components/ui/segmented";
 import { STATE_META, TONE_CIRCLE, TONE_PILL, type StateTone } from "@/components/status/stateMeta";
 import { cn } from "@/lib/utils";
 import { clock } from "@/lib/time";
@@ -180,25 +180,30 @@ function bandFor(props: RiderViewProps): Band | null {
 
 function LanguageToggle({ language, onChange }: { language: Language; onChange: (language: Language) => void }) {
   return (
-    <Tabs value={language} onValueChange={(value) => onChange(value as Language)}>
-      <TabsList aria-label="Language / भाषा" className="h-11">
-        <TabsTrigger value="en" lang="en" className="min-w-12 text-[0.9375rem]">EN</TabsTrigger>
-        <TabsTrigger value="hi" lang="hi" className="min-w-12 text-[0.9375rem]">हिं</TabsTrigger>
-      </TabsList>
-    </Tabs>
+    <Segmented
+      label="Language / भाषा"
+      size="lg"
+      value={language}
+      onChange={onChange}
+      options={[
+        { value: "en", label: "EN", lang: "en" },
+        { value: "hi", label: "हिं", lang: "hi" },
+      ]}
+    />
   );
 }
 
+/** A list row built from spans so it is valid inside a button as well as inside a div. */
 function Row({ icon, title, detail, sub }: { icon: ReactNode; title: string; detail?: string; sub?: string }) {
   return (
-    <div className="flex items-center gap-3.5 px-4 py-3.5">
+    <span className="flex items-center gap-3.5 px-4 py-3.5">
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-label">{icon}</span>
-      <div className="min-w-0 flex-1">
-        <p className="text-[0.8125rem] text-label-2">{title}</p>
-        {detail && <p className="text-[1.0625rem] font-medium leading-snug">{detail}</p>}
-        {sub && <p className="text-[0.9375rem] text-label-2">{sub}</p>}
-      </div>
-    </div>
+      <span className="block min-w-0 flex-1">
+        <span className="block text-[0.8125rem] text-label-2">{title}</span>
+        {detail && <span className="block text-[1.0625rem] font-medium leading-snug">{detail}</span>}
+        {sub && <span className="block text-[0.9375rem] text-label-2">{sub}</span>}
+      </span>
+    </span>
   );
 }
 

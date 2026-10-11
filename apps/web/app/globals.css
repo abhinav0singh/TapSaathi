@@ -157,6 +157,10 @@
     min-height: 100vh;
     letter-spacing: -0.011em;
   }
+  /* Tracking can break joining and mark placement in Indic scripts. */
+  :lang(hi) {
+    letter-spacing: 0;
+  }
   button,
   a {
     -webkit-tap-highlight-color: transparent;

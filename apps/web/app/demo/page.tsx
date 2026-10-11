@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from "lucide-react"
 import DeskHeader from "@/components/shell/DeskHeader";
 import StateChip from "@/components/status/StateChip";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Segmented } from "@/components/ui/segmented";
 import { recordedRuns, type Actor, type WorkerState } from "@/lib/recordedRuns";
 import { humanize } from "@/lib/humanize";
 import { cn } from "@/lib/utils";
@@ -72,15 +72,12 @@ export default function RecordedRunPage() {
         </p>
 
         <div className="mt-6">
-          <Tabs value={run.id} onValueChange={(value) => choose(value as (typeof recordedRuns)[number]["id"])}>
-            <TabsList aria-label="Recorded runs" className="h-auto flex-wrap">
-              {recordedRuns.map((item) => (
-                <TabsTrigger key={item.id} value={item.id} className="h-9 px-4">
-                  {item.title}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <Segmented
+            label="Recorded runs"
+            value={run.id}
+            onChange={choose}
+            options={recordedRuns.map((item) => ({ value: item.id, label: item.title }))}
+          />
           <p className="mt-3 max-w-3xl text-[1rem] leading-relaxed text-label-2">{run.summary}</p>
         </div>
 

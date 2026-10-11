@@ -3,8 +3,6 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 /*
   Inter for Latin, Noto Sans Devanagari for Hindi. Regular, medium and semibold only: the screens
@@ -35,8 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", latin.variable, devanagari.variable)}>
       <body>
-        <TooltipProvider>{children}</TooltipProvider>
-        <Toaster theme="light" position="top-center" />
+        {children}
       </body>
     </html>
   );
