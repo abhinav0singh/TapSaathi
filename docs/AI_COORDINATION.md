@@ -469,3 +469,32 @@ through at desktop and 375px: button text is black on white (and white on red
 for the unwell action), buttons are 48px tall, and there is no horizontal
 overflow. Local frontend verification only; no deployment, AWS action or shared
 sandbox mutation was performed.
+
+### Sandbox controls on the Operations page (operator and supervisor)
+
+This supersedes the earlier statement that the web client has no reset or
+heat-spike controls. `/ops` now shows a **Sandbox controls** card with *Reset
+demo* (behind a confirmation dialog) and *Start heat spike* to a signed-in user
+whose Cognito groups include `OPERATOR` or `SUPERVISOR`
+(`apps/web/components/ops/DemoControls.tsx`, `apps/web/lib/demoControls.ts`).
+Signed-out visitors and riders do not see it; riders are redirected away from
+`/ops` by the existing route guard. The visible gate is a convenience only: the
+API checks the mapped role again on every request. The landing walkthrough is
+unchanged and still never calls the API.
+
+How it was checked: unit tests for the role gate and the error wording (42 web
+tests), and a local browser session with a deliberately fake, unsigned token
+placed in `localStorage` for each role. That showed the card for the operator
+and the supervisor, hid it for a rider and a signed-out visitor, opened and
+cancelled the reset confirmation, and showed a plain error when the API refused
+the fake token with 401. The refused requests changed nothing on the shared
+demo (it was still generation 38, Ravi `AWAITING_SUPERVISOR`, afterwards).
+Phone width (375px) has no horizontal overflow and 48px buttons. A real sign-in
+and a real reset or spike from the website were **not** exercised.
+
+Dependency: the operator works with the deployed backend today. The supervisor
+only works after the backend change in the "Demo controls for the operator and
+the supervisor" section is deployed; until then the card is shown to the
+supervisor and the API answers 403, which the card explains. Neither action is
+attributed to a person in the audit trail yet.
+
