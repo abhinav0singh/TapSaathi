@@ -26,6 +26,38 @@ export function startOperationsAuditPolling(
   return () => cancel(timer);
 }
 
+export function startOperationsAuditVisibilityRefresh(
+  refresh: () => void,
+  getVisibilityState: () => DocumentVisibilityState,
+  subscribe: (listener: () => void) => void,
+  unsubscribe: (listener: () => void) => void
+): () => void {
+  const onVisibilityChange = () => {
+    if (shouldRefreshOperationsAudit(getVisibilityState())) refresh();
+  };
+
+  subscribe(onVisibilityChange);
+  return () => unsubscribe(onVisibilityChange);
+}
+
+export type VisibilityDocument = {
+  readonly visibilityState: DocumentVisibilityState;
+  addEventListener(type: "visibilitychange", listener: () => void): void;
+  removeEventListener(type: "visibilitychange", listener: () => void): void;
+};
+
+export function startOperationsAuditDocumentRefresh(
+  refresh: () => void,
+  visibilityDocument: VisibilityDocument
+): () => void {
+  return startOperationsAuditVisibilityRefresh(
+    refresh,
+    () => visibilityDocument.visibilityState,
+    (listener) => visibilityDocument.addEventListener("visibilitychange", listener),
+    (listener) => visibilityDocument.removeEventListener("visibilitychange", listener)
+  );
+}
+
 export async function refreshOperationsAudit(
   demoGeneration: number,
   fetchEvents: () => Promise<AuditEvent[]>,
@@ -108,10 +140,15 @@ export function useOperationsAudit(
       (callback, interval) => window.setInterval(callback, interval),
       (timer) => window.clearInterval(timer)
     );
+    const stopVisibilityRefresh = startOperationsAuditDocumentRefresh(
+      () => void refresh(),
+      document
+    );
 
     return () => {
       refresher.dispose();
       stopPolling();
+      stopVisibilityRefresh();
     };
   }, [demoGeneration, enabled]);
 
