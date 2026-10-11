@@ -25,6 +25,7 @@ export interface CallbackRecord {
 
 export interface ConsumeCallbackInput {
   interventionId: string;
+  generation: number;
   actorType: "WORKER" | "SUPERVISOR";
   actorId: string;
   clientRequestId: string;

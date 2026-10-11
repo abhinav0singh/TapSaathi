@@ -285,6 +285,16 @@ export default function OperationsPage() {
                 </TabsList>
 
                 <TabsContent value="audit" className="pt-4">
+                  {audit.status === "loaded" && audit.stale && (
+                    <p role="status" className="mb-3 text-[0.875rem] text-caution-ink">
+                      Showing the last loaded audit history; refresh is temporarily unavailable.
+                    </p>
+                  )}
+                  {audit.status === "unavailable" && (
+                    <p role="status" className="mb-3 text-[0.875rem] text-caution-ink">
+                      Audit history is temporarily unavailable.
+                    </p>
+                  )}
                   {displayedEvents.length === 0 ? (
                     <p className="text-[0.9375rem] text-label-2">Nothing has been recorded yet. Start a heat spike to see events appear.</p>
                   ) : (

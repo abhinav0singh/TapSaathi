@@ -203,3 +203,117 @@ hidden, keeps its overlap and unmount guards under direct regression tests, and
 retains the last successful audit history with a visible stale marker after a
 transient failure. This remains local UI behavior only; no deployed-browser or
 AWS verification is claimed.
+
+### PR #37 follow-up hardening
+
+The Web workflow now executes the web Vitest suite, including the operations
+audit regression tests. The operations audit poller skips hidden-tab interval
+work and refreshes immediately when the tab becomes visible again. Its
+visibility subscription is cleaned up on unmount.
+
+The obsolete circular retry test was removed. Recovery is covered through the
+real refresher and fetch paths instead. The operations timeline now repeats
+the stale-history notice and also identifies unavailable audit history, so the
+state is not confined to the impact card.
+
+These are source and local-test changes only. No deployed-browser or AWS
+verification is claimed.
+
+Local verification for this follow-up passed: root typecheck; 155 backend unit
+tests; 16 infrastructure tests; state-machine definition validation; 3
+deterministic risk-policy tests; 5 web test files / 21 tests; and the
+production web build. The Web GitHub Actions workflow also passed on the
+reviewed PR head `24fb3b0` (run `38113699099`), including the web test step
+added here.
+
+### PR #38 follow-up review corrections
+
+The cited Web CI evidence now identifies the reviewed PR head and run
+accurately. The visibility-change DOM wiring was extracted into a
+document-like helper and has direct regression coverage for subscription,
+visible-tab refresh, and cleanup. Local verification after this correction
+passed root typecheck, 5 web test files / 22 tests, and the production web
+build. The Web GitHub Actions workflow also passed on the reviewed PR head
+`297a7b9` (run `38114232259`).
+
+No deployed-browser or AWS verification is claimed.
+
+### Authenticated Phase 3 browser evidence — 11 October 2026
+
+Fresh Cognito sessions were used against the hosted Amplify application. No
+password, token, callback value, or signed audio URL was recorded in the
+repository or this coordination log.
+
+- An operator triggered a heat spike and observed Ravi's active intervention.
+- Ravi used the Hindi active-intervention screen, loaded the protected audio
+  element, selected `TAKE_BREAK`, and reached `RESTING` after the delivery was
+  reassigned to Asha. The `RESTING` view was checked at a 375 × 812 viewport.
+- In a separate run, Ravi selected `FEEL_UNWELL`; Neha acknowledged the
+  supervisor request; Ravi completed the required self-declaration and
+  returned to `SAFE`.
+- An authenticated AWS Console session opened the detail and graph for the
+  documented stale-callback execution (generations 32 to 33). This confirms
+  console access, not a new workflow result.
+- The final reset completed cleanly at generation 38 with zero active
+  interventions, Ravi `SAFE`, and `delivery-001` assigned to Ravi.
+
+**Evidence boundary:** all Phase 3 behavioral checks above were observed in
+the hosted system. A submission-ready, redacted Step Functions graph image is
+not stored in the repository. Capture it separately only if the submission
+package requires a persistent artifact; do not include account metadata,
+tokens, signed URLs, or callback secrets.
+
+### Review correction: stale execution after reset
+
+Do not describe the stale-execution class as closed. The execution
+`7163ff5c-97d8-c430-75eb-285cbd137cbc_cd3a54c8-133c-1b7a-ea48-d1174f22f0bb`
+ended `FAILED` with `AppError: Intervention not found.` in
+`CompleteSupervisorUnacknowledged` after a reset removed its old intervention.
+It made no write to the new generation, but `DynamoRepository.complete` looks
+up the intervention before comparing generations and therefore raises
+`NotFoundError`, which the state machine does not catch as stale. Similar
+lookup-first paths require review. Fix, test, deploy, and re-verify this in a
+separate backend change; do not treat this documentation update as a fix.
+
+The manually observed browser flows correlate to successful execution
+`d33ed3c9-a765-b419-8abd-04139ac552f6_e46772c5-f792-2d9d-eee4-fb09b024c713`
+(generation 36, operator/`TAKE_BREAK`) and
+`648edea5-abd5-51b5-78ca-003d8647deeb_7fc910bf-9b3c-8931-abe2-7ada04eab9a9`
+(generation 37, `FEEL_UNWELL`/supervisor acknowledgement). The Hindi,
+audio-element, and mobile-viewport details remain manual observations, not
+facts independently established by the Step Functions records.
+
+### Release-baseline correction — 11 October 2026
+
+The current reviewed source baseline is PR #35 merge
+`a87a17b3bf4061582a0e14403782942d62301763`, which was deployed on 11 October
+2026. PR #30 (`61836f8eb57580ba20d8c5708d5ad68c7ed123f1`) remains historical
+production evidence for the protected-audio work, not the current release
+baseline. The independently reviewed PR #35 suite was 31 Vitest files / 189
+tests plus 3 standalone deterministic risk-policy tests; do not repeat the
+superseded 180-test count as the current figure.
+
+### Pending backend correction: stale missing intervention
+
+The `codex/stale-missing-intervention` branch contains the separate source fix
+for the known post-reset failure. `complete`, `escalate`, and `consumeCallback`
+now compare their known execution generation with the current demo generation
+when the intervention lookup is missing. An older execution raises
+`StaleGenerationError` for the existing Step Functions stale catch; a missing
+intervention in the current generation remains a `NotFoundError`.
+
+`consumeCallback` now receives the persisted intervention generation from the
+authenticated respond handler, rather than trusting client input. Adapter
+regression tests cover all three repository operations; terminal Lambda tests
+verify that stale errors propagate to the state-machine catch path; and the
+respond-handler tests verify generation propagation and the `409`
+stale-generation response without signaling Step Functions when the
+intervention still exists. A callback for an intervention already removed by a
+reset returns `404` from the respond handler's initial lookup, does not call
+`consumeCallback`, and likewise does not signal Step Functions.
+
+Local verification passed: root typecheck; 27 unit-test files / 166 tests; 16
+infrastructure tests; CDK synth; and state-machine definition validation.
+This branch has not been reviewed, merged, or deployed. The failed generation
+26 execution remains a production limitation until an AWS owner deploys this
+fix and a real stale-after-reset execution ARN is re-verified.

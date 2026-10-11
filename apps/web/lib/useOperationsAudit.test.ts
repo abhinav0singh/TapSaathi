@@ -12,7 +12,9 @@ import {
   createOperationsAuditRefresher,
   shouldRefreshOperationsAudit,
   refreshOperationsAudit,
+  startOperationsAuditDocumentRefresh,
   startOperationsAuditPolling,
+  startOperationsAuditVisibilityRefresh,
 } from "./useOperationsAudit";
 
 afterEach(() => {
@@ -49,35 +51,56 @@ describe("operations audit polling", () => {
     expect(refresh).toHaveBeenCalledTimes(14);
   });
 
-  it("retries after an unsuccessful refresh", () => {
-    vi.useFakeTimers();
-
-    let attempts = 0;
-    const refresh = vi.fn(() => {
-      attempts += 1;
-      if (attempts === 1) throw new Error("Unavailable");
-    });
-
-    const safeRefresh = () => {
-      try {
-        refresh();
-      } catch {
-        // The hook handles failed requests and retries.
+  it("refreshes immediately when a hidden tab becomes visible", () => {
+    let visibilityState: DocumentVisibilityState = "hidden";
+    let listener: (() => void) | undefined;
+    const refresh = vi.fn();
+    const stop = startOperationsAuditVisibilityRefresh(
+      refresh,
+      () => visibilityState,
+      (nextListener) => { listener = nextListener; },
+      (nextListener) => {
+        if (listener === nextListener) listener = undefined;
       }
-    };
-
-    const stop = startOperationsAuditPolling(
-      safeRefresh,
-      (callback, interval) =>
-        setInterval(callback, interval) as unknown as number,
-      (timer) => clearInterval(timer)
     );
 
-    vi.advanceTimersByTime(OPERATIONS_AUDIT_INTERVAL_MS);
+    listener?.();
+    expect(refresh).not.toHaveBeenCalled();
 
-    expect(refresh).toHaveBeenCalledTimes(2);
+    visibilityState = "visible";
+    listener?.();
+    expect(refresh).toHaveBeenCalledTimes(1);
 
     stop();
+    listener?.();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("wires the document visibility listener and removes it on cleanup", () => {
+    let visibilityState: DocumentVisibilityState = "hidden";
+    let listener: (() => void) | undefined;
+    const addEventListener = vi.fn((_type: "visibilitychange", nextListener: () => void) => {
+      listener = nextListener;
+    });
+    const removeEventListener = vi.fn((_type: "visibilitychange", nextListener: () => void) => {
+      if (listener === nextListener) listener = undefined;
+    });
+    const refresh = vi.fn();
+    const stop = startOperationsAuditDocumentRefresh(refresh, {
+      get visibilityState() { return visibilityState; },
+      addEventListener,
+      removeEventListener,
+    });
+
+    expect(addEventListener).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
+    visibilityState = "visible";
+    listener?.();
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    stop();
+    expect(removeEventListener).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
+    listener?.();
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });
 
