@@ -1,4 +1,4 @@
-# TaapSaathi project status
+# Sahara project status
 
 **Updated:** 11 October 2026  
 **Current source baseline:** `a87a17b3bf4061582a0e14403782942d62301763` (PR #35 merge)  

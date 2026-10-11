@@ -1,79 +1,208 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./shadcn.css";
 
+/*
+  Design tokens. The look follows iOS and Uber: a quiet gray canvas with white rounded surfaces,
+  true-black primary actions, regular and medium type, and no outlines. State is shown by a
+  colored circle, an icon and a word together, never by color alone.
+*/
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #172338;
-  background: #f5f7fb;
+  --canvas: #f2f2f7;
+  --surface: #ffffff;
+  --fill: #f2f2f7;
+  --fill-strong: #e5e5ea;
+  --label: #000000;
+  --label-2: #6c6c70;
+  --label-3: #aeaeb2;
+  --separator: #ececf0;
+
+  --safe: #34c759;
+  --safe-tint: #e8f8ec;
+  --safe-ink: #1b7a37;
+  --caution: #ffb800;
+  --caution-tint: #fff5d6;
+  --caution-ink: #7d5700;
+  --high: #ee6300;
+  --high-tint: #ffecd6;
+  --high-ink: #a04a00;
+  --critical: #ff3b30;
+  --critical-tint: #ffe6e4;
+  --critical-ink: #b3261e;
+  --rest: #007aff;
+  --rest-tint: #e4f0ff;
+  --rest-ink: #0a58c2;
+  --wait: #8e8e93;
+  --wait-tint: #ececf0;
+  --wait-ink: #48484a;
+
+  --background: var(--canvas);
+  --foreground: var(--label);
+  --card: var(--surface);
+  --card-foreground: var(--label);
+  --popover: var(--surface);
+  --popover-foreground: var(--label);
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: var(--fill);
+  --secondary-foreground: var(--label);
+  --muted: var(--fill);
+  --muted-foreground: var(--label-2);
+  --accent: var(--fill);
+  --accent-foreground: var(--label);
+  --destructive: var(--critical);
+  --border: var(--separator);
+  --input: var(--fill-strong);
+  --ring: #000000;
+  --chart-1: var(--safe);
+  --chart-2: var(--caution);
+  --chart-3: var(--high);
+  --chart-4: var(--critical);
+  --chart-5: var(--rest);
+  --radius: 0.875rem;
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--label);
+  --sidebar-primary: #000000;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--fill);
+  --sidebar-accent-foreground: var(--label);
+  --sidebar-border: var(--separator);
+  --sidebar-ring: #000000;
 }
 
-html {
-  scroll-behavior: smooth;
+@theme inline {
+  --font-sans: var(--font-inter), var(--font-deva), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-sans);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-separator: var(--separator);
+  --color-safe: var(--safe);
+  --color-safe-tint: var(--safe-tint);
+  --color-safe-ink: var(--safe-ink);
+  --color-caution: var(--caution);
+  --color-caution-tint: var(--caution-tint);
+  --color-caution-ink: var(--caution-ink);
+  --color-high: var(--high);
+  --color-high-tint: var(--high-tint);
+  --color-high-ink: var(--high-ink);
+  --color-critical: var(--critical);
+  --color-critical-tint: var(--critical-tint);
+  --color-critical-ink: var(--critical-ink);
+  --color-rest: var(--rest);
+  --color-rest-tint: var(--rest-tint);
+  --color-rest-ink: var(--rest-ink);
+  --color-wait: var(--wait);
+  --color-wait-tint: var(--wait-tint);
+  --color-wait-ink: var(--wait-ink);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.3);
+  --radius-2xl: calc(var(--radius) * 1.7);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-height: 100vh;
+    letter-spacing: -0.011em;
+  }
+  /* Tracking can break joining and mark placement in Indic scripts. */
+  :lang(hi) {
+    letter-spacing: 0;
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--rest);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--rest-tint);
+  }
 }
 
-::selection {
-  background: #fb923c;
-  color: #07110f;
+/* The one live element: a soft ring that breathes around whatever needs attention now. */
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--high) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--high) 0%, transparent);
+  }
+}
+.breathe {
+  animation: breathe 2.4s ease-out infinite;
 }
 
-.landing-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: linear-gradient(to bottom, black, transparent 88%);
+/* Quiet the street map so state colors are what you see. */
+.map-quiet .leaflet-tile-pane {
+  filter: grayscale(1) contrast(0.92) brightness(1.04);
 }
-
-.map-lines {
-  background-image:
-    linear-gradient(28deg, transparent 47%, rgba(255,255,255,.8) 48%, rgba(255,255,255,.8) 50%, transparent 51%),
-    linear-gradient(118deg, transparent 47%, rgba(255,255,255,.65) 48%, rgba(255,255,255,.65) 50%, transparent 51%);
-  background-size: 150px 110px, 180px 135px;
-}
-
-@keyframes float-card {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -8px, 0); }
-}
-
-@keyframes map-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, .45); }
-  50% { box-shadow: 0 0 0 18px rgba(124, 58, 237, 0); }
-}
-
-@keyframes orbit-drift {
-  from { transform: rotate(0deg) scale(.98); }
-  to { transform: rotate(360deg) scale(1.02); }
-}
-
-@keyframes heat-breathe {
-  0%, 100% { opacity: .55; transform: scale(.95); }
-  50% { opacity: .9; transform: scale(1.05); }
-}
-
-.landing-float { animation: float-card 5s ease-in-out infinite; }
-.map-pulse { animation: map-pulse 2.2s ease-out infinite; }
-.heat-orbit { animation: orbit-drift 28s linear infinite; }
-.heat-glow { animation: heat-breathe 7s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .landing-float, .map-pulse, .heat-orbit, .heat-glow { animation: none; }
-}
-
-button, a {
-  -webkit-tap-highlight-color: transparent;
-}
-
-button:not(:disabled), a {
-  cursor: pointer;
-}
-
-:focus-visible {
-  outline: 2px solid #ea580c;
-  outline-offset: 3px;
+  html {
+    scroll-behavior: auto;
+  }
+  .breathe {
+    animation: none;
+  }
 }

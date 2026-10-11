@@ -1,11 +1,11 @@
-# TaapSaathi - AWS Authentication Deployment Status
+# Sahara - AWS Authentication Deployment Status
 
 **Updated:** 9 October 2026
 **Milestone:** Cognito authentication infrastructure and AWS security verification
 
 ## Executive summary
 
-TaapSaathi's backend reliability improvements and Cognito
+Sahara's backend reliability improvements and Cognito
 authentication infrastructure have been deployed successfully
 to AWS Mumbai (ap-south-1).
 

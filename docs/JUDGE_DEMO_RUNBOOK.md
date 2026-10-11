@@ -10,7 +10,7 @@ There is no live presentation, so everything below works without anyone on the t
 4. To try the actions yourself, sign in with `demo-operator` (trigger a heat spike), `demo-ravi` (rider screen) or `demo-neha` (supervisor). The demo password is in the submission writeup and is not stored in this repository. After a run, use **Reset** on the operations board.
 5. Evidence for what was verified, and what was not, is in `docs/GOLDEN_PATH_EVIDENCE.md`.
 
-Everything is simulated demonstration data. TaapSaathi makes no medical claims and does not contact emergency services.
+Everything is simulated demonstration data. Sahara makes no medical claims and does not contact emergency services.
 
 ## For the team: recording the demo video
 
@@ -42,7 +42,7 @@ Keep operator, Ravi, and Neha signed in through separate browser profiles so rol
 
 ## How Ravi returns to work
 
-- **After `TAKE_BREAK`:** Ravi rests and hydrates, then uses the authenticated **I am ready to resume work** action. TaapSaathi records `RIDER_RESUMED_WORK`, changes Ravi from `RESTING` to `SAFE`, and resets continuous active minutes to zero.
+- **After `TAKE_BREAK`:** Ravi rests and hydrates, then uses the authenticated **I am ready to resume work** action. Sahara records `RIDER_RESUMED_WORK`, changes Ravi from `RESTING` to `SAFE`, and resets continuous active minutes to zero.
 - **Delivery ownership:** `delivery-001` remains with Asha. Ravi becomes available for new work; the system never silently takes the reassigned delivery back.
 - **After `FEEL_UNWELL`:** once the supervisor acknowledges, Ravi can resume by ticking "I feel well enough" and using **I am ready to resume work**. The audit event records `afterSymptomReport` and `selfDeclaredFit`. Supervisor acknowledgment means a human has taken responsibility for follow-up; it is not a medical clearance.
 - **After a timeout with no supervisor acknowledgment:** Ravi cannot self-resume, because no human has seen the report.

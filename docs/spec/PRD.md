@@ -1,16 +1,16 @@
-# TaapSaathi Product Requirements Document
+# Sahara Product Requirements Document
 
 **Status:** Final and locked for the hackathon  
 **Track:** Heat and Water  
 **Build window:** 48 hours  
 **Target score:** 28 or more out of 30  
-**Product statement:** TaapSaathi converts a heat-risk event into a protected worker break, safe-route guidance, delivery reassignment, human escalation, and an auditable response.
+**Product statement:** Sahara converts a heat-risk event into a protected worker break, safe-route guidance, delivery reassignment, human escalation, and an auditable response.
 
 ## 1. Decision
 
-The team will build TaapSaathi and will not change the core idea during the hackathon.
+The team will build Sahara and will not change the core idea during the hackathon.
 
-TaapSaathi is an event-driven safety and dispatch layer for last-mile delivery operations. It monitors environmental and shift state, applies deterministic rules, and starts an AWS Step Functions intervention without waiting for a supervisor to notice the problem. The web application is the interface to the workflow; it is not the product's decision engine.
+Sahara is an event-driven safety and dispatch layer for last-mile delivery operations. It monitors environmental and shift state, applies deterministic rules, and starts an AWS Step Functions intervention without waiting for a supervisor to notice the problem. The web application is the interface to the workflow; it is not the product's decision engine.
 
 The hackathon version proves one complete scenario for one delivery hub, three riders, one supervisor, one active delivery, and three seeded rest points.
 

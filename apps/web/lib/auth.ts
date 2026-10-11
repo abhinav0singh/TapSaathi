@@ -210,5 +210,5 @@ export function destinationForIdentity(identity: AuthenticatedIdentity): string 
     return `/worker/${encodeURIComponent(identity.actorId)}`;
   }
 
-  throw new Error("This account is not assigned to a TaapSaathi role.");
+  throw new Error("This account is not assigned to a Sahara role.");
 }

@@ -1,37 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { DashboardResponse, RiskState } from "@taapsaathi/contracts";
+import type { DashboardResponse } from "@taapsaathi/contracts";
 import type { LayerGroup, Map as LeafletMap } from "leaflet";
+import { STATE_META, TONE_DOT, TONE_HEX } from "@/components/status/stateMeta";
+import { cn } from "@/lib/utils";
 
 type Worker = DashboardResponse["workers"][number];
 type Intervention = DashboardResponse["activeInterventions"][number];
 
-type OperationsMapProps = {
+type Props = {
   hubName: string;
   workers: Worker[];
   activeInterventions: Intervention[];
-  demoPending?: boolean;
-  onStartDemo?: () => void;
-};
-
-const statusColors: Record<RiskState, string> = {
-  SAFE: "#16a34a",
-  CAUTION: "#d97706",
-  HIGH: "#ea580c",
-  CRITICAL: "#dc2626",
-  RESTING: "#2563eb",
-  AWAITING_SUPERVISOR: "#7c3aed",
+  selectedId: string | null;
+  onSelect: (workerId: string) => void;
+  className?: string;
 };
 
 function centreOf(workers: Worker[]): [number, number] {
   if (workers.length === 0) return [28.6139, 77.209];
   const [longitude, latitude] = workers.reduce(
-    ([longitudeSum, latitudeSum], worker) => [
-      longitudeSum + worker.position[0],
-      latitudeSum + worker.position[1],
-    ],
-    [0, 0]
+    ([longitudeSum, latitudeSum], worker) => [longitudeSum + worker.position[0], latitudeSum + worker.position[1]],
+    [0, 0],
   );
   return [latitude / workers.length, longitude / workers.length];
 }
@@ -46,45 +37,58 @@ function fallbackPosition(workers: Worker[], worker: Worker): { left: string; to
   return { left: `${x}%`, top: `${y}%` };
 }
 
-function popupContent(worker: Worker): HTMLElement {
-  const content = document.createElement("div");
-  content.className = "min-w-36 text-slate-900";
-
-  const name = document.createElement("p");
-  name.className = "font-bold";
-  name.textContent = worker.name;
-
-  const status = document.createElement("p");
-  status.className = "mt-1 text-xs text-slate-600";
-  status.textContent = worker.state.replaceAll("_", " ");
-
-  const workload = document.createElement("p");
-  workload.className = "mt-2 text-xs text-slate-500";
-  workload.textContent = worker.activeTaskIds.length > 0
-    ? `${worker.activeTaskIds.length} active delivery`
-    : "No active delivery";
-
-  content.append(name, status, workload);
-  return content;
+/** Marker as a DOM node: backend strings go in as text, never parsed as HTML. */
+function markerElement(worker: Worker, selected: boolean): HTMLElement {
+  const color = TONE_HEX[STATE_META[worker.state].tone];
+  const size = selected ? 40 : 34;
+  const element = document.createElement("div");
+  element.textContent = worker.name.slice(0, 1).toUpperCase();
+  Object.assign(element.style, {
+    width: `${size}px`,
+    height: `${size}px`,
+    borderRadius: "9999px",
+    background: color,
+    color: STATE_META[worker.state].tone === "caution" ? "#000" : "#fff",
+    border: "3px solid #fff",
+    boxShadow: `${selected ? "0 0 0 4px rgba(0,0,0,0.85)," : ""}0 2px 8px rgba(0,0,0,.25)`,
+    display: "grid",
+    placeItems: "center",
+    font: "600 14px Inter, system-ui, sans-serif",
+  });
+  return element;
 }
 
-export default function OperationsMap({
-  hubName,
-  workers,
-  activeInterventions,
-  demoPending = false,
-  onStartDemo,
-}: OperationsMapProps) {
+function textElement(text: string): HTMLElement {
+  const element = document.createElement("span");
+  element.textContent = text;
+  return element;
+}
+
+const LEGEND: Array<[string, keyof typeof TONE_DOT]> = [
+  ["Safe", "safe"],
+  ["Caution", "caution"],
+  ["At risk", "high"],
+  ["Resting", "rest"],
+  ["Waiting", "wait"],
+];
+
+export default function OperationsMap({ hubName, workers, activeInterventions, selectedId, onSelect, className }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
-  const dynamicLayersRef = useRef<LayerGroup | null>(null);
+  const layersRef = useRef<LayerGroup | null>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const [ready, setReady] = useState(false);
   const [tileUnavailable, setTileUnavailable] = useState(false);
-  const [selectedWorkerId, setSelectedWorkerId] = useState(
-    activeInterventions[0]?.workerId ?? workers[0]?.workerId ?? ""
-  );
-  const selectedWorker = workers.find((worker) => worker.workerId === selectedWorkerId) ?? workers[0];
+  const fittedKeyRef = useRef<string | null>(null);
+
+  // The dashboard is polled every few seconds and hands back new arrays each time. Redraw only when
+  // something visible changed, and re-fit only when the set of riders or routes changed, so a pan
+  // or zoom by the operator is not undone by the next poll.
+  const routeKey = activeInterventions
+    .map((item) => `${item.interventionId}:${item.route?.restPointId ?? ""}:${item.route?.generatedAt ?? ""}`)
+    .join("|");
+  const riderKey = workers.map((worker) => `${worker.workerId}:${worker.state}:${worker.position.join(",")}`).join("|");
+  const idsKey = workers.map((worker) => worker.workerId).join("|");
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -96,12 +100,10 @@ export default function OperationsMap({
       if (cancelled || !containerRef.current) return;
 
       leafletRef.current = leaflet;
-      const map = leaflet.map(containerRef.current, {
-        attributionControl: true,
-        zoomControl: true,
-        minZoom: 10,
-        maxZoom: 18,
-      }).setView(centreOf(workers), 14);
+      const map = leaflet
+        .map(containerRef.current, { attributionControl: true, zoomControl: false, minZoom: 10, maxZoom: 18 })
+        .setView(centreOf(workers), 14);
+      leaflet.control.zoom({ position: "bottomright" }).addTo(map);
 
       const tiles = leaflet.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
@@ -127,9 +129,11 @@ export default function OperationsMap({
       resizeObserver?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;
-      dynamicLayersRef.current = null;
+      layersRef.current = null;
       leafletRef.current = null;
     };
+    // The map is created once; markers and routes are redrawn by the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -137,169 +141,130 @@ export default function OperationsMap({
     const leaflet = leafletRef.current;
     if (!map || !leaflet || !ready) return;
 
-    dynamicLayersRef.current?.remove();
+    layersRef.current?.remove();
     const layers = leaflet.layerGroup().addTo(map);
-    dynamicLayersRef.current = layers;
+    layersRef.current = layers;
     const bounds = leaflet.latLngBounds([]);
-
-    for (const worker of workers) {
-      const position: [number, number] = [worker.position[1], worker.position[0]];
-      const selected = worker.workerId === selectedWorker?.workerId;
-      const marker = leaflet.circleMarker(position, {
-        radius: selected ? 12 : 9,
-        color: "#ffffff",
-        weight: 4,
-        fillColor: statusColors[worker.state],
-        fillOpacity: 1,
-      });
-      marker.bindPopup(popupContent(worker), { offset: [0, -8] });
-      marker.bindTooltip(worker.name, { direction: "top", offset: [0, -10] });
-      marker.on("click", () => setSelectedWorkerId(worker.workerId));
-      marker.addTo(layers);
-      marker.getElement()?.setAttribute("aria-label", `${worker.name}: ${worker.state.replaceAll("_", " ")}`);
-      bounds.extend(position);
-    }
 
     for (const intervention of activeInterventions) {
       const route = intervention.route;
       if (!route || route.geometry.coordinates.length < 2) continue;
 
-      const routePositions = route.geometry.coordinates.map(
-        (coordinate) => [coordinate[1], coordinate[0]] as [number, number]
-      );
-      leaflet.polyline(routePositions, { color: "#ffffff", weight: 9, opacity: 0.9 }).addTo(layers);
-      leaflet.polyline(routePositions, { color: "#ea580c", weight: 5, opacity: 0.95 }).addTo(layers);
+      const points = route.geometry.coordinates.map((coordinate) => [coordinate[1], coordinate[0]] as [number, number]);
+      leaflet.polyline(points, { color: "#ffffff", weight: 9, opacity: 1 }).addTo(layers);
+      leaflet.polyline(points, { color: "#000000", weight: 4, opacity: 1 }).addTo(layers);
 
-      const destination = routePositions.at(-1);
+      const destination = points.at(-1);
       if (destination) {
-        leaflet.circleMarker(destination, {
-          radius: 11,
-          color: "#ffffff",
-          weight: 3,
-          fillColor: "#0f766e",
-          fillOpacity: 1,
-        }).bindTooltip(`Rest point: ${route.restPointName}`, { permanent: true, direction: "top" })
+        leaflet
+          .marker(destination, {
+            icon: leaflet.divIcon({
+              className: "",
+              iconSize: [18, 18],
+              iconAnchor: [9, 9],
+              html: '<div style="width:18px;height:18px;border-radius:5px;background:#000;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.3)"></div>',
+            }),
+            title: `Shade: ${route.restPointName}`,
+          })
+          .bindTooltip(textElement(`Shade: ${route.restPointName}`), { direction: "top", offset: [0, -10] })
           .addTo(layers);
       }
-      routePositions.forEach((position) => bounds.extend(position));
+      points.forEach((point) => bounds.extend(point));
     }
 
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
-  }, [activeInterventions, ready, selectedWorker?.workerId, workers]);
+    for (const worker of workers) {
+      const position: [number, number] = [worker.position[1], worker.position[0]];
+      const selected = worker.workerId === selectedId;
+      const size = selected ? 40 : 34;
+      const marker = leaflet.marker(position, {
+        icon: leaflet.divIcon({
+          className: "",
+          html: markerElement(worker, selected),
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        }),
+        zIndexOffset: selected ? 1000 : 0,
+        keyboard: true,
+        title: `${worker.name}: ${STATE_META[worker.state].short.en}`,
+      });
+      marker.on("click", () => onSelect(worker.workerId));
+      marker.addTo(layers);
+      bounds.extend(position);
+    }
 
-  useEffect(() => {
-    if (!selectedWorkerId && workers[0]) setSelectedWorkerId(workers[0].workerId);
-  }, [selectedWorkerId, workers]);
+    const fitKey = `${idsKey}#${routeKey}`;
+    if (bounds.isValid() && fittedKeyRef.current !== fitKey) {
+      fittedKeyRef.current = fitKey;
+      map.fitBounds(bounds, { padding: [70, 70], maxZoom: 15, animate: false });
+    }
+    // activeInterventions and workers are read through their keys above so a poll that changes
+    // nothing does not rebuild the layers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeKey, riderKey, idsKey, onSelect, ready, selectedId]);
+
+  const legend = (
+    <ul className="flex flex-wrap gap-x-3.5 gap-y-1 text-[0.8125rem] text-label-2">
+      {LEGEND.map(([label, tone]) => (
+        <li key={label} className="flex items-center gap-1.5">
+          <span className={cn("size-2.5 rounded-full", TONE_DOT[tone])} />
+          {label}
+        </li>
+      ))}
+      <li className="flex items-center gap-1.5">
+        <span className="size-2.5 rounded-[3px] bg-black" />
+        Shade
+      </li>
+    </ul>
+  );
+
+  const shades = Array.from(
+    new Set(activeInterventions.flatMap((item) => (item.route ? [`${item.route.restPointName}, ${Math.round(item.route.distanceMeters)} m`] : []))),
+  );
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-xl shadow-slate-200/60">
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="relative min-h-[320px] bg-slate-900 md:min-h-[390px]">
-          <div ref={containerRef} className="absolute inset-0" aria-label={`Live rider map for ${hubName}`} />
+    <div>
+      <section className={cn("relative overflow-hidden rounded-3xl bg-fill-strong", className)}>
+        <div ref={containerRef} className="map-quiet absolute inset-0" aria-label={`Rider map for ${hubName}`} />
 
-          <div className="absolute left-4 top-4 z-[1000] max-w-[calc(100%-2rem)] rounded-2xl border border-white/20 bg-slate-950/90 px-4 py-3 text-white shadow-lg backdrop-blur">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-300">Live operations map</p>
-            <p className="mt-1 text-sm font-semibold">{hubName}</p>
-            <p className="mt-1 text-xs text-slate-300">
-              {workers.length} riders · {activeInterventions.length} active intervention{activeInterventions.length === 1 ? "" : "s"}
-            </p>
-            {activeInterventions.length === 0 && onStartDemo && (
+        {!ready && <div className="absolute inset-0 grid place-items-center text-[0.9375rem] text-label-2">Loading map…</div>}
+
+        {tileUnavailable && (
+          <div className="absolute inset-0 z-[900] overflow-hidden bg-fill-strong">
+            {workers.map((worker) => (
               <button
+                key={worker.workerId}
                 type="button"
-                disabled={demoPending}
-                onClick={onStartDemo}
-                className="mt-3 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-500 disabled:opacity-50"
+                aria-label={`${worker.name}: ${STATE_META[worker.state].short.en}`}
+                onClick={() => onSelect(worker.workerId)}
+                className={cn(
+                  "absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white text-sm font-semibold shadow-md",
+                  TONE_DOT[STATE_META[worker.state].tone],
+                  STATE_META[worker.state].tone === "caution" ? "text-black" : "text-white",
+                  worker.workerId === selectedId ? "size-10 ring-4 ring-black/85" : "size-[34px]",
+                )}
+                style={fallbackPosition(workers, worker)}
               >
-                {demoPending ? "Starting…" : "Start live demo"}
+                {worker.name.slice(0, 1).toUpperCase()}
               </button>
-            )}
+            ))}
+            <p role="status" className="absolute inset-x-4 bottom-4 rounded-2xl bg-surface px-4 py-3 text-[0.875rem] text-label-2 shadow-sm sm:right-auto sm:max-w-sm">
+              Street tiles are unavailable. Rider positions are relative and states are still live.
+            </p>
           </div>
+        )}
 
-          {!ready && (
-            <div className="absolute inset-0 grid place-items-center text-sm text-slate-300">Loading operational map…</div>
-          )}
-
-          {tileUnavailable && (
-            <div
-              className="absolute inset-0 z-[900] overflow-hidden bg-slate-900"
-              style={{
-                backgroundImage: "linear-gradient(rgba(148,163,184,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.09) 1px, transparent 1px), radial-gradient(circle at center, #1e293b 0, #0f172a 70%)",
-                backgroundSize: "42px 42px, 42px 42px, auto",
-              }}
-            >
-              {workers.map((worker) => (
-                <button
-                  key={worker.workerId}
-                  type="button"
-                  aria-label={`${worker.name}: ${worker.state.replaceAll("_", " ")}`}
-                  title={`${worker.name} · ${worker.state.replaceAll("_", " ")}`}
-                  onClick={() => setSelectedWorkerId(worker.workerId)}
-                  className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white text-[10px] font-black text-white shadow-xl transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300"
-                  style={{
-                    ...fallbackPosition(workers, worker),
-                    width: worker.workerId === selectedWorker?.workerId ? 36 : 30,
-                    height: worker.workerId === selectedWorker?.workerId ? 36 : 30,
-                    backgroundColor: statusColors[worker.state],
-                  }}
-                >
-                  {worker.name.slice(0, 1)}
-                </button>
-              ))}
-              <div role="status" className="absolute bottom-4 left-4 right-4 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-xs text-amber-100 shadow-lg md:right-auto md:max-w-sm">
-                Street tiles are unavailable. Live relative positions and rider states remain active.
-              </div>
-            </div>
-          )}
+        <div className="pointer-events-none absolute left-4 top-4 z-[1000] hidden rounded-full bg-surface/95 px-3.5 py-2 shadow-sm backdrop-blur sm:block">
+          {legend}
         </div>
-
-        <aside className="border-t border-white/10 bg-slate-950 p-5 text-white lg:border-l lg:border-t-0">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Selected rider</p>
-          {selectedWorker ? (
-            <>
-              <div className="mt-4 flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full ring-4 ring-white/10" style={{ backgroundColor: statusColors[selectedWorker.state] }} />
-                <div>
-                  <p className="text-xl font-bold">{selectedWorker.name}</p>
-                  <p className="text-xs text-slate-400">{selectedWorker.workerId}</p>
-                </div>
-              </div>
-              <p className="mt-5 text-sm font-semibold text-orange-300">{selectedWorker.state.replaceAll("_", " ")}</p>
-              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl bg-white/5 p-3">
-                  <dt className="text-xs text-slate-400">Active time</dt>
-                  <dd className="mt-1 font-bold">{selectedWorker.activeMinutes} min</dd>
-                </div>
-                <div className="rounded-xl bg-white/5 p-3">
-                  <dt className="text-xs text-slate-400">Deliveries</dt>
-                  <dd className="mt-1 font-bold">{selectedWorker.activeTaskIds.length}</dd>
-                </div>
-              </dl>
-              <a href={`/worker/${selectedWorker.workerId}`} className="mt-5 block rounded-xl border border-white/15 px-4 py-3 text-center text-sm font-semibold transition hover:bg-white/10">
-                Open rider view
-              </a>
-            </>
-          ) : (
-            <p className="mt-4 text-sm text-slate-400">No riders are available.</p>
-          )}
-
-          <div className="mt-6 border-t border-white/10 pt-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Legend</p>
-            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-300">
-              {([
-                ["Safe", statusColors.SAFE],
-                ["Caution", statusColors.CAUTION],
-                ["Intervention", statusColors.HIGH],
-                ["Follow-up", statusColors.AWAITING_SUPERVISOR],
-              ] as const).map(([label, color]) => (
-                <span key={label} className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </aside>
+      </section>
+      <div className="mt-3 space-y-1 px-1 text-[0.875rem]">
+        <div className="sm:hidden">{legend}</div>
+        {shades.map((shade) => (
+          <p key={shade} className="text-label-2">
+            Shade: <span className="text-label">{shade}</span>
+          </p>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }

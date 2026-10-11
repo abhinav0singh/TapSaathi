@@ -1,4 +1,4 @@
-# TaapSaathi Frontend Software Design Specification
+# Sahara Frontend Software Design Specification
 
 **Audience:** Frontend developer and integration tester  
 **Status:** Final implementation specification  
@@ -93,7 +93,7 @@ Primary supervisor surface.
 
 Required regions:
 
-1. Header containing TaapSaathi, current hub, backend health, and last refresh.
+1. Header containing Sahara, current hub, backend health, and last refresh.
 2. Status summary for safe, caution, intervention, and awaiting supervisor.
 3. Rider list containing Ravi, Asha, and Imran.
 4. Map showing riders, three rest points, and the active route.
@@ -116,7 +116,7 @@ Required regions:
 5. Audio replay.
 6. **Take break** primary action.
 7. **I feel unwell** urgent action.
-8. Visible 112 emergency action with a disclaimer that TaapSaathi has not placed the call.
+8. Visible 112 emergency action with a disclaimer that Sahara has not placed the call.
 
 ### 4.4 Demo controls
 
@@ -125,7 +125,7 @@ Demo controls may live in `/ops` or `/demo`, but only one implementation should 
 Controls:
 
 - `Reset demo`
-- `Trigger simulated heat spike`
+- `Start heat spike` (a simulated heat spike; the interface labels it as simulated)
 - optional `Trigger symptom branch` only if it invokes the same worker response API
 
 The interface must label the environmental trigger as **Simulated for demonstration**.

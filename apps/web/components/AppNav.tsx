@@ -2,39 +2,67 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { hasRole, signOut } from "@/lib/auth";
 import { useIdentity } from "@/components/useIdentity";
+import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string };
 
-const focus =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600";
-
-export default function AppNav() {
-  const pathname = usePathname();
-  const router = useRouter();
+/** The pages this person can open. Everyone sees Home and the recorded run. */
+function useNavItems(): NavItem[] {
   const state = useIdentity();
-
   const identity = state.status === "signed-in" ? state.identity : null;
 
-  const items: NavItem[] = [];
-  items.push({ href: "/", label: "Home" }, { href: "/demo", label: "Recorded run" });
+  const items: NavItem[] = [{ href: "/", label: "Home" }, { href: "/demo", label: "Recorded run" }];
   if (!identity) {
     items.push({ href: "/ops", label: "Operations" }, { href: "/login", label: "Sign in" });
-  } else {
-    if (hasRole(identity, "OPERATOR") || hasRole(identity, "SUPERVISOR")) {
-      items.push({ href: "/ops", label: "Operations" });
-    }
-    if (hasRole(identity, "SUPERVISOR")) {
-      items.push({ href: "/supervisor", label: "Supervisor" });
-    }
-    if (hasRole(identity, "WORKER") && identity.actorId) {
-      items.push({
-        href: `/worker/${encodeURIComponent(identity.actorId)}`,
-        label: "My safety screen",
-      });
-    }
+    return items;
   }
+  if (hasRole(identity, "OPERATOR") || hasRole(identity, "SUPERVISOR")) {
+    items.push({ href: "/ops", label: "Operations" });
+  }
+  if (hasRole(identity, "SUPERVISOR")) {
+    items.push({ href: "/supervisor", label: "Supervisor" });
+  }
+  if (hasRole(identity, "WORKER") && identity.actorId) {
+    items.push({ href: `/worker/${encodeURIComponent(identity.actorId)}`, label: "My safety screen" });
+  }
+  return items;
+}
+
+/** Page links. Compact on phones so the common four fit without scrolling. */
+export function NavLinks() {
+  const pathname = usePathname();
+  const items = useNavItems();
+
+  return (
+    <nav aria-label="Primary navigation" className="no-scrollbar flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
+      {items.map((item) => {
+        const active = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "inline-flex min-h-10 shrink-0 items-center rounded-full px-3 text-[0.875rem] font-medium sm:min-h-9 sm:px-3.5 sm:text-[0.9375rem]",
+              active ? "bg-surface text-label shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "text-label-2 hover:text-label",
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Who is signed in, and the way out. Renders nothing for visitors. */
+export function AccountControls() {
+  const router = useRouter();
+  const state = useIdentity();
+  if (state.status !== "signed-in") return null;
 
   function handleSignOut() {
     try {
@@ -46,43 +74,18 @@ export default function AppNav() {
   }
 
   return (
-    <nav
-      aria-label="Primary navigation"
-      className="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200/80 bg-white/90 p-1 shadow-sm backdrop-blur"
-    >
-      {items.map((item) => {
-        const active = pathname === item.href;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${focus} ${
-              active
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-            }`}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
-
-      {identity && (
-        <>
-          <span className="px-2 text-xs text-slate-500" aria-label="Signed in as">
-            {identity.username}
-          </span>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className={`rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 ${focus}`}
-          >
-            Sign out
-          </button>
-        </>
-      )}
-    </nav>
+    <div className="flex shrink-0 items-center gap-1">
+      <span className="hidden max-w-40 truncate text-[0.875rem] text-label-2 sm:inline" aria-label="Signed in as">
+        {state.identity.username}
+      </span>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-[0.875rem] text-label-2 hover:text-label sm:text-[0.9375rem]"
+      >
+        <LogOut aria-hidden="true" className="size-4" />
+        Sign out
+      </button>
+    </div>
   );
 }

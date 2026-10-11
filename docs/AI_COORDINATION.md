@@ -317,3 +317,82 @@ infrastructure tests; CDK synth; and state-machine definition validation.
 This branch has not been reviewed, merged, or deployed. The failed generation
 26 execution remains a production limitation until an AWS owner deploys this
 fix and a real stale-after-reset execution ARN is re-verified.
+
+### PR #41 Sahara frontend review verification — 11 October 2026
+
+Sahara is the approved public product name. Product-facing web copy and
+documentation use Sahara; internal package names, repository URL, CloudFormation
+stack name, and AWS resource identifiers deliberately remain TaapSaathi so the
+existing deployed backend is not changed.
+
+The PR contains frontend, documentation, and dependency-lockfile changes only;
+it does not modify backend services, CDK infrastructure, or contracts. The
+Sahara candidate was run locally against the deployed production API without
+resetting the shared demo or triggering a heat spike.
+
+- Clean install, root TypeScript typecheck, web typecheck, and production web
+  build passed.
+- Web Vitest suite passed: 7 files / 34 tests.
+- Public production `GET /health`, `GET /dashboard`, and
+  `GET /workers/ravi-001` each returned `200`; their responses contained no
+  public audio URL, expiry, or storage key.
+- Fresh Cognito sessions for the operator, Ravi, and Neha authenticated through
+  the Sahara candidate. Operator `/ops` rendered the live map, rider roster,
+  delivery assignment, and audit/context panels. Ravi's session rendered the
+  identity-bound `/worker/ravi-001` view in both English and Hindi; requesting
+  another worker path still displayed Ravi's identity-bound data. Neha's
+  `/supervisor` view refreshed successfully and correctly reported no pending
+  acknowledgement.
+- No live intervention was active. Protected-audio playback, rider resume, and
+  supervisor acknowledgement controls were therefore not exercised in this
+  pass, avoiding any mutation of the shared demonstration.
+- Responsive checks at 375 × 812 found and fixed two frontend-only header
+  issues: the signed-in username no longer clips on mobile, and the header
+  no longer widens the page when the supervisor navigation scrolls. The mobile
+  document width is 375px for both operator and supervisor views.
+
+**Evidence boundary:** these are local-candidate UI checks using real Cognito
+and the deployed API, not an Amplify deployment of PR #41. No credential,
+token, signed URL, or screenshot with account metadata is stored in the
+repository. Active-flow evidence remains the recorded Phase 3 verification
+described above.
+
+### PR #41 follow-up: header rewrite, review fixes and responsive checks — 11 October 2026
+
+The header notes above describe the `ead3a1b` fix. Commit `d6f8585` then split the navigation into
+page links and account controls, so on a phone the brand and **Sign out** share the first row, the
+signed-in username is hidden below the `sm` breakpoint, and the page links scroll inside their own
+row. The `overflow-x-hidden` on the header from `ead3a1b` is no longer present. The current
+suite is 35 files / 216 tests, not the 7 files / 34 tests quoted above.
+
+A code review of the branch then produced ten findings, all frontend-only and all fixed:
+
+- The supervisor desk opened a modal sheet when a case was clicked on a laptop (the backdrop and
+  focus trap appeared with the content hidden). The sheet now opens only below the `lg` breakpoint.
+- The operations map re-fitted and redrew on every poll, undoing the operator's pan and zoom. It now
+  redraws only when a rider's state or position or a route changes, and re-fits only when the set
+  of riders or routes changes.
+- Map markers and tooltips are built from DOM text, not HTML strings, so names from the backend are
+  never parsed as markup.
+- The supervisor fact "Active before alert" showed the live active minutes; it is now "Active time now".
+- The Cognito session is read once per load and shared (`components/useIdentity.ts`) instead of once
+  per component.
+- The unused toast and tooltip providers were removed, together with the `sonner` and `next-themes`
+  dependencies.
+- The language switch and the recorded-run picker are `aria-pressed` toggle buttons instead of tabs
+  with no panels, and the audio control no longer nests block elements inside a button.
+- Hindi text no longer inherits the global negative letter-spacing.
+
+**Evidence boundary:** responsive layout was checked at 375, 768 and 1440 px against a local
+production build using a read-only proxy of the deployed API, signed out. The signed-in header on a
+phone after `d6f8585` and every authenticated action (rider reply, resume, supervisor
+acknowledgment) still need a manual pass with the demo accounts. No Amplify deployment of PR #41
+has been checked. No credential or token is recorded here.
+
+### PR #41 follow-up: public documentation brand assets — 11 October 2026
+
+The previous README GIFs and unused login screenshots visibly displayed the former TaapSaathi
+product name. They were removed from the submission materials. The README now uses two
+repository-native Sahara SVG diagrams for the product overview and intervention loop. This is a
+documentation-only branding correction: it does not change any application, backend,
+infrastructure, contract, deployment, or verification evidence.

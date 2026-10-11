@@ -1,4 +1,4 @@
-# TaapSaathi - Post-Critique Engineering Progress
+# Sahara - Post-Critique Engineering Progress
 
 **Updated:** 9 October 2026
 **Milestone:** Backend reliability hardening
