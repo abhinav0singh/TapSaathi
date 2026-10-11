@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { hasRole, signOut } from "@/lib/auth";
 import { useIdentity } from "@/components/useIdentity";
+import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string };
-
-const focus =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600";
 
 export default function AppNav() {
   const pathname = usePathname();
@@ -46,23 +45,18 @@ export default function AppNav() {
   }
 
   return (
-    <nav
-      aria-label="Primary navigation"
-      className="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200/80 bg-white/90 p-1 shadow-sm backdrop-blur"
-    >
+    <nav aria-label="Primary navigation" className="flex min-w-0 items-center gap-1 overflow-x-auto">
       {items.map((item) => {
         const active = pathname === item.href;
-
         return (
           <Link
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${focus} ${
-              active
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-            }`}
+            className={cn(
+              "inline-flex min-h-9 shrink-0 items-center rounded-full px-3.5 text-[0.9375rem] font-medium",
+              active ? "bg-surface text-label shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "text-label-2 hover:text-label",
+            )}
           >
             {item.label}
           </Link>
@@ -71,14 +65,15 @@ export default function AppNav() {
 
       {identity && (
         <>
-          <span className="px-2 text-xs text-slate-500" aria-label="Signed in as">
+          <span className="ml-2 shrink-0 text-[0.875rem] text-label-2" aria-label="Signed in as">
             {identity.username}
           </span>
           <button
             type="button"
             onClick={handleSignOut}
-            className={`rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 ${focus}`}
+            className="ml-1 inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[0.9375rem] text-label-2 hover:text-label"
           >
+            <LogOut aria-hidden="true" className="size-4" />
             Sign out
           </button>
         </>

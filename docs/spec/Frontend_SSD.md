@@ -125,7 +125,7 @@ Demo controls may live in `/ops` or `/demo`, but only one implementation should 
 Controls:
 
 - `Reset demo`
-- `Trigger simulated heat spike`
+- `Start heat spike` (a simulated heat spike; the interface labels it as simulated)
 - optional `Trigger symptom branch` only if it invokes the same worker response API
 
 The interface must label the environmental trigger as **Simulated for demonstration**.

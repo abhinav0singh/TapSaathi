@@ -1,72 +1,79 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { CircleCheck, ExternalLink, OctagonAlert, RotateCcw, TriangleAlert } from "lucide-react";
 import type { DashboardResponse } from "@taapsaathi/contracts";
-import AppNav from "@/components/AppNav";
+import DeskHeader from "@/components/shell/DeskHeader";
 import OperationsMap from "@/components/ops/OperationsMap";
+import StageList from "@/components/ops/StageList";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { STATE_META, TONE_CIRCLE, TONE_PILL, urgencyRank, type StateTone } from "@/components/status/stateMeta";
 import { api } from "@/lib/api";
 import { latestSupervisorOutcome } from "@/lib/supervisorOutcome";
 import { useOperationsAudit } from "@/lib/useOperationsAudit";
 import { auditImpact } from "@/lib/auditImpact";
+import { eventText } from "@/lib/auditText";
+import { ago, clockWithSeconds, dateTime } from "@/lib/time";
+import { humanize } from "@/lib/humanize";
+import { useNow } from "@/lib/useNow";
+import { cn } from "@/lib/utils";
 import { delhiArchiveWeatherDecision, delhiHistoricalDecision, delhiHistoricalReplay } from "@/lib/historicalHeatReplay";
 
 type Dashboard = DashboardResponse;
+type Worker = Dashboard["workers"][number];
 
-const statusStyles: Record<string, string> = {
-  SAFE: "bg-emerald-50 text-emerald-700",
-  CAUTION: "bg-amber-50 text-amber-700",
-  HIGH: "bg-orange-50 text-orange-700",
-  CRITICAL: "bg-red-50 text-red-700",
-  RESTING: "bg-blue-50 text-blue-700",
-  AWAITING_SUPERVISOR: "bg-violet-50 text-violet-700",
-  ACKNOWLEDGED: "bg-emerald-50 text-emerald-700",
-  UNACKNOWLEDGED: "bg-red-50 text-red-700",
-};
+const ACTOR_LABEL = { SYSTEM: "System", WORKER: "Rider", SUPERVISOR: "Supervisor" } as const;
 
-const statusIcons: Record<string, string> = {
-  SAFE: "✓",
-  CAUTION: "!",
-  HIGH: "!",
-  CRITICAL: "!",
-  RESTING: "Ⅱ",
-  AWAITING_SUPERVISOR: "!",
-  ACKNOWLEDGED: "✓",
-  UNACKNOWLEDGED: "!",
-};
+/** Numbers get large type; words ("Loading", "Not yet recorded") stay small so they never shout. */
+function Stat({ value, label }: { value: string; label: string }) {
+  const numeric = /^\d/.test(value);
+  return (
+    <div>
+      <p className={cn("tabular-nums", numeric ? "text-[1.5rem] font-medium leading-none tracking-tight" : "text-[0.9375rem] leading-[1.5rem] text-label-2")}>
+        {numeric ? value : value === "Not yet recorded" ? "Not recorded yet" : value}
+      </p>
+      <p className="mt-2 text-[0.8125rem] text-label-2">{label}</p>
+    </div>
+  );
+}
+
+function Fact({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <p className="text-[1.25rem] font-medium leading-none tracking-tight tabular-nums">{value}</p>
+      <p className="mt-1.5 text-[0.8125rem] text-label-2">{label}</p>
+    </div>
+  );
+}
 
 export default function OperationsPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const audit = useOperationsAudit(
-    data?.demoGeneration,
-    Boolean(data)
-  );
-  const auditEvents = audit.events ?? [];
-  const displayedEvents = audit.status === "loaded" && data && auditEvents.length > 0
-    ? auditEvents
-        .filter((event) => event.demoGeneration === data.demoGeneration)
-        .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
-        .slice(0, 50)
-    : data?.recentEvents ?? [];
-  const impact = data && audit.status === "loaded"
-    ? auditImpact(auditEvents, data.demoGeneration)
-    : null;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const now = useNow(1000);
+
+  const audit = useOperationsAudit(data?.demoGeneration, Boolean(data));
+  const auditEvents = useMemo(() => audit.events ?? [], [audit.events]);
+  const displayedEvents =
+    audit.status === "loaded" && data && auditEvents.length > 0
+      ? auditEvents
+          .filter((event) => event.demoGeneration === data.demoGeneration)
+          .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+          .slice(0, 50)
+      : (data?.recentEvents ?? []);
+  const impact = data && audit.status === "loaded" ? auditImpact(auditEvents, data.demoGeneration) : null;
   const impactValue = (value: number | undefined) =>
-    audit.status === "loading"
-      ? "Loading"
-      : audit.status === "unavailable"
-        ? "Unavailable"
-        : String(value ?? 0);
+    audit.status === "loading" ? "Loading" : audit.status === "unavailable" ? "Unavailable" : String(value ?? 0);
+  const formatDuration = (milliseconds: number | null) =>
+    milliseconds === null ? "Not yet recorded" : `${Math.round(milliseconds / 1000)} s`;
   const impactDuration = (value: number | null | undefined) =>
-    audit.status === "loading"
-      ? "Loading"
-      : audit.status === "unavailable"
-        ? "Unavailable"
-        : formatDuration(value ?? null);
-  const formatDuration = (milliseconds: number | null) => milliseconds === null ? "Not yet recorded" : `${Math.round(milliseconds / 1000)} s`;
+    audit.status === "loading" ? "Loading" : audit.status === "unavailable" ? "Unavailable" : formatDuration(value ?? null);
 
   const refresh = useCallback(async () => {
     try {
@@ -75,7 +82,7 @@ export default function OperationsPage() {
       setError(null);
       setLastRefresh(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to reach backend.");
+      setError(err instanceof Error ? err.message : "Unable to reach the backend.");
     }
   }, []);
 
@@ -84,25 +91,19 @@ export default function OperationsPage() {
   }, [refresh]);
 
   useEffect(() => {
-    const interval = setInterval(
-      () => void refresh(),
-      data?.activeInterventions.length ? 2000 : 5000
-    );
-
+    const interval = setInterval(() => void refresh(), data?.activeInterventions.length ? 2000 : 5000);
     return () => clearInterval(interval);
   }, [refresh, data?.activeInterventions.length]);
 
   async function triggerHeatSpike() {
     if (pending) return;
-
     setPending(true);
     setError(null);
-
     try {
       await api.heatSpike();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Heat spike failed.");
+      setError(err instanceof Error ? err.message : "The heat spike could not start.");
     } finally {
       setPending(false);
     }
@@ -110,279 +111,329 @@ export default function OperationsPage() {
 
   async function resetDemo() {
     if (pending) return;
-    if (!window.confirm("Reset the simulated demo state?")) return;
-
+    setConfirmReset(false);
     setPending(true);
     setError(null);
-
     try {
       await api.reset();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Reset failed.");
+      setError(err instanceof Error ? err.message : "The reset failed.");
     } finally {
       setPending(false);
     }
   }
 
-  return (
-    <main className="min-h-screen bg-[#eef1ec] px-4 py-5 text-slate-900 md:px-8 md:py-7">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <header className="relative flex flex-wrap items-start justify-between gap-7 overflow-hidden rounded-[2rem] bg-[#081411] p-6 text-white shadow-[0_25px_70px_rgba(8,20,17,.18)] md:p-8">
-          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[48px] border-orange-500/10" aria-hidden="true" />
-          <div className="relative">
-            <p className="text-xs font-bold tracking-[0.25em] text-orange-300">
-              TAAPSAATHI
-            </p>
-            <h1 className="mt-3 text-3xl font-black tracking-[-.035em] md:text-5xl">
-              Intervention Command Center
-            </h1>
-            <p className="mt-3 text-sm text-white/55">
-              {data?.hub.name ?? "Connecting to operations hub"}
-            </p>
-          </div>
+  const nameOf = useCallback(
+    (workerId: string) => data?.workers.find((worker) => worker.workerId === workerId)?.name ?? workerId,
+    [data],
+  );
 
-          <div className="relative flex flex-col items-end gap-3">
-            <AppNav />
-            <div className="text-right">
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-2 text-xs font-semibold text-orange-200">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-300" />
-                SIMULATED DEMO
+  const primary = data?.activeInterventions[0] ?? null;
+  const selected = data?.workers.find((worker) => worker.workerId === (selectedId ?? primary?.workerId)) ?? null;
+
+  const roster = useMemo(() => {
+    if (!data) return [];
+    return [...data.workers]
+      .sort((a, b) => urgencyRank(a.state) - urgencyRank(b.state) || a.name.localeCompare(b.name))
+      .map((worker) => {
+        const outcome =
+          worker.state === "AWAITING_SUPERVISOR" && !worker.activeInterventionId
+            ? latestSupervisorOutcome(auditEvents, worker.workerId, data.demoGeneration)
+            : null;
+        const meta = STATE_META[worker.state];
+        let tone: StateTone = meta.tone;
+        let Icon = meta.icon;
+        let label = meta.short.en;
+        if (outcome?.status === "ACKNOWLEDGED") {
+          tone = "rest";
+          Icon = CircleCheck;
+          label = "Acknowledged, may resume";
+        } else if (outcome?.status === "UNACKNOWLEDGED") {
+          tone = "critical";
+          Icon = OctagonAlert;
+          label = "Reply overdue";
+        }
+        return { worker, tone, Icon, label };
+      });
+  }, [data, auditEvents]);
+
+  const taskOwner = (assigneeId: string | null) => (assigneeId ? nameOf(assigneeId) : "Nobody yet");
+
+  return (
+    <div className="min-h-dvh bg-canvas">
+      <DeskHeader />
+
+      <main className="mx-auto max-w-[88rem] px-4 pb-16 pt-8 sm:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-[1.625rem] font-semibold tracking-tight">Command center</h1>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.9375rem] text-label-2">
+              <span>{data?.hub.name ?? "Connecting to the hub…"}</span>
+              <span className="rounded-full bg-wait-tint px-2.5 py-0.5 text-[0.8125rem] font-medium text-wait-ink">
+                Simulated demonstration
               </span>
-              <p className="mt-3 text-xs text-white/45">
-                {lastRefresh
-                  ? `Last refreshed ${lastRefresh.toLocaleTimeString()}`
-                  : "Waiting for first refresh"}
-              </p>
-            </div>
+              <span className="text-[0.875rem]" suppressHydrationWarning>
+                {lastRefresh && now !== null ? `Updated ${ago(now - lastRefresh.getTime())}` : ""}
+              </span>
+            </p>
           </div>
-        </header>
+          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+            <div className="flex items-center gap-2.5">
+              <Button variant="secondary" size="lg" disabled={pending} onClick={() => setConfirmReset(true)}>
+                <RotateCcw aria-hidden="true" />
+                Reset demo
+              </Button>
+              <Button size="lg" disabled={pending} onClick={() => void triggerHeatSpike()}>
+                {pending ? "Working…" : "Start heat spike"}
+              </Button>
+            </div>
+            <p className="text-[0.8125rem] text-label-2">Simulated for demonstration. It runs the real AWS workflow.</p>
+          </div>
+        </div>
 
         {error && (
-          <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-            <button onClick={() => void refresh()} className="ml-3 font-bold underline">
-              Retry
+          <p role="alert" className="mt-5 flex items-start gap-3 rounded-2xl bg-critical-tint px-4 py-3.5 text-[0.9375rem] text-critical-ink">
+            <TriangleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button type="button" onClick={() => void refresh()} className="font-medium underline underline-offset-4">
+              Try again
             </button>
-          </div>
+          </p>
         )}
 
         {!data ? (
-          <div className="rounded-2xl bg-white p-10 text-center text-slate-500">
-            Loading live operations data...
+          <div className="mt-8 grid gap-6 lg:grid-cols-[26rem_minmax(0,1fr)]" aria-busy="true">
+            <div className="h-96 animate-pulse rounded-3xl bg-surface" />
+            <div className="h-96 animate-pulse rounded-3xl bg-surface" />
           </div>
         ) : (
           <>
-            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {[
-                ["Safe workers", data.summary.safe, "text-emerald-600"],
-                ["Caution", data.summary.caution, "text-amber-600"],
-                ["Interventions", data.summary.intervention, "text-orange-600"],
-                ["Needs follow-up", data.summary.awaitingSupervisor, "text-violet-600"],
-              ].map(([label, value, color]) => (
-                <div key={String(label)} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-                  <p className={`mt-3 text-3xl font-bold ${color}`}>
-                    {value}
-                  </p>
-                </div>
-              ))}
-            </section>
+            <div className="mt-8 grid items-start gap-6 lg:grid-cols-[26rem_minmax(0,1fr)]">
+              <div className="space-y-6">
+                <StageList
+                  intervention={primary}
+                  riderName={primary ? nameOf(primary.workerId) : ""}
+                  more={Math.max(0, data.activeInterventions.length - 1)}
+                  now={now}
+                />
 
-            <section className="grid gap-5 lg:grid-cols-2">
-              <div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">Historical replay · not live weather</p>
-                <h2 className="mt-2 text-lg font-bold">Delhi archive reanalysis value</h2>
-                <p className="mt-2 text-sm text-slate-700">{delhiHistoricalReplay.observedAt} · {delhiHistoricalReplay.temperatureC}°C air · {delhiHistoricalReplay.apparentTemperatureC}°C apparent · {delhiHistoricalReplay.relativeHumidity}% humidity</p>
-                <p className="mt-2 text-sm font-semibold text-orange-800">Weather alone: {delhiArchiveWeatherDecision.state} · {delhiArchiveWeatherDecision.matchedRule.replaceAll("_", " ")}. At the demo&apos;s 60-minute continuous-exposure limit: {delhiHistoricalDecision.state} · {delhiHistoricalDecision.matchedRule.replaceAll("_", " ")}.</p>
-                <a className="mt-3 inline-block text-xs font-semibold underline" href={delhiHistoricalReplay.sourceUrl} target="_blank" rel="noreferrer">Source: {delhiHistoricalReplay.sourceName}</a>
-                <p className="mt-2 text-xs text-slate-600">Requested point: {delhiHistoricalReplay.requestedLocation}; returned grid point: {delhiHistoricalReplay.gridPoint}. Retrieved {delhiHistoricalReplay.retrievedAt}. This fixed reanalysis value does not change the live demo or claim a current official alert.</p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Audit-derived impact · full current-generation history</p>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><p><strong>{impactValue(impact?.interventionCount)}</strong><br />interventions</p><p><strong>{impactValue(impact?.escalationCount)}</strong><br />escalations</p><p><strong>{impactDuration(impact?.triggerToReassignmentMs)}</strong><br />trigger to reassignment</p><p><strong>{impactDuration(impact?.triggerToResponseMs)}</strong><br />trigger to worker response</p></div>
-                <p className="mt-4 text-xs text-slate-500">{audit.status === "loaded" && audit.stale ? "Showing the last loaded audit history; refresh is temporarily unavailable. " : ""}Timings describe the first intervention in this generation. Operational timings only; rider wellbeing and medical outcomes are not inferred.</p>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-teal-200 bg-teal-50 p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-800">Heat and water context · external survey</p>
-              <h2 className="mt-2 text-lg font-bold">Why rest-point routing includes a water-and-shade goal</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">In a June 2024 Hyderabad survey by HeatWatch and the Telangana Gig and Platform Workers Union, 65% of surveyed gig workers called for clean water and toilets and 55% called for shaded rest areas. This supports the product direction; it is not a claim about Delhi, the simulated riders, or the facilities at this demo&apos;s seeded rest points.</p>
-              <a className="mt-3 inline-block text-xs font-semibold underline" href="https://tgpwu.org/2024/08/17/impact-of-extreme-heat-on-gig-workers-a-survey-report/" target="_blank" rel="noreferrer">Read the 2024 TGPWU / HeatWatch survey</a>
-              <p className="mt-2 text-xs text-slate-600">Demo rest points are simulated. Their names and routes do not verify real water, shade, toilet, or cooling availability.</p>
-            </section>
-
-            <OperationsMap
-              hubName={data.hub.name}
-              workers={data.workers}
-              activeInterventions={data.activeInterventions}
-              demoPending={pending}
-              onStartDemo={() => void triggerHeatSpike()}
-            />
-
-            <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
-              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold">Worker roster</h2>
-                <p className="mb-5 text-xs text-slate-500">
-                  Live backend-reported safety states
-                </p>
-
-                <div className="space-y-3">
-                  {data.workers.map((worker) => {
-                    const outcome = worker.state === "AWAITING_SUPERVISOR" && !worker.activeInterventionId
-                      ? latestSupervisorOutcome(auditEvents, worker.workerId, data.demoGeneration)
-                      : null;
-                    const displayStatus = outcome?.status === "ACKNOWLEDGED"
-                      ? "ACKNOWLEDGED"
-                      : outcome?.status === "UNACKNOWLEDGED"
-                        ? "UNACKNOWLEDGED"
-                        : worker.state;
-                    return (
-                    <Link
-                      key={worker.workerId}
-                      href={`/worker/${worker.workerId}`}
-                      className="flex items-center justify-between rounded-xl border border-slate-100 p-4 transition hover:border-slate-200 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-orange-600"
-                    >
-                      <div>
-                        <p className="font-semibold">{worker.name}</p>
-                        <p className="text-xs text-slate-500">
-                          {worker.activeMinutes} active minutes
-                        </p>
-                      </div>
-
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[displayStatus] ?? "bg-slate-100"}`}>
-                        {statusIcons[displayStatus] ?? "•"} {outcome?.status === "ACKNOWLEDGED"
-                          ? "ACKNOWLEDGED · MAY RESUME"
-                          : outcome?.status === "UNACKNOWLEDGED"
-                            ? "RESPONSE OVERDUE"
-                            : worker.state.replaceAll("_", " ")}
-                      </span>
-                    </Link>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold">Intervention lifecycle</h2>
-                <p className="mb-5 text-xs text-slate-500">
-                  AWS Step Functions workflow
-                </p>
-
-                {data.activeInterventions.length === 0 ? (
-                  <div className="flex min-h-52 flex-col items-center justify-center rounded-xl bg-slate-50 text-center">
-                    <p className="text-lg font-semibold">No active intervention</p>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Trigger a simulated heat spike to begin.
-                    </p>
-                    <button
-                      disabled={pending}
-                      onClick={() => void triggerHeatSpike()}
-                      className="mt-5 min-h-12 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:opacity-50"
-                    >
-                      {pending ? "Processing..." : "Start intervention demo"}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {data.activeInterventions.map((item) => (
-                      <div key={item.interventionId} className="rounded-xl border border-orange-200 bg-orange-50 p-4">
-                        <p className="text-xs font-bold text-orange-700">
-                          {item.riskLevel} RISK
-                        </p>
-                        <h3 className="mt-2 font-semibold">{data.workers.find((worker) => worker.workerId === item.workerId)?.name ?? item.workerId}</h3>
-                        <p className="mt-2 text-sm">
-                          Workflow: {item.status.replaceAll("_", " ")}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-600">
-                          Matched rule: {item.matchedRule}
-                        </p>
-                        {item.route && (
-                          <p className="mt-3 text-sm">
-                            Rest point: {item.route.restPointName}
-                            {" · "}
-                            {item.route.distanceMeters} m
-                          </p>
-                        )}
-                      </div>
+                <section aria-label="Riders" className="rounded-3xl bg-surface p-2">
+                  <h2 className="px-4 pb-1 pt-3 text-[0.9375rem] font-medium text-label-2">Riders</h2>
+                  <ul>
+                    {roster.map(({ worker, tone, Icon, label }) => (
+                      <RiderRow
+                        key={worker.workerId}
+                        worker={worker}
+                        tone={tone}
+                        Icon={Icon}
+                        label={label}
+                        selected={selected?.workerId === worker.workerId}
+                        onSelect={() => setSelectedId(worker.workerId)}
+                      />
                     ))}
-                  </div>
-                )}
-              </section>
-            </div>
-
-            <div className="grid gap-5 lg:grid-cols-2">
-              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold">Delivery assignments</h2>
-
-                <div className="mt-4 space-y-3">
-                  {data.tasks.map((task) => (
-                    <div key={task.taskId} className="flex flex-wrap justify-between gap-3 rounded-xl bg-slate-50 p-4">
-                      <div>
-                        <p className="font-semibold">{task.taskId}</p>
-                        <p className="text-xs text-slate-500">{task.status}</p>
-                      </div>
-                      <p className="text-sm font-semibold">
-                        {data.workers.find((worker) => worker.workerId === task.assigneeId)?.name ?? "Unassigned"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold">Audit timeline</h2>
-
-                <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
-                  {displayedEvents.length === 0 ? (
-                    <p className="text-sm text-slate-500">
-                      No audit events recorded yet.
-                    </p>
-                  ) : (
-                    displayedEvents.map((event) => (
-                      <div key={event.auditEventId} className="border-l-2 border-orange-400 pl-4">
-                        <p className="text-sm font-semibold">{event.eventType}</p>
-                        <p className="text-xs text-slate-500">
-                          {event.workerId} · {new Date(event.occurredAt).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    ))
+                  </ul>
+                  {selected && (
+                    <Link
+                      href={`/worker/${selected.workerId}`}
+                      className="mx-4 mb-3 mt-1 inline-flex min-h-10 items-center gap-1.5 text-[0.9375rem] text-rest underline-offset-4 hover:underline"
+                    >
+                      See what {selected.name} sees
+                      <ExternalLink aria-hidden="true" className="size-3.5" />
+                    </Link>
                   )}
-                </div>
-              </section>
+                </section>
+              </div>
+
+              <div className="space-y-6">
+                <OperationsMap
+                  hubName={data.hub.name}
+                  workers={data.workers}
+                  activeInterventions={data.activeInterventions}
+                  selectedId={selected?.workerId ?? null}
+                  onSelect={setSelectedId}
+                  className="h-[28rem] lg:h-[34rem]"
+                />
+
+                <section aria-label="Deliveries" className="rounded-3xl bg-surface p-2">
+                  <h2 className="px-4 pb-1 pt-3 text-[0.9375rem] font-medium text-label-2">Deliveries</h2>
+                  <ul>
+                    {data.tasks.map((task) => (
+                      <li key={task.taskId} className="flex items-center justify-between gap-4 rounded-2xl px-4 py-3">
+                        <div>
+                          <p className="text-[1rem] font-medium">{task.taskId}</p>
+                          <p className="text-[0.875rem] text-label-2">
+                            {task.status === "REASSIGNMENT_REQUIRED" ? "Needs reassignment" : task.status === "COMPLETED" ? "Completed" : "Assigned"}
+                          </p>
+                        </div>
+                        <p className={cn("text-[0.9375rem]", task.status === "REASSIGNMENT_REQUIRED" ? "font-medium text-critical-ink" : "text-label-2")}>
+                          {taskOwner(task.assigneeId)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
             </div>
 
-            <section className="rounded-3xl border border-white/10 bg-[#081411] p-6 text-white shadow-xl">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold">Demo controls</h2>
-                  <p className="mt-1 text-xs text-white/50">
-                    Simulated for demonstration. Uses real AWS backend workflows.
-                  </p>
-                </div>
+            <section className="mt-6 rounded-3xl bg-surface p-6 sm:p-8">
+              <Tabs defaultValue="audit">
+                <TabsList>
+                  <TabsTrigger value="audit">Audit trail</TabsTrigger>
+                  <TabsTrigger value="impact">Impact</TabsTrigger>
+                  <TabsTrigger value="context">Context</TabsTrigger>
+                </TabsList>
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    disabled={pending}
-                    onClick={() => void resetDemo()}
-                    className="min-h-12 rounded-xl border border-white/20 px-5 text-sm font-semibold transition hover:bg-white/5 disabled:opacity-50"
-                  >
-                    Reset demo
-                  </button>
-                  <button
-                    disabled={pending}
-                    onClick={() => void triggerHeatSpike()}
-                    className="min-h-12 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    {pending ? "Processing..." : "Trigger simulated heat spike"}
-                  </button>
-                </div>
-              </div>
+                <TabsContent value="audit" className="pt-4">
+                  {displayedEvents.length === 0 ? (
+                    <p className="text-[0.9375rem] text-label-2">Nothing has been recorded yet. Start a heat spike to see events appear.</p>
+                  ) : (
+                    <ol className="max-h-80 space-y-1 overflow-y-auto pr-2">
+                      {displayedEvents.map((event) => (
+                        <li key={event.auditEventId} className="flex items-baseline gap-4 rounded-xl px-1 py-2">
+                          <span className="w-24 shrink-0 text-[0.875rem] tabular-nums text-label-2" suppressHydrationWarning>
+                            {clockWithSeconds(new Date(event.occurredAt))}
+                          </span>
+                          <span className="flex-1 text-[1rem]">{eventText(event, nameOf(event.workerId))}</span>
+                          <span className="shrink-0 text-[0.8125rem] text-label-2">{ACTOR_LABEL[event.actorType]}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="impact" className="pt-6">
+                  <div className="grid max-w-3xl grid-cols-2 gap-x-10 gap-y-7 sm:grid-cols-4">
+                    <Stat value={impactValue(impact?.interventionCount)} label="Alerts" />
+                    <Stat value={impactValue(impact?.escalationCount)} label="Escalations" />
+                    <Stat value={impactDuration(impact?.triggerToReassignmentMs)} label="Alert to delivery handover" />
+                    <Stat value={impactDuration(impact?.triggerToResponseMs)} label="Alert to rider reply" />
+                  </div>
+                  <p className="mt-6 max-w-2xl text-[0.875rem] leading-relaxed text-label-2">
+                    {audit.status === "loaded" && audit.stale ? "Showing the last loaded history; refresh is temporarily unavailable. " : ""}
+                    Derived from the audit history of the current demo run. Timings describe the first alert in this run. They measure operations only; rider wellbeing and medical outcomes are not inferred.
+                  </p>
+                </TabsContent>
+
+                <TabsContent value="context" className="grid gap-12 pt-7 lg:grid-cols-2">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h3 className="text-[1.0625rem] font-semibold">Historical replay</h3>
+                      <span className="rounded-full bg-wait-tint px-2.5 py-0.5 text-[0.8125rem] font-medium text-wait-ink">Not live weather</span>
+                    </div>
+                    <p className="mt-1 text-[0.9375rem] text-label-2">Delhi, {dateTime(new Date(delhiHistoricalReplay.observedAt))}</p>
+
+                    <div className="mt-5 grid grid-cols-3 gap-6">
+                      <Fact value={`${delhiHistoricalReplay.temperatureC}°C`} label="Air" />
+                      <Fact value={`${delhiHistoricalReplay.apparentTemperatureC}°C`} label="Feels like" />
+                      <Fact value={`${delhiHistoricalReplay.relativeHumidity}%`} label="Humidity" />
+                    </div>
+
+                    <ul className="mt-6 space-y-2.5 text-[0.9375rem]">
+                      <li className="flex items-center justify-between gap-4">
+                        <span>Weather alone</span>
+                        <span className={cn("rounded-full px-2.5 py-1 text-[0.8125rem] font-medium", delhiArchiveWeatherDecision.state === "SAFE" ? TONE_PILL.safe : delhiArchiveWeatherDecision.state === "CAUTION" ? TONE_PILL.caution : TONE_PILL.high)}>
+                          {humanize(delhiArchiveWeatherDecision.state)}
+                        </span>
+                      </li>
+                      <li className="flex items-center justify-between gap-4">
+                        <span>After 60 minutes of continuous riding</span>
+                        <span className={cn("rounded-full px-2.5 py-1 text-[0.8125rem] font-medium", delhiHistoricalDecision.state === "SAFE" ? TONE_PILL.safe : delhiHistoricalDecision.state === "CAUTION" ? TONE_PILL.caution : TONE_PILL.high)}>
+                          {humanize(delhiHistoricalDecision.state)}
+                        </span>
+                      </li>
+                    </ul>
+
+                    <p className="mt-6 max-w-prose text-[0.8125rem] leading-relaxed text-label-2">
+                      A fixed reanalysis value from{" "}
+                      <a className="text-rest underline underline-offset-4" href={delhiHistoricalReplay.sourceUrl} target="_blank" rel="noreferrer">
+                        {delhiHistoricalReplay.sourceName}
+                      </a>
+                      , retrieved {delhiHistoricalReplay.retrievedAt}. It does not change the live demo or claim a current official alert. Requested point {delhiHistoricalReplay.requestedLocation}; returned grid point {delhiHistoricalReplay.gridPoint}.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-[1.0625rem] font-semibold">Why routing looks for water and shade</h3>
+                    <p className="mt-1 text-[0.9375rem] text-label-2">June 2024 survey of gig workers in Hyderabad</p>
+
+                    <div className="mt-5 grid grid-cols-2 gap-6">
+                      <Fact value="65%" label="asked for clean water and toilets" />
+                      <Fact value="55%" label="asked for shaded rest areas" />
+                    </div>
+
+                    <p className="mt-6 max-w-prose text-[0.9375rem] leading-relaxed text-label-2">
+                      By HeatWatch and the Telangana Gig and Platform Workers Union. It supports the product direction. It is not a claim about Delhi, the simulated riders, or the facilities at this demo&apos;s rest points.
+                    </p>
+                    <p className="mt-3 max-w-prose text-[0.8125rem] leading-relaxed text-label-2">
+                      Demo rest points are simulated; their names and routes do not verify real water, shade, toilet or cooling availability.{" "}
+                      <a className="text-rest underline underline-offset-4" href="https://tgpwu.org/2024/08/17/impact-of-extreme-heat-on-gig-workers-a-survey-report/" target="_blank" rel="noreferrer">
+                        Read the survey
+                      </a>
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </section>
           </>
         )}
-      </div>
-    </main>
+
+        <Dialog open={confirmReset} onOpenChange={setConfirmReset}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reset the demo?</DialogTitle>
+              <DialogDescription>
+                This clears every alert and puts all riders back to safe, with the delivery back on its first rider.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setConfirmReset(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => void resetDemo()}>Reset demo</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}
+
+function RiderRow({
+  worker,
+  tone,
+  Icon,
+  label,
+  selected,
+  onSelect,
+}: {
+  worker: Worker;
+  tone: StateTone;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-current={selected ? "true" : undefined}
+        className={cn(
+          "flex w-full items-center gap-3.5 rounded-2xl px-3.5 py-3 text-left transition-colors",
+          selected ? "bg-fill" : "hover:bg-fill/60",
+        )}
+      >
+        <span className={cn("grid size-10 shrink-0 place-items-center rounded-full", TONE_CIRCLE[tone])}>
+          <Icon aria-hidden="true" className="size-5" strokeWidth={2.2} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[1.0625rem] font-medium">{worker.name}</span>
+          <span className="block text-[0.875rem] text-label-2">{worker.activeMinutes} min active</span>
+        </span>
+        <span className="shrink-0 text-[0.875rem] text-label-2">{label}</span>
+      </button>
+    </li>
   );
 }

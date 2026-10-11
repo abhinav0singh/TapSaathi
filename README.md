@@ -63,9 +63,9 @@ The operator does not manually manufacture the intervention result in the browse
 
 | Experience | What you can see or do |
 | :-- | :-- |
-| **Operations Command Center** — [`/ops`](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Live map, rider roster, delivery assignments, active intervention state, audit timeline, historical replay, and operational impact metrics. |
+| **Operations command center** — [`/ops`](https://main.d6hf0wv24qbik.amplifyapp.com/ops) | Live map, rider roster, delivery assignments, active intervention state, audit timeline, historical replay, and operational impact metrics. |
 | **Rider experience** | English/Hindi instructions, route-to-rest context, protected voice guidance, explicit **Take break** / **I feel unwell** actions, and an audited return-to-work flow. |
-| **Supervisor response desk** — [`/supervisor`](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Review an escalation and record authenticated acknowledgment. Acknowledgment is **not** medical clearance. |
+| **Supervisor desk** — [`/supervisor`](https://main.d6hf0wv24qbik.amplifyapp.com/supervisor) | Review an escalation and record authenticated acknowledgment. Acknowledgment is **not** medical clearance. |
 | **Recorded runs** — [`/demo`](https://main.d6hf0wv24qbik.amplifyapp.com/demo) | Walk through recorded rider-break and symptom scenarios **without signing in**. These are labelled replays, not live interventions. |
 
 **For judges:** Start with the [no-login recorded run](https://main.d6hf0wv24qbik.amplifyapp.com/demo). Then inspect the [read-only Operations dashboard](https://main.d6hf0wv24qbik.amplifyapp.com/ops). State-changing actions require the correct Cognito role; demo credentials are not published in this repository.

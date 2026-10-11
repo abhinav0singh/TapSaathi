@@ -1,9 +1,10 @@
 import type { RouteView } from "@taapsaathi/contracts";
+import { cn } from "@/lib/utils";
 
 const WIDTH = 300;
-const HEIGHT = 132;
-const PAD_X = 16;
-const PAD_Y = 24;
+const HEIGHT = 190;
+const PAD_X = 36;
+const PAD_Y = 40;
 
 type Point = { x: number; y: number };
 
@@ -46,50 +47,52 @@ function toPoints(coordinates: RouteView["geometry"]["coordinates"]): Point[] | 
   }));
 }
 
-export default function RoutePreview({ route }: { route: RouteView }) {
+/** A calm, map-like sketch of the walk to shade. Blue dot is the rider, black pin is the shade. */
+export default function RoutePreview({ route, className }: { route: RouteView; className?: string }) {
   const points = toPoints(route.geometry?.coordinates ?? []);
-  const providerLabel = route.provider === "AMAZON_LOCATION" ? "Amazon Location" : "Approximate route";
+  const approximate = route.provider !== "AMAZON_LOCATION";
 
   if (!points) {
     return (
-      <div
-        role="status"
-        className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-600"
-      >
-        Route preview is unavailable for this rest point. Use the distance and time shown above.
+      <div role="status" className={cn("grid h-32 place-items-center bg-fill px-6 text-center text-[0.9375rem] text-label-2", className)}>
+        Route sketch unavailable. Use the distance and time below.
       </div>
     );
   }
 
   const start = points[0];
   const end = points[points.length - 1];
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
 
   return (
-    <div
-      className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-sky-50"
-      aria-label={`Route preview to ${route.restPointName}`}
-    >
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="block h-32 w-full" role="img" aria-label={`Route to ${route.restPointName}`}>
+    <div className={className}>
+      <svg
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        preserveAspectRatio="xMidYMid slice"
+        className="block h-full min-h-44 w-full bg-fill-strong/60"
+        role="img"
+        aria-label={`${approximate ? "Approximate" : "Walking"} route to ${route.restPointName}`}
+      >
         <defs>
-          <pattern id="route-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#dbeafe" strokeWidth="1" />
+          <pattern id="route-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#ffffff" strokeWidth="1.5" />
           </pattern>
         </defs>
         <rect width={WIDTH} height={HEIGHT} fill="url(#route-grid)" />
+        <polyline points={path} fill="none" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
         <polyline
-          points={points.map((point) => `${point.x},${point.y}`).join(" ")}
+          points={path}
           fill="none"
-          stroke="#ea580c"
-          strokeWidth="6"
+          stroke="#000000"
+          strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeDasharray={approximate ? "1 9" : undefined}
         />
-        <circle cx={start.x} cy={start.y} r="7" fill="#0f172a" />
-        <circle cx={end.x} cy={end.y} r="9" fill="#16a34a" stroke="white" strokeWidth="4" />
+        <circle cx={start.x} cy={start.y} r="13" fill="#007aff" fillOpacity="0.18" />
+        <circle cx={start.x} cy={start.y} r="7" fill="#007aff" stroke="#ffffff" strokeWidth="3" />
+        <rect x={end.x - 8} y={end.y - 8} width="16" height="16" rx="3" fill="#000000" stroke="#ffffff" strokeWidth="3" />
       </svg>
-      <p className="border-t border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-        Route preview · {providerLabel}
-      </p>
     </div>
   );
 }

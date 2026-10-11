@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { LoaderCircle, TriangleAlert } from "lucide-react";
 import {
   destinationForIdentity,
   hasRole,
@@ -67,10 +68,17 @@ export default function RoleGuard({ allow, workerId, allowAnonymous = false, chi
   if (decision.kind === "loading" && allowAnonymous) return <>{children}</>;
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f5f7fb] px-4 text-slate-700">
-      <p role={decision.kind === "blocked" ? "alert" : "status"} className="max-w-sm text-center text-sm">
-        {decision.kind === "blocked" ? decision.message : "Checking your access…"}
-      </p>
+    <main className="grid min-h-dvh place-items-center bg-canvas px-6">
+      <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+        {decision.kind === "blocked" ? (
+          <TriangleAlert aria-hidden="true" className="size-7 text-critical-ink" />
+        ) : (
+          <LoaderCircle aria-hidden="true" className="size-7 animate-spin text-label-2" />
+        )}
+        <p role={decision.kind === "blocked" ? "alert" : "status"} className="text-[1rem] leading-relaxed text-label-2">
+          {decision.kind === "blocked" ? decision.message : "Checking your access…"}
+        </p>
+      </div>
     </main>
   );
 }
