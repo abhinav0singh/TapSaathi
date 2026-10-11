@@ -121,6 +121,18 @@ export function requireOperator(
   }
 }
 
+/** The demo controls (reset and heat spike) are for the operator and the supervisor only. */
+export function requireOperatorOrSupervisor(
+  event: APIGatewayProxyEventV2,
+  mapping: IdentityMapping
+): void {
+  const identity = identityFrom(event, mapping);
+
+  if (identity.role !== "OPERATOR" && identity.role !== "SUPERVISOR") {
+    throw new AppError("FORBIDDEN", "Operator or supervisor access required.", 403);
+  }
+}
+
 export function requireActor(
   event: APIGatewayProxyEventV2,
   mapping: IdentityMapping,

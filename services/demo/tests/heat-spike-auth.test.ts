@@ -24,10 +24,12 @@ import { handler } from "../src/heat-spike.js";
 
 const operatorSub = "11111111-1111-4111-8111-111111111111";
 const workerSub = "22222222-2222-4222-8222-222222222222";
+const supervisorSub = "44444444-4444-4444-8444-444444444444";
 
 const mapping = {
   [operatorSub]: { role: "OPERATOR" },
   [workerSub]: { role: "WORKER", actorId: "ravi-001" },
+  [supervisorSub]: { role: "SUPERVISOR", actorId: "supervisor-neha-001" },
 };
 
 function event(
@@ -113,6 +115,20 @@ describe("Heat-spike API authorization", () => {
       eventId: "evt-ravi-001",
       simulated: true,
     });
+  });
+
+  it("allows the mapped supervisor to trigger the demo", async () => {
+    const result = await invoke(event(supervisorSub, ["SUPERVISOR"]));
+
+    expect(result.statusCode).toBe(202);
+    expect(mocks.evaluateAndPublishObservation).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a supervisor identity whose token lacks the SUPERVISOR group", async () => {
+    const result = await invoke(event(supervisorSub, ["WORKER"]));
+
+    expect(result.statusCode).toBe(403);
+    expect(mocks.evaluateAndPublishObservation).not.toHaveBeenCalled();
   });
 
   it("rejects unmapped operator identities", async () => {
