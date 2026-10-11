@@ -12,6 +12,7 @@ import {
   createOperationsAuditRefresher,
   shouldRefreshOperationsAudit,
   refreshOperationsAudit,
+  startOperationsAuditDocumentRefresh,
   startOperationsAuditPolling,
   startOperationsAuditVisibilityRefresh,
 } from "./useOperationsAudit";
@@ -71,6 +72,33 @@ describe("operations audit polling", () => {
     expect(refresh).toHaveBeenCalledTimes(1);
 
     stop();
+    listener?.();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("wires the document visibility listener and removes it on cleanup", () => {
+    let visibilityState: DocumentVisibilityState = "hidden";
+    let listener: (() => void) | undefined;
+    const addEventListener = vi.fn((_type: "visibilitychange", nextListener: () => void) => {
+      listener = nextListener;
+    });
+    const removeEventListener = vi.fn((_type: "visibilitychange", nextListener: () => void) => {
+      if (listener === nextListener) listener = undefined;
+    });
+    const refresh = vi.fn();
+    const stop = startOperationsAuditDocumentRefresh(refresh, {
+      get visibilityState() { return visibilityState; },
+      addEventListener,
+      removeEventListener,
+    });
+
+    expect(addEventListener).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
+    visibilityState = "visible";
+    listener?.();
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    stop();
+    expect(removeEventListener).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
     listener?.();
     expect(refresh).toHaveBeenCalledTimes(1);
   });

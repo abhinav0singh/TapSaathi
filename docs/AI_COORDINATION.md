@@ -222,5 +222,18 @@ verification is claimed.
 Local verification for this follow-up passed: root typecheck; 155 backend unit
 tests; 16 infrastructure tests; state-machine definition validation; 3
 deterministic risk-policy tests; 5 web test files / 21 tests; and the
-production web build. The Web GitHub Actions workflow also passed on commit
-`220e733` (run `38113629977`), including the web test step added here.
+production web build. The Web GitHub Actions workflow also passed on the
+reviewed PR head `24fb3b0` (run `38113699099`), including the web test step
+added here.
+
+### PR #38 follow-up review corrections
+
+The cited Web CI evidence now identifies the reviewed PR head and run
+accurately. The visibility-change DOM wiring was extracted into a
+document-like helper and has direct regression coverage for subscription,
+visible-tab refresh, and cleanup. Local verification after this correction
+passed root typecheck, 5 web test files / 22 tests, and the production web
+build. The Web GitHub Actions workflow also passed on the reviewed PR head
+`defd5cd` (run `38113984303`).
+
+No deployed-browser or AWS verification is claimed.

@@ -40,6 +40,24 @@ export function startOperationsAuditVisibilityRefresh(
   return () => unsubscribe(onVisibilityChange);
 }
 
+export type VisibilityDocument = {
+  readonly visibilityState: DocumentVisibilityState;
+  addEventListener(type: "visibilitychange", listener: () => void): void;
+  removeEventListener(type: "visibilitychange", listener: () => void): void;
+};
+
+export function startOperationsAuditDocumentRefresh(
+  refresh: () => void,
+  visibilityDocument: VisibilityDocument
+): () => void {
+  return startOperationsAuditVisibilityRefresh(
+    refresh,
+    () => visibilityDocument.visibilityState,
+    (listener) => visibilityDocument.addEventListener("visibilitychange", listener),
+    (listener) => visibilityDocument.removeEventListener("visibilitychange", listener)
+  );
+}
+
 export async function refreshOperationsAudit(
   demoGeneration: number,
   fetchEvents: () => Promise<AuditEvent[]>,
@@ -122,11 +140,9 @@ export function useOperationsAudit(
       (callback, interval) => window.setInterval(callback, interval),
       (timer) => window.clearInterval(timer)
     );
-    const stopVisibilityRefresh = startOperationsAuditVisibilityRefresh(
+    const stopVisibilityRefresh = startOperationsAuditDocumentRefresh(
       () => void refresh(),
-      () => document.visibilityState,
-      (listener) => document.addEventListener("visibilitychange", listener),
-      (listener) => document.removeEventListener("visibilitychange", listener)
+      document
     );
 
     return () => {
